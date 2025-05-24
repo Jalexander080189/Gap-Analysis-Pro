@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
 // Import ReactQuill dynamically to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+const ReactQuill = dynamic(() => import('react-quill'), { 
+  ssr: false,
+  loading: () => <div className="h-full bg-gray-100 flex items-center justify-center">Loading editor...</div>
+});
 import 'react-quill/dist/quill.snow.css';
 
 interface NotesProps {
@@ -14,6 +17,11 @@ interface NotesProps {
 
 const Notes: React.FC<NotesProps> = ({ data, setData }) => {
   const [expanded, setExpanded] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleChange = (content: string) => {
     setData(content);
@@ -43,7 +51,7 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
       </div>
       
       <div className={expanded ? 'h-96' : 'h-48'}>
-        {typeof window !== 'undefined' && (
+        {mounted && (
           <ReactQuill
             value={data}
             onChange={handleChange}
@@ -74,7 +82,7 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
         </button>
       </div>
     </div>
-  );
+   );
 };
 
 export default Notes;
