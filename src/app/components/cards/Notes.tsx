@@ -1,19 +1,94 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-
-// Import ReactQuill dynamically to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { 
-  ssr: false,
-  loading: () => <div className="h-full bg-gray-100 flex items-center justify-center">Loading editor...</div>
-});
-import 'react-quill/dist/quill.snow.css';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import TextStyle from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
+import Link from '@tiptap/extension-link';
 
 interface NotesProps {
   data: string;
   setData: React.Dispatch<React.SetStateAction<string>>;
 }
+
+const MenuBar = ({ editor }: { editor: any }) => {
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1 p-2 bg-gray-100 rounded-t border-b border-gray-200">
+      <button
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('bold') ? 'bg-gray-300' : 'bg-white'}`}
+      >
+        Bold
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('italic') ? 'bg-gray-300' : 'bg-white'}`}
+      >
+        Italic
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('underline') ? 'bg-gray-300' : 'bg-white'}`}
+      >
+        Underline
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('strike') ? 'bg-gray-300' : 'bg-white'}`}
+      >
+        Strike
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        className={`px-2 py-1 rounded ${editor.isActive('heading', { level: 1 }) ? 'bg-gray-300' : 'bg-white'}`}
+      >
+        H1
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        className={`px-2 py-1 rounded ${editor.isActive('heading', { level: 2 }) ? 'bg-gray-300' : 'bg-white'}`}
+      >
+        H2
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('bulletList') ? 'bg-gray-300' : 'bg-white'}`}
+      >
+        Bullet List
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('orderedList') ? 'bg-gray-300' : 'bg-white'}`}
+      >
+        Ordered List
+      </button>
+      <button
+        onClick={() => {
+          const url = window.prompt('URL');
+          if (url) {
+            editor.chain().focus().setLink({ href: url }).run();
+          }
+        }}
+        className={`px-2 py-1 rounded ${editor.isActive('link') ? 'bg-gray-300' : 'bg-white'}`}
+      >
+        Link
+      </button>
+      <button
+        onClick={() => editor.chain().focus().unsetLink().run()}
+        className="px-2 py-1 rounded bg-white"
+        disabled={!editor.isActive('link')}
+      >
+        Unlink
+      </button>
+    </div>
+  );
+};
 
 const Notes: React.FC<NotesProps> = ({ data, setData }) => {
   const [expanded, setExpanded] = useState(false);
@@ -23,20 +98,21 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
     setMounted(true);
   }, []);
 
-  const handleChange = (content: string) => {
-    setData(content);
-  };
-
-  const modules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'color': [] }, { 'background': [] }],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-      ['link'],
-      ['clean']
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      TextStyle,
+      Color,
+      Link.configure({
+        openOnClick: false,
+      }),
     ],
-  };
+    content: data,
+    onUpdate: ({ editor }) => {
+      setData(editor.getHTML());
+    },
+  });
 
   return (
     <div className="card">
@@ -51,13 +127,11 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
       </div>
       
       <div className={expanded ? 'h-96' : 'h-48'}>
-        {mounted && (
-          <ReactQuill
-            value={data}
-            onChange={handleChange}
-            modules={modules}
-            className="bg-white h-full"
-          />
+        {mounted && editor && (
+          <div className="bg-white h-full border rounded">
+            <MenuBar editor={editor} />
+            <EditorContent editor={editor} className="p-4 h-[calc(100%-48px)] overflow-auto" />
+          </div>
         )}
       </div>
       
