@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
 // Import ReactQuill dynamically to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+const ReactQuill = dynamic(() => import('react-quill'), { 
+  ssr: false,
+  loading: () => <div className="h-32 bg-gray-100 flex items-center justify-center">Loading editor...</div>
+});
 import 'react-quill/dist/quill.snow.css';
 
 interface ClientInformationProps {
@@ -30,6 +33,11 @@ interface ClientInformationProps {
 
 const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) => {
   const [showBusinessOverview, setShowBusinessOverview] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -294,14 +302,14 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
           <div className="mb-6">
             <h3 className="card-title">Business Overview</h3>
             
-            {typeof window !== 'undefined' && (
+            {mounted && (
               <ReactQuill
                 value={data.businessOverview}
                 onChange={handleBusinessOverviewChange}
                 modules={modules}
                 className="bg-white"
               />
-            )}
+             )}
           </div>
           
           <button
@@ -335,7 +343,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
         </button>
       </div>
     </div>
-  );
+   );
 };
 
 export default ClientInformation;
