@@ -12,6 +12,65 @@ import Notes from './components/cards/Notes';
 import GPTDataBlock from './components/cards/GPTDataBlock';
 import { useSearchParams } from 'next/navigation';
 
+// Separate component for handling useSearchParams
+function SearchParamsHandler({ 
+  clientData, setClientData,
+  marketData, setMarketData,
+  companyData, setCompanyData,
+  gapsData, setGapsData,
+  scenariosData, setScenariosData,
+  marketingData, setMarketingData,
+  sbaData, setSbaData,
+  notesData, setNotesData
+}) {
+  const searchParams = useSearchParams();
+  
+  // Load data from URL or localStorage when component mounts
+  useEffect(() => {
+    const companySlug = searchParams.get('company');
+    if (companySlug) {
+      // Load data from localStorage based on company slug
+      const savedData = localStorage.getItem(`gap-analysis-${companySlug}`);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        setClientData(parsedData.clientData || clientData);
+        setMarketData(parsedData.marketData || marketData);
+        setCompanyData(parsedData.companyData || companyData);
+        setGapsData(parsedData.gapsData || gapsData);
+        setScenariosData(parsedData.scenariosData || scenariosData);
+        setMarketingData(parsedData.marketingData || marketingData);
+        setSbaData(parsedData.sbaData || sbaData);
+        setNotesData(parsedData.notesData || notesData);
+      }
+    }
+  }, []);
+  
+  // Save data to localStorage when client information is saved
+  useEffect(() => {
+    if (clientData.saved && clientData.companyName) {
+      const companySlug = clientData.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const dataToSave = {
+        clientData,
+        marketData,
+        companyData,
+        gapsData,
+        scenariosData,
+        marketingData,
+        sbaData,
+        notesData
+      };
+      localStorage.setItem(`gap-analysis-${companySlug}`, JSON.stringify(dataToSave));
+      
+      // Update URL with company slug if not already present
+      if (!searchParams.get('company')) {
+        window.history.pushState({}, '', `/reports/${companySlug}`);
+      }
+    }
+  }, [clientData, marketData, companyData, gapsData, scenariosData, marketingData, sbaData, notesData]);
+
+  return null; // This component doesn't render anything, it just handles the logic
+}
+
 export default function Home() {
   const [clientData, setClientData] = useState({
     primaryOwner: { name: '', email: '', phone: '' },
@@ -93,54 +152,29 @@ export default function Home() {
   });
   
   const [notesData, setNotesData] = useState('');
-  
-  const searchParams = useSearchParams();
-  
-  // Load data from URL or localStorage when component mounts
-  useEffect(() => {
-    const companySlug = searchParams.get('company');
-    if (companySlug) {
-      // Load data from localStorage based on company slug
-      const savedData = localStorage.getItem(`gap-analysis-${companySlug}`);
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        setClientData(parsedData.clientData || clientData);
-        setMarketData(parsedData.marketData || marketData);
-        setCompanyData(parsedData.companyData || companyData);
-        setGapsData(parsedData.gapsData || gapsData);
-        setScenariosData(parsedData.scenariosData || scenariosData);
-        setMarketingData(parsedData.marketingData || marketingData);
-        setSbaData(parsedData.sbaData || sbaData);
-        setNotesData(parsedData.notesData || notesData);
-      }
-    }
-  }, []);
-  
-  // Save data to localStorage when client information is saved
-  useEffect(() => {
-    if (clientData.saved && clientData.companyName) {
-      const companySlug = clientData.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-      const dataToSave = {
-        clientData,
-        marketData,
-        companyData,
-        gapsData,
-        scenariosData,
-        marketingData,
-        sbaData,
-        notesData
-      };
-      localStorage.setItem(`gap-analysis-${companySlug}`, JSON.stringify(dataToSave));
-      
-      // Update URL with company slug if not already present
-      if (!searchParams.get('company')) {
-        window.history.pushState({}, '', `/reports/${companySlug}`);
-      }
-    }
-  }, [clientData, marketData, companyData, gapsData, scenariosData, marketingData, sbaData, notesData]);
 
   return (
     <main className="flex flex-col gap-6">
+      {/* SearchParamsHandler component to handle URL params and localStorage */}
+      <SearchParamsHandler
+        clientData={clientData}
+        setClientData={setClientData}
+        marketData={marketData}
+        setMarketData={setMarketData}
+        companyData={companyData}
+        setCompanyData={setCompanyData}
+        gapsData={gapsData}
+        setGapsData={setGapsData}
+        scenariosData={scenariosData}
+        setScenariosData={setScenariosData}
+        marketingData={marketingData}
+        setMarketingData={setMarketingData}
+        sbaData={sbaData}
+        setSbaData={setSbaData}
+        notesData={notesData}
+        setNotesData={setNotesData}
+      />
+      
       <ClientInformation data={clientData} setData={setClientData} />
       <MarketOverview data={marketData} setData={setMarketData} />
       <CompanyOverview 
