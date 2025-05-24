@@ -27,6 +27,7 @@ interface ClientInformationProps {
     saved: boolean;
   };
   setData: React.Dispatch<React.SetStateAction<any>>;
+  isClient?: boolean;
 }
 
 // Business Overview Editor component
@@ -103,13 +104,8 @@ const BusinessOverviewEditor = ({ value, onChange }: { value: string, onChange: 
 };
 
 // Main component with default export
-const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) => {
+const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, isClient = false }) => {
   const [showBusinessOverview, setShowBusinessOverview] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -144,9 +140,12 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
       saved: true
     });
     
-    // Generate unique URL based on company name
-    const companySlug = data.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    window.history.pushState({}, '', `/reports/${companySlug}`);
+    // Only run browser-specific code on client side
+    if (isClient) {
+      // Generate unique URL based on company name
+      const companySlug = data.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      window.history.pushState({}, '', `/reports/${companySlug}`);
+    }
   };
 
   const handleEdit = () => {
@@ -363,7 +362,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
           <div className="mb-6">
             <h3 className="card-title">Business Overview</h3>
             
-            {mounted && (
+            {isClient && (
               <BusinessOverviewEditor 
                 value={data.businessOverview}
                 onChange={handleBusinessOverviewChange}

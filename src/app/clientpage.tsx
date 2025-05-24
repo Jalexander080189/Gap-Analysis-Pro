@@ -24,29 +24,43 @@ function SearchParamsHandler({
   notesData, setNotesData
 }) {
   const searchParams = useSearchParams();
+  const [isClient, setIsClient] = useState(false);
+  
+  // Set isClient to true after component mounts
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   // Load data from URL or localStorage when component mounts
   useEffect(() => {
+    if (!isClient) return; // Only run on client side
+    
     const companySlug = searchParams.get('company');
     if (companySlug) {
       // Load data from localStorage based on company slug
       const savedData = localStorage.getItem(`gap-analysis-${companySlug}`);
       if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        setClientData(parsedData.clientData || clientData);
-        setMarketData(parsedData.marketData || marketData);
-        setCompanyData(parsedData.companyData || companyData);
-        setGapsData(parsedData.gapsData || gapsData);
-        setScenariosData(parsedData.scenariosData || scenariosData);
-        setMarketingData(parsedData.marketingData || marketingData);
-        setSbaData(parsedData.sbaData || sbaData);
-        setNotesData(parsedData.notesData || notesData);
+        try {
+          const parsedData = JSON.parse(savedData);
+          setClientData(parsedData.clientData || clientData);
+          setMarketData(parsedData.marketData || marketData);
+          setCompanyData(parsedData.companyData || companyData);
+          setGapsData(parsedData.gapsData || gapsData);
+          setScenariosData(parsedData.scenariosData || scenariosData);
+          setMarketingData(parsedData.marketingData || marketingData);
+          setSbaData(parsedData.sbaData || sbaData);
+          setNotesData(parsedData.notesData || notesData);
+        } catch (e) {
+          console.error("Error parsing saved data:", e);
+        }
       }
     }
-  }, []);
+  }, [isClient, searchParams]);
   
   // Save data to localStorage when client information is saved
   useEffect(() => {
+    if (!isClient) return; // Only run on client side
+    
     if (clientData.saved && clientData.companyName) {
       const companySlug = clientData.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
       const dataToSave = {
@@ -66,18 +80,18 @@ function SearchParamsHandler({
         window.history.pushState({}, '', `/reports/${companySlug}`);
       }
     }
-  }, [clientData, marketData, companyData, gapsData, scenariosData, marketingData, sbaData, notesData]);
+  }, [isClient, clientData, marketData, companyData, gapsData, scenariosData, marketingData, sbaData, notesData, searchParams]);
 
   return null; // This component doesn't render anything, it just handles the logic
 }
 
 export default function Home() {
-  // Add mounted state for client-side only rendering
-  const [mounted, setMounted] = useState(false);
+  // Add isClient state for client-side only operations
+  const [isClient, setIsClient] = useState(false);
   
-  // Set mounted to true after component mounts
+  // Set isClient to true after component mounts
   useEffect(() => {
-    setMounted(true);
+    setIsClient(true);
   }, []);
 
   const [clientData, setClientData] = useState({
@@ -161,10 +175,27 @@ export default function Home() {
   
   const [notesData, setNotesData] = useState('');
 
+  // Loading state for initial render
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Set loading to false after a short delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <main className="flex flex-col gap-6">
-      {/* Only render components that use client-side APIs when mounted */}
-      {mounted ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4 text-lg">Loading...</p>
+          </div>
+        </div>
+      ) : (
         <>
           {/* SearchParamsHandler component to handle URL params and localStorage */}
           <SearchParamsHandler
@@ -186,7 +217,7 @@ export default function Home() {
             setNotesData={setNotesData}
           />
           
-          <ClientInformation data={clientData} setData={setClientData} />
+          <ClientInformation data={clientData} setData={setClientData} isClient={isClient} />
           <MarketOverview data={marketData} setData={setMarketData} />
           <CompanyOverview 
             data={companyData} 
@@ -216,7 +247,7 @@ export default function Home() {
             data={sbaData} 
             setData={setSbaData} 
           />
-          <Notes data={notesData} setData={setNotesData} />
+          <Notes data={notesData} setData={setNotesData} isClient={isClient} />
           <GPTDataBlock 
             setClientData={setClientData}
             setMarketData={setMarketData}
@@ -227,13 +258,6 @@ export default function Home() {
             setNotesData={setNotesData}
           />
         </>
-      ) : (
-        <div className="flex justify-center items-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-4 text-lg">Loading...</p>
-          </div>
-        </div>
       )}
     </main>
   );

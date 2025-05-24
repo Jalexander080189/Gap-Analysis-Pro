@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import DriveLogoToggle from '../DriveLogoToggle';
+import { formatNumber } from '../utils/numberFormatting';
+import DriveLogoToggle from './DriveLogoToggle';
 
 interface CompanyOverviewProps {
   data: {
@@ -26,135 +27,141 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
 }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setData({
-      ...data,
-      [name]: value
-    });
+    
+    if (name === 'percentNewCustomers') {
+      const newValue = parseFloat(value) || 0;
+      const remainingValue = Math.max(0, 100 - newValue);
+      
+      setData({
+        ...data,
+        percentNewCustomers: value,
+        percentCurrentCustomers: remainingValue.toString()
+      });
+    } else if (name === 'percentCurrentCustomers') {
+      const newValue = parseFloat(value) || 0;
+      const remainingValue = Math.max(0, 100 - newValue);
+      
+      setData({
+        ...data,
+        percentCurrentCustomers: value,
+        percentNewCustomers: remainingValue.toString()
+      });
+    } else {
+      setData({
+        ...data,
+        [name]: value
+      });
+    }
   };
 
-  const toggleView = () => {
+  const toggleCardSide = () => {
     setData({
       ...data,
       showBack: !data.showBack
     });
   };
 
-  // Calculate values when inputs change
+  // Calculate customer metrics when inputs change
   useEffect(() => {
-    if (avgYearlyCustomerValue <= 0) return;
+    const annualRevenue = parseFloat(data.annualRevenue.replace(/,/g, '')) || 0;
+    const percentNewCustomers = parseFloat(data.percentNewCustomers) || 0;
     
-    const annualRevenue = parseFloat(data.annualRevenue.replace(/[^0-9.]/g, '')) || 0;
-    const percentNewCustomers = parseFloat(data.percentNewCustomers.replace(/[^0-9.]/g, '')) || 0;
+    // Fix: Calculate total customers correctly (annualRevenue / avgYearlyCustomerValue)
+    const calculatedTotalCustomers = avgYearlyCustomerValue > 0 ? 
+      annualRevenue / avgYearlyCustomerValue : 0;
     
-    const calculatedTotalCustomers = annualRevenue / avgYearlyCustomerValue;
-    const calculatedNewCustomers = (annualRevenue * (percentNewCustomers / 100)) / avgYearlyCustomerValue;
-    const percentOfMarketRevShare = totalMarketRevShare > 0 ? (annualRevenue / totalMarketRevShare) * 100 : 0;
+    // Fix: Calculate new customers correctly (calculatedTotalCustomers * percentNewCustomers / 100)
+    const calculatedNewCustomers = calculatedTotalCustomers * (percentNewCustomers / 100);
     
-    setData(prev => ({
-      ...prev,
+    // Fix: Calculate market rev share percentage correctly (annualRevenue / totalMarketRevShare * 100)
+    const percentOfMarketRevShare = totalMarketRevShare > 0 ? 
+      (annualRevenue / totalMarketRevShare) * 100 : 0;
+    
+    setData({
+      ...data,
       calculatedTotalCustomers,
       calculatedNewCustomers,
       percentOfMarketRevShare
-    }));
-  }, [data.annualRevenue, data.percentNewCustomers, avgYearlyCustomerValue, totalMarketRevShare]);
+    });
+  }, [data.annualRevenue, data.percentNewCustomers, data.percentCurrentCustomers, avgYearlyCustomerValue, totalMarketRevShare]);
 
   return (
-    <div className="card relative">
-      <DriveLogoToggle 
-        showBack={data.showBack} 
-        setShowBack={() => toggleView()} 
-      />
-      
-      <h2 className="section-title">Company Overview</h2>
-      
-      {data.showBack ? (
-        <div className="card-yellow p-4 rounded-lg">
-          <h3 className="card-title text-yellow-800">Company Overview - Full View</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Annual Revenue
-              </label>
-              <input
-                type="text"
-                name="annualRevenue"
-                value={data.annualRevenue}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="e.g. 1M or $1,000,000"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                % New Customers
-              </label>
-              <input
-                type="text"
-                name="percentNewCustomers"
-                value={data.percentNewCustomers}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="e.g. 30 or 30%"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                % Current Customers
-              </label>
-              <input
-                type="text"
-                name="percentCurrentCustomers"
-                value={data.percentCurrentCustomers}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="e.g. 70 or 70%"
-              />
-            </div>
+    <div className="card">
+      {!data.showBack ? (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="section-title">Company Overview</h2>
+            <DriveLogoToggle onClick={toggleCardSide} />
           </div>
           
-          {(data.annualRevenue && avgYearlyCustomerValue > 0) && (
-            <div className="bg-yellow-100 p-3 rounded-lg mb-4">
-              <p className="text-yellow-800 font-medium">
-                Calculated Total Customers: {data.calculatedTotalCustomers.toLocaleString()}
-              </p>
-            </div>
-          )}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Annual Revenue
+            </label>
+            <input
+              type="text"
+              name="annualRevenue"
+              value={data.annualRevenue}
+              onChange={handleInputChange}
+              className="input-field"
+              placeholder="e.g., 1,000,000"
+            />
+          </div>
           
-          {(data.annualRevenue && data.percentNewCustomers && avgYearlyCustomerValue > 0) && (
-            <div className="bg-yellow-100 p-3 rounded-lg mb-4">
-              <p className="text-yellow-800 font-medium">
-                Calculated New Customers: {data.calculatedNewCustomers.toLocaleString()}
-              </p>
-            </div>
-          )}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              % New Customers
+            </label>
+            <input
+              type="text"
+              name="percentNewCustomers"
+              value={data.percentNewCustomers}
+              onChange={handleInputChange}
+              className="input-field"
+              placeholder="e.g., 50"
+            />
+          </div>
           
-          {(data.annualRevenue && totalMarketRevShare > 0) && (
-            <div className="bg-yellow-100 p-3 rounded-lg">
-              <p className="text-yellow-800 font-medium">
-                % of Market Rev Share: {data.percentOfMarketRevShare.toFixed(2)}%
-              </p>
-            </div>
-          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              % Current Customers
+            </label>
+            <input
+              type="text"
+              name="percentCurrentCustomers"
+              value={data.percentCurrentCustomers}
+              onChange={handleInputChange}
+              className="input-field"
+              placeholder="e.g., 50"
+            />
+          </div>
         </div>
       ) : (
-        <div className="p-4 border border-yellow-200 rounded-lg">
-          <h3 className="card-title">Company Overview - Preview</h3>
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="section-title">Company Overview Results</h2>
+            <DriveLogoToggle onClick={toggleCardSide} />
+          </div>
           
-          {(data.annualRevenue && data.percentNewCustomers && data.percentCurrentCustomers) ? (
-            <div>
-              <p className="mb-2">Annual Revenue: {data.annualRevenue}</p>
-              <p className="mb-2">% New Customers: {data.percentNewCustomers}</p>
-              <p className="mb-2">% Current Customers: {data.percentCurrentCustomers}</p>
-              {totalMarketRevShare > 0 && (
-                <p className="font-medium text-yellow-800">Market Share: {data.percentOfMarketRevShare.toFixed(2)}%</p>
-              )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="stat-card">
+              <h3 className="stat-title">Calculated Total Customers</h3>
+              <p className="stat-value">{formatNumber(data.calculatedTotalCustomers)}</p>
+              <p className="stat-desc">Total customers based on annual revenue</p>
             </div>
-          ) : (
-            <p className="text-gray-500 italic">Enter company information to see preview</p>
-          )}
+            
+            <div className="stat-card">
+              <h3 className="stat-title">Calculated New Customers</h3>
+              <p className="stat-value">{formatNumber(data.calculatedNewCustomers)}</p>
+              <p className="stat-desc">New customers based on percentage</p>
+            </div>
+            
+            <div className="stat-card">
+              <h3 className="stat-title">% of Market Rev Share</h3>
+              <p className="stat-value">{formatNumber(data.percentOfMarketRevShare)}%</p>
+              <p className="stat-desc">Your share of the total market revenue</p>
+            </div>
+          </div>
         </div>
       )}
       
@@ -179,7 +186,7 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
         </button>
       </div>
     </div>
-  );
+   );
 };
 
 export default CompanyOverview;

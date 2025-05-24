@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { parseHumanFriendlyNumber, formatCurrency, formatPercentage } from '../../utils/numberFormatting';
+import { formatNumber } from '../utils/numberFormatting';
+
+interface MarketingChannel {
+  name: string;
+  monthlyCost: string;
+  monthlyAdSpend: string;
+}
 
 interface CurrentMarketingOverviewProps {
   data: {
-    channels: Array<{
-      name: string;
-      monthlyCost: string;
-      monthlyAdSpend: string;
-    }>;
+    channels: MarketingChannel[];
     totalMonthlySpend: number;
     totalYearlySpend: number;
     additionalMonthlySpend: number;
@@ -24,12 +26,11 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
   setData, 
   annualRevenue 
 }) => {
-  const handleInputChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handleChannelChange = (index: number, field: keyof MarketingChannel, value: string) => {
     const updatedChannels = [...data.channels];
     updatedChannels[index] = {
       ...updatedChannels[index],
-      [name]: value
+      [field]: value
     };
     
     setData({
@@ -41,7 +42,10 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
   const addChannel = () => {
     setData({
       ...data,
-      channels: [...data.channels, { name: '', monthlyCost: '', monthlyAdSpend: '' }]
+      channels: [
+        ...data.channels,
+        { name: '', monthlyCost: '', monthlyAdSpend: '' }
+      ]
     });
   };
 
@@ -57,125 +61,129 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
 
   // Calculate totals when channels change
   useEffect(() => {
-    let totalMonthly = 0;
-    
-    data.channels.forEach(channel => {
-      const monthlyCost = parseHumanFriendlyNumber(channel.monthlyCost);
-      const monthlyAdSpend = parseHumanFriendlyNumber(channel.monthlyAdSpend);
-      
-      totalMonthly += monthlyCost + monthlyAdSpend;
-    });
+    // Calculate total monthly and yearly spend
+    const totalMonthly = data.channels.reduce((sum, channel) => {
+      const monthlyCost = parseFloat(channel.monthlyCost.replace(/,/g, '')) || 0;
+      const monthlyAdSpend = parseFloat(channel.monthlyAdSpend.replace(/,/g, '')) || 0;
+      return sum + monthlyCost + monthlyAdSpend;
+    }, 0);
     
     const totalYearly = totalMonthly * 12;
-    const targetYearlySpend = annualRevenue * 0.08; // 8% of annual revenue
-    const additionalMonthlyNeeded = Math.max(0, (targetYearlySpend - totalYearly) / 12);
-    const percentOfRevenue = annualRevenue > 0 ? (totalYearly / annualRevenue) * 100 : 0;
     
-    setData(prev => ({
-      ...prev,
+    // Fix: Calculate additional monthly spend to hit 8% of annual revenue
+    const annualRevenueValue = parseFloat(annualRevenue.toString().replace(/,/g, '')) || 0;
+    const targetMonthlySpend = (annualRevenueValue * 0.08) / 12;
+    const additionalMonthlySpend = Math.max(0, targetMonthlySpend - totalMonthly);
+    
+    // Fix: Calculate percentage of annual revenue spent
+    const percentOfAnnualRevenue = annualRevenueValue > 0 ? 
+      (totalMonthly / annualRevenueValue) * 100 : 0;
+    
+    setData({
+      ...data,
       totalMonthlySpend: totalMonthly,
       totalYearlySpend: totalYearly,
-      additionalMonthlySpend: additionalMonthlyNeeded,
-      percentOfAnnualRevenue: percentOfRevenue
-    }));
+      additionalMonthlySpend,
+      percentOfAnnualRevenue
+    });
   }, [data.channels, annualRevenue]);
 
   return (
     <div className="card">
-      <h2 className="section-title">Current Marketing Overview</h2>
+      <h2 className="section-title mb-6">Current Marketing Overview</h2>
       
-      <div className="mb-4">
-        <div className="grid grid-cols-12 gap-2 mb-2 font-medium text-gray-700">
-          <div className="col-span-4">Marketing Channel</div>
-          <div className="col-span-3">Monthly Cost</div>
-          <div className="col-span-3">Monthly Ad Spend</div>
-          <div className="col-span-2"></div>
+      <div className="mb-6">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Marketing Channel
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Monthly Cost
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Monthly Ad Spend
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {data.channels.map((channel, index) => (
+                <tr key={index}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="text"
+                      value={channel.name}
+                      onChange={(e) => handleChannelChange(index, 'name', e.target.value)}
+                      className="input-field"
+                      placeholder="e.g., TV, Radio, Social"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="text"
+                      value={channel.monthlyCost}
+                      onChange={(e) => handleChannelChange(index, 'monthlyCost', e.target.value)}
+                      className="input-field"
+                      placeholder="e.g., 500"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="text"
+                      value={channel.monthlyAdSpend}
+                      onChange={(e) => handleChannelChange(index, 'monthlyAdSpend', e.target.value)}
+                      className="input-field"
+                      placeholder="e.g., 500"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => removeChannel(index)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        
-        {data.channels.map((channel, index) => (
-          <div key={index} className="grid grid-cols-12 gap-2 mb-2">
-            <div className="col-span-4">
-              <input
-                type="text"
-                name="name"
-                value={channel.name}
-                onChange={(e) => handleInputChange(index, e)}
-                className="input-field"
-                placeholder="Channel name"
-              />
-            </div>
-            <div className="col-span-3">
-              <input
-                type="text"
-                name="monthlyCost"
-                value={channel.monthlyCost}
-                onChange={(e) => handleInputChange(index, e)}
-                className="input-field"
-                placeholder="e.g. $500"
-              />
-            </div>
-            <div className="col-span-3">
-              <input
-                type="text"
-                name="monthlyAdSpend"
-                value={channel.monthlyAdSpend}
-                onChange={(e) => handleInputChange(index, e)}
-                className="input-field"
-                placeholder="e.g. $1k"
-              />
-            </div>
-            <div className="col-span-2">
-              {index > 0 && (
-                <button
-                  onClick={() => removeChannel(index)}
-                  className="px-2 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
         
         <button
           onClick={addChannel}
-          className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
         >
-          Add Marketing Channel
+          Add Channel
         </button>
       </div>
       
-      <div className="bg-orange-100 p-4 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Total Monthly Spend</p>
-            <p className="font-medium">{formatCurrency(data.totalMonthlySpend)}</p>
-          </div>
-          
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Total Yearly Spend</p>
-            <p className="font-medium">{formatCurrency(data.totalYearlySpend)}</p>
-          </div>
-          
-          {annualRevenue > 0 && (
-            <>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Additional Monthly Spend to Hit 8% of Annual Revenue</p>
-                <p className="font-medium">{formatCurrency(data.additionalMonthlySpend)}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-600 mb-1">% of Annual Revenue Spent</p>
-                <p className={`font-medium ${
-                  data.percentOfAnnualRevenue < 6 ? 'text-red-600' : 
-                  data.percentOfAnnualRevenue >= 8 ? 'text-green-600' : 
-                  'text-yellow-600'
-                }`}>
-                  {formatPercentage(data.percentOfAnnualRevenue / 100)}
-                </p>
-              </div>
-            </>
-          )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="stat-card">
+          <h3 className="stat-title">Total Monthly Spend</h3>
+          <p className="stat-value">${formatNumber(data.totalMonthlySpend)}</p>
+        </div>
+        
+        <div className="stat-card">
+          <h3 className="stat-title">Total Yearly Spend</h3>
+          <p className="stat-value">${formatNumber(data.totalYearlySpend)}</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="stat-card">
+          <h3 className="stat-title">Additional Monthly Spend to Hit 8% of Annual Revenue</h3>
+          <p className="stat-value">${formatNumber(data.additionalMonthlySpend)}</p>
+        </div>
+        
+        <div className="stat-card">
+          <h3 className="stat-title">% of Annual Revenue Spent</h3>
+          <p className="stat-value">{formatNumber(data.percentOfAnnualRevenue)}%</p>
         </div>
       </div>
       
@@ -200,7 +208,7 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
         </button>
       </div>
     </div>
-  );
+   );
 };
 
 export default CurrentMarketingOverview;

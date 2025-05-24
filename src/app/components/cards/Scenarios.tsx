@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
+import { formatNumber } from '../utils/numberFormatting';
+import ReactSlider from 'react-slider';
 
 interface ScenariosProps {
   data: {
@@ -26,175 +27,133 @@ const Scenarios: React.FC<ScenariosProps> = ({
   avgYearlyCustomerValue,
   annualRevenue
 }) => {
-  // Auto-position sliders based on current gap percentages
+  // Initialize sliders with success percentages (not gap percentages)
   useEffect(() => {
     if (gapsData.mode === 'leadgen') {
-      setData(prev => ({
-        ...prev,
-        visibilityGapPercent: Math.round(gapsData.leadgen.visibilityReachGap * 100),
-        leadGenGapPercent: Math.round(gapsData.leadgen.leadGenGap * 100),
-        closeRateGapPercent: Math.round(gapsData.leadgen.closeRateGap * 100)
-      }));
-    } else {
-      setData(prev => ({
-        ...prev,
-        visibilityGapPercent: Math.round(gapsData.retail.visibilityReachGap * 100),
-        leadGenGapPercent: 0,
-        closeRateGapPercent: Math.round(gapsData.retail.closeRateGap * 100)
-      }));
+      // Fix: Set initial slider values to success percentages (not gap percentages)
+      const visibilitySuccess = Math.max(0, 100 - (gapsData.leadgen?.visibilityReachGap || 95));
+      const leadGenSuccess = Math.max(0, 100 - (gapsData.leadgen?.leadGenGap || 80));
+      const closeRateSuccess = Math.max(0, 100 - (gapsData.leadgen?.closeRateGap || 80));
+      
+      calculateAdditionalMetrics(visibilitySuccess, leadGenSuccess, closeRateSuccess);
     }
-  }, [
-    gapsData.mode, 
-    gapsData.leadgen.visibilityReachGap, 
-    gapsData.leadgen.leadGenGap, 
-    gapsData.leadgen.closeRateGap,
-    gapsData.retail.visibilityReachGap,
-    gapsData.retail.closeRateGap
-  ]);
+  }, [gapsData]);
 
-  // Calculate scenario results when sliders change
-  useEffect(() => {
-    // Only calculate if we have the necessary values
-    if (annualRevenue <= 0 || avgYearlyCustomerValue <= 0) return;
-    
+  const calculateAdditionalMetrics = (newVisibility: number, newLeadGen: number, newCloseRate: number) => {
     // Get base values from gaps data
-    let baseVisitors = 0;
-    let baseLeads = 0;
-    let baseClosed = 0;
+    const calculatedBuyers = gapsData.mode === 'leadgen' ? 
+      parseFloat(gapsData.calculatedBuyers?.toString().replace(/,/g, '') || '0') : 100000;
     
-    if (gapsData.mode === 'leadgen') {
-      baseVisitors = parseHumanFriendlyNumber(gapsData.leadgen.annualWebsiteVisitors);
-      baseLeads = parseHumanFriendlyNumber(gapsData.leadgen.annualLeadsGenerated);
-      baseClosed = parseHumanFriendlyNumber(gapsData.leadgen.annualNewAccountsClosed);
-    } else {
-      baseVisitors = parseHumanFriendlyNumber(gapsData.retail.annualStoreVisitors);
-      baseClosed = parseHumanFriendlyNumber(gapsData.retail.annualNewAccountsClosed);
-    }
+    const annualWebsiteVisitors = gapsData.mode === 'leadgen' ? 
+      parseFloat(gapsData.leadgen?.annualWebsiteVisitors?.replace(/,/g, '') || '0') : 5000;
     
-    // Calculate additional leads based on visibility gap improvement
-    const additionalVisitors = baseVisitors * (data.visibilityGapPercent / 100);
+    const annualLeadsGenerated = gapsData.mode === 'leadgen' ? 
+      parseFloat(gapsData.leadgen?.annualLeadsGenerated?.replace(/,/g, '') || '0') : 1000;
     
-    // Calculate additional leads based on lead gen gap improvement
-    let additionalLeads = 0;
-    if (gapsData.mode === 'leadgen') {
-      additionalLeads = additionalVisitors * (1 - (data.leadGenGapPercent / 100)) + 
-                        baseVisitors * (data.leadGenGapPercent / 100);
-    } else {
-      additionalLeads = additionalVisitors;
-    }
+    const annualNewAccountsClosed = gapsData.mode === 'leadgen' ? 
+      parseFloat(gapsData.leadgen?.annualNewAccountsClosed?.replace(/,/g, '') || '0') : 200;
     
-    // Calculate additional closed accounts based on close rate gap improvement
-    const additionalClosed = additionalLeads * (1 - (data.closeRateGapPercent / 100)) + 
-                             (gapsData.mode === 'leadgen' ? baseLeads : baseVisitors) * (data.closeRateGapPercent / 100);
+    // Calculate potential improvements based on slider values
+    const potentialVisitors = calculatedBuyers * (newVisibility / 100);
+    const additionalVisitors = Math.max(0, potentialVisitors - annualWebsiteVisitors);
+    
+    const potentialLeads = potentialVisitors * (newLeadGen / 100);
+    const additionalLeads = Math.max(0, potentialLeads - annualLeadsGenerated);
+    
+    const potentialNewAccounts = potentialLeads * (newCloseRate / 100);
+    const additionalNewAccounts = Math.max(0, potentialNewAccounts - annualNewAccountsClosed);
     
     // Calculate additional revenue
-    const additionalRevenue = additionalClosed * avgYearlyCustomerValue;
+    const additionalRevenue = additionalNewAccounts * avgYearlyCustomerValue;
     
-    // Calculate total revenue
-    const totalRevenue = annualRevenue + additionalRevenue;
-    
-    setData(prev => ({
-      ...prev,
-      additionalAnnualLeads: additionalLeads,
-      additionalAnnualNewAccountsClosed: additionalClosed,
-      additionalAnnualRevenueCreated: additionalRevenue,
-      totalCalculatedAnnualRevenue: totalRevenue
-    }));
-  }, [
-    data.visibilityGapPercent,
-    data.leadGenGapPercent,
-    data.closeRateGapPercent,
-    gapsData,
-    avgYearlyCustomerValue,
-    annualRevenue
-  ]);
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    // Update state with new calculations
     setData({
       ...data,
-      [name]: parseInt(value)
+      visibilityGapPercent: newVisibility,
+      leadGenGapPercent: newLeadGen,
+      closeRateGapPercent: newCloseRate,
+      additionalAnnualLeads: additionalLeads,
+      additionalAnnualNewAccountsClosed: additionalNewAccounts,
+      additionalAnnualRevenueCreated: additionalRevenue,
+      totalCalculatedAnnualRevenue: annualRevenue + additionalRevenue
     });
   };
 
   return (
     <div className="card">
-      <h2 className="section-title">Scenario "What-Ifs"</h2>
+      <h2 className="section-title mb-6">What If Scenarios</h2>
       
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Visibility Gap: {formatPercentage(data.visibilityGapPercent / 100)}
-        </label>
-        <input
-          type="range"
-          name="visibilityGapPercent"
-          min="0"
-          max="100"
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-lg font-medium">Visibility Reach</h3>
+          <span className="text-lg font-semibold">{formatNumber(data.visibilityGapPercent)}%</span>
+        </div>
+        <ReactSlider
+          className="horizontal-slider"
+          thumbClassName="slider-thumb"
+          trackClassName="slider-track"
           value={data.visibilityGapPercent}
-          onChange={handleSliderChange}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          onChange={(value) => calculateAdditionalMetrics(value, data.leadGenGapPercent, data.closeRateGapPercent)}
+          min={0}
+          max={100}
         />
       </div>
       
-      {gapsData.mode === 'leadgen' && (
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Lead Gen Gap: {formatPercentage(data.leadGenGapPercent / 100)}
-          </label>
-          <input
-            type="range"
-            name="leadGenGapPercent"
-            min="0"
-            max="100"
-            value={data.leadGenGapPercent}
-            onChange={handleSliderChange}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-          />
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-lg font-medium">Lead Generation</h3>
+          <span className="text-lg font-semibold">{formatNumber(data.leadGenGapPercent)}%</span>
         </div>
-      )}
+        <ReactSlider
+          className="horizontal-slider"
+          thumbClassName="slider-thumb"
+          trackClassName="slider-track"
+          value={data.leadGenGapPercent}
+          onChange={(value) => calculateAdditionalMetrics(data.visibilityGapPercent, value, data.closeRateGapPercent)}
+          min={0}
+          max={100}
+        />
+      </div>
       
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Close Rate Gap: {formatPercentage(data.closeRateGapPercent / 100)}
-        </label>
-        <input
-          type="range"
-          name="closeRateGapPercent"
-          min="0"
-          max="100"
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-lg font-medium">Close Rate</h3>
+          <span className="text-lg font-semibold">{formatNumber(data.closeRateGapPercent)}%</span>
+        </div>
+        <ReactSlider
+          className="horizontal-slider"
+          thumbClassName="slider-thumb"
+          trackClassName="slider-track"
           value={data.closeRateGapPercent}
-          onChange={handleSliderChange}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          onChange={(value) => calculateAdditionalMetrics(data.visibilityGapPercent, data.leadGenGapPercent, value)}
+          min={0}
+          max={100}
         />
       </div>
       
-      {(data.visibilityGapPercent > 0 || data.leadGenGapPercent > 0 || data.closeRateGapPercent > 0) && (
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-blue-800 mb-3">Scenario Results</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Additional Annual Leads</p>
-              <p className="font-medium">{Math.round(data.additionalAnnualLeads).toLocaleString()}</p>
-            </div>
-            
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Additional Annual New Accounts Closed</p>
-              <p className="font-medium">{Math.round(data.additionalAnnualNewAccountsClosed).toLocaleString()}</p>
-            </div>
-            
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Additional Annual Revenue Created</p>
-              <p className="font-medium">${Math.round(data.additionalAnnualRevenueCreated).toLocaleString()}</p>
-            </div>
-            
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Total Calculated Annual Revenue</p>
-              <p className="font-medium text-blue-800">${Math.round(data.totalCalculatedAnnualRevenue).toLocaleString()}</p>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="stat-card">
+          <h3 className="stat-title">Additional Annual Leads</h3>
+          <p className="stat-value">{formatNumber(data.additionalAnnualLeads)}</p>
         </div>
-      )}
+        
+        <div className="stat-card">
+          <h3 className="stat-title">Additional Annual New Accounts Closed</h3>
+          <p className="stat-value">{formatNumber(data.additionalAnnualNewAccountsClosed)}</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="stat-card">
+          <h3 className="stat-title">Additional Annual Revenue Created</h3>
+          <p className="stat-value">${formatNumber(data.additionalAnnualRevenueCreated)}</p>
+        </div>
+        
+        <div className="stat-card">
+          <h3 className="stat-title">Total Calculated Annual Revenue</h3>
+          <p className="stat-value">${formatNumber(data.totalCalculatedAnnualRevenue)}</p>
+        </div>
+      </div>
       
       <div className="mt-4 flex items-center space-x-2">
         <button className="social-button">
@@ -217,7 +176,7 @@ const Scenarios: React.FC<ScenariosProps> = ({
         </button>
       </div>
     </div>
-  );
+   );
 };
 
 export default Scenarios;
