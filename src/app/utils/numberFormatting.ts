@@ -95,3 +95,19 @@ export function formatCompactNumber(value: number, decimals: number = 0): string
   
   return value.toFixed(decimals);
 }
+
+/**
+ * Format a number with commas as thousands separators
+ * 
+ * @param value The number to format
+ * @param decimals Number of decimal places (default: 0)
+ * @returns Formatted number string
+ */
+export function formatNumber(value: number, decimals: number = 0): string {
+  if (isNaN(value)) return '0';
+  
+  return value.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+}
