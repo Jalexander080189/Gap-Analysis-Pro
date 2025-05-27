@@ -45,9 +45,9 @@ const Scenarios: React.FC<ScenariosProps> = ({
   // Calculate additional metrics when sliders change
   useEffect(() => {
     calculateAdditionalMetrics();
-  }, [data.visibilityReachSlider, data.leadGenSlider, data.closeRateSlider]);
+  }, [data.visibilityReachSlider, data.leadGenSlider, data.closeRateSlider, calculateAdditionalMetrics]);
 
-  const calculateAdditionalMetrics = () => {
+  const calculateAdditionalMetrics = React.useCallback(() => {
     // Calculate additional visitors based on visibility reach slider
     const additionalVisitorsPercent = data.visibilityReachSlider / 100;
     const potentialAdditionalVisitors = (calculatedBuyers * visibilityReachGap / 100) * additionalVisitorsPercent;
@@ -74,7 +74,7 @@ const Scenarios: React.FC<ScenariosProps> = ({
       additionalNewAccounts,
       totalCalculatedAnnualRevenue
     });
-  };
+  }, [data, setData, calculatedBuyers, visibilityReachGap, leadGenGap, closeRateGap, annualRevenue]);
 
   return (
     <div className="card">

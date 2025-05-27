@@ -25,15 +25,6 @@ const SBAMarketingBudget: React.FC<SBAMarketingBudgetProps> = ({
   setData, 
   annualRevenue 
 }) => {
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    setData({
-      ...data,
-      [name]: value
-    });
-  };
-
   const handleChannelChange = (index: number, field: keyof SBAMarketingBudgetData['recommendedChannels'][0], value: string) => {
     const updatedChannels = [...data.recommendedChannels];
     updatedChannels[index] = {

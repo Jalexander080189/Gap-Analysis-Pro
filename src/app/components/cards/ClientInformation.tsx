@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { formatNumber } from '../../utils/numberFormatting';
 
 interface ClientData {
   companyName: string;

@@ -30,14 +30,12 @@ interface GapsAndOppsData {
 interface GapsAndOppsProps {
   data: GapsAndOppsData;
   setData: React.Dispatch<React.SetStateAction<GapsAndOppsData>>;
-  annualRevenue: number;
   calculatedBuyers: number;
 }
 
 const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ 
   data, 
   setData, 
-  annualRevenue,
   calculatedBuyers
 }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
