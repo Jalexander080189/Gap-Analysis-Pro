@@ -45,6 +45,15 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
     });
   }, [data.audienceSize, data.buyerPercentage, data.avgYearlyCustomerValue]);
 
+  // Function to handle toggle click
+  const handleToggle = (value: boolean) => {
+    console.log('MarketOverview toggle clicked, setting showBack to:', value);
+    setData({
+      ...data,
+      showBack: value
+    });
+  };
+
   return (
     <div className="card">
       {!data.showBack ? (
@@ -53,7 +62,7 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
             <h2 className="section-title">Market Overview</h2>
             <DriveLogoToggle 
               showBack={data.showBack} 
-              setShowBack={(value) => setData({...data, showBack: value})} 
+              setShowBack={handleToggle} 
             />
           </div>
           
@@ -98,6 +107,21 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
               placeholder="e.g., 1,000"
             />
           </div>
+          
+          {/* Preview of calculations on front */}
+          {(data.calculatedBuyers > 0 || data.totalMarketRevShare > 0) && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-md">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Calculation Preview:</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="font-medium">Calculated Buyers:</span> {formatNumber(Math.round(data.calculatedBuyers))}
+                </div>
+                <div>
+                  <span className="font-medium">Total Market Rev:</span> ${formatNumber(Math.round(data.totalMarketRevShare))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div>
@@ -105,20 +129,20 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
             <h2 className="section-title">Market Overview Results</h2>
             <DriveLogoToggle 
               showBack={data.showBack} 
-              setShowBack={(value) => setData({...data, showBack: value})} 
+              setShowBack={handleToggle} 
             />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="stat-card">
               <h3 className="stat-title">Calculated Buyers</h3>
-              <p className="stat-value">{formatNumber(data.calculatedBuyers)}</p>
+              <p className="stat-value">{formatNumber(Math.round(data.calculatedBuyers))}</p>
               <p className="stat-desc">Total potential buyers in your market</p>
             </div>
             
             <div className="stat-card">
               <h3 className="stat-title">Total Market Rev Share</h3>
-              <p className="stat-value">${formatNumber(data.totalMarketRevShare)}</p>
+              <p className="stat-value">${formatNumber(Math.round(data.totalMarketRevShare))}</p>
               <p className="stat-desc">Total revenue potential in your market</p>
             </div>
           </div>

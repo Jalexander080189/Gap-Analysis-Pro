@@ -78,6 +78,15 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
     });
   }, [data.annualRevenue, data.percentNewCustomers, data.percentCurrentCustomers, avgYearlyCustomerValue, totalMarketRevShare]);
 
+  // Function to handle toggle click
+  const handleToggle = (value: boolean) => {
+    console.log('CompanyOverview toggle clicked, setting showBack to:', value);
+    setData({
+      ...data,
+      showBack: value
+    });
+  };
+
   return (
     <div className="card">
       {!data.showBack ? (
@@ -86,7 +95,7 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
             <h2 className="section-title">Company Overview</h2>
             <DriveLogoToggle 
               showBack={data.showBack} 
-              setShowBack={(value) => setData({...data, showBack: value})} 
+              setShowBack={handleToggle} 
             />
           </div>
           
@@ -131,6 +140,24 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
               placeholder="e.g., 50"
             />
           </div>
+          
+          {/* Preview of calculations on front */}
+          {(data.calculatedTotalCustomers > 0 || data.calculatedNewCustomers > 0 || data.percentOfMarketRevShare > 0) && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-md">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Calculation Preview:</h3>
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                <div>
+                  <span className="font-medium">Total Customers:</span> {formatNumber(Math.round(data.calculatedTotalCustomers))}
+                </div>
+                <div>
+                  <span className="font-medium">New Customers:</span> {formatNumber(Math.round(data.calculatedNewCustomers))}
+                </div>
+                <div>
+                  <span className="font-medium">Market Share:</span> {formatNumber(data.percentOfMarketRevShare)}%
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div>
@@ -138,20 +165,20 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
             <h2 className="section-title">Company Overview Results</h2>
             <DriveLogoToggle 
               showBack={data.showBack} 
-              setShowBack={(value) => setData({...data, showBack: value})} 
+              setShowBack={handleToggle} 
             />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="stat-card">
               <h3 className="stat-title">Calculated Total Customers</h3>
-              <p className="stat-value">{formatNumber(data.calculatedTotalCustomers)}</p>
+              <p className="stat-value">{formatNumber(Math.round(data.calculatedTotalCustomers))}</p>
               <p className="stat-desc">Total customers based on annual revenue</p>
             </div>
             
             <div className="stat-card">
               <h3 className="stat-title">Calculated New Customers</h3>
-              <p className="stat-value">{formatNumber(data.calculatedNewCustomers)}</p>
+              <p className="stat-value">{formatNumber(Math.round(data.calculatedNewCustomers))}</p>
               <p className="stat-desc">New customers based on percentage</p>
             </div>
             

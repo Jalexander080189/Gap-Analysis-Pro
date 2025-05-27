@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { formatNumber } from '../../utils/numberFormatting';
 import DriveLogoToggle from '../../components/DriveLogoToggle';
 
@@ -56,7 +56,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
     }
   };
 
-  // Calculate gaps when flipping to back side
+  // Calculate gaps for preview and back side
   const calculateGaps = () => {
     if (data.mode === 'leadgen') {
       const annualWebsiteVisitors = parseFloat(data.leadgen.annualWebsiteVisitors.replace(/,/g, '')) || 0;
@@ -78,15 +78,11 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
       const closeRateGap = annualLeadsGenerated > 0 ? 
         Math.min(100, Math.max(0, ((annualLeadsGenerated - annualNewAccountsClosed) / annualLeadsGenerated) * 100)) : 0;
       
-      setData({
-        ...data,
-        leadgen: {
-          ...data.leadgen,
-          visibilityReachGap,
-          leadGenGap,
-          closeRateGap
-        }
-      });
+      return {
+        visibilityReachGap,
+        leadGenGap,
+        closeRateGap
+      };
     } else {
       const annualStoreVisitors = parseFloat(data.retail.annualStoreVisitors.replace(/,/g, '')) || 0;
       const annualNewAccountsClosed = parseFloat(data.retail.annualNewAccountsClosed.replace(/,/g, '')) || 0;
@@ -98,26 +94,49 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
       const closeRateGap = annualStoreVisitors > 0 ? 
         Math.min(100, Math.max(0, ((annualStoreVisitors - annualNewAccountsClosed) / annualStoreVisitors) * 100)) : 0;
       
-      setData({
-        ...data,
-        retail: {
-          ...data.retail,
-          visibilityReachGap,
-          closeRateGap
-        }
-      });
+      return {
+        visibilityReachGap,
+        closeRateGap
+      };
     }
   };
 
   // Handle toggle with calculations
-  const handleToggle = (showBack: boolean) => {
-    if (showBack) {
-      calculateGaps();
+  const handleToggle = (value: boolean) => {
+    console.log('GapsAndOpps toggle clicked, setting showBack to:', value);
+    
+    if (value) {
+      // Calculate gaps when flipping to back side
+      const gaps = calculateGaps();
+      
+      if (data.mode === 'leadgen') {
+        setData({
+          ...data,
+          leadgen: {
+            ...data.leadgen,
+            visibilityReachGap: gaps.visibilityReachGap,
+            leadGenGap: gaps.leadGenGap,
+            closeRateGap: gaps.closeRateGap
+          },
+          showBack: value
+        });
+      } else {
+        setData({
+          ...data,
+          retail: {
+            ...data.retail,
+            visibilityReachGap: gaps.visibilityReachGap,
+            closeRateGap: gaps.closeRateGap
+          },
+          showBack: value
+        });
+      }
+    } else {
+      setData({
+        ...data,
+        showBack: value
+      });
     }
-    setData({
-      ...data,
-      showBack
-    });
   };
 
   const toggleMode = (mode: 'leadgen' | 'retail') => {
@@ -127,6 +146,9 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
       showBack: false
     });
   };
+
+  // Calculate gaps for preview
+  const gaps = calculateGaps();
 
   return (
     <div className="card">
@@ -199,6 +221,24 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
                     placeholder="e.g., 1,000"
                   />
                 </div>
+                
+                {/* Preview of calculations on front for leadgen */}
+                {(gaps.visibilityReachGap > 0 || gaps.leadGenGap > 0 || gaps.closeRateGap > 0) && (
+                  <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Gap Analysis Preview:</h3>
+                    <div className="grid grid-cols-1 gap-2 text-sm">
+                      <div>
+                        <span className="font-medium">Visibility Gap:</span> {formatNumber(Math.round(gaps.visibilityReachGap))}%
+                      </div>
+                      <div>
+                        <span className="font-medium">Lead Gen Gap:</span> {formatNumber(Math.round(gaps.leadGenGap))}%
+                      </div>
+                      <div>
+                        <span className="font-medium">Close Rate Gap:</span> {formatNumber(Math.round(gaps.closeRateGap))}%
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div>
@@ -229,6 +269,21 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
                     placeholder="e.g., 1,000"
                   />
                 </div>
+                
+                {/* Preview of calculations on front for retail */}
+                {(gaps.visibilityReachGap > 0 || gaps.closeRateGap > 0) && (
+                  <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Gap Analysis Preview:</h3>
+                    <div className="grid grid-cols-1 gap-2 text-sm">
+                      <div>
+                        <span className="font-medium">Visibility Gap:</span> {formatNumber(Math.round(gaps.visibilityReachGap))}%
+                      </div>
+                      <div>
+                        <span className="font-medium">Close Rate Gap:</span> {formatNumber(Math.round(gaps.closeRateGap))}%
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -247,34 +302,34 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="stat-card">
                 <h3 className="stat-title">Visibility Reach Gap</h3>
-                <p className="stat-value">{formatNumber(data.leadgen.visibilityReachGap)}%</p>
-                <p className="stat-desc">{formatNumber(data.leadgen.visibilityReachGap)}% of all buyers in market didn't even look at your company as an option!</p>
+                <p className="stat-value">{formatNumber(Math.round(data.leadgen.visibilityReachGap))}%</p>
+                <p className="stat-desc">{formatNumber(Math.round(data.leadgen.visibilityReachGap))}% of all buyers in market didn't even look at your company as an option!</p>
               </div>
               
               <div className="stat-card">
                 <h3 className="stat-title">Lead Gen Gap</h3>
-                <p className="stat-value">{formatNumber(data.leadgen.leadGenGap)}%</p>
-                <p className="stat-desc">{formatNumber(data.leadgen.leadGenGap)}% of all buyers that researched you didn't even leave a name or contact info?!? If you can't identify them how can you sell them?</p>
+                <p className="stat-value">{formatNumber(Math.round(data.leadgen.leadGenGap))}%</p>
+                <p className="stat-desc">{formatNumber(Math.round(data.leadgen.leadGenGap))}% of all buyers that researched you didn't even leave a name or contact info?!? If you can't identify them how can you sell them?</p>
               </div>
               
               <div className="stat-card">
                 <h3 className="stat-title">Close Rate Gap</h3>
-                <p className="stat-value">{formatNumber(data.leadgen.closeRateGap)}%</p>
-                <p className="stat-desc">{formatNumber(data.leadgen.closeRateGap)}% of all opportunities given you are saying no too! Why?</p>
+                <p className="stat-value">{formatNumber(Math.round(data.leadgen.closeRateGap))}%</p>
+                <p className="stat-desc">{formatNumber(Math.round(data.leadgen.closeRateGap))}% of all opportunities given you are saying no too! Why?</p>
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="stat-card">
                 <h3 className="stat-title">Visibility Reach Gap</h3>
-                <p className="stat-value">{formatNumber(data.retail.visibilityReachGap)}%</p>
-                <p className="stat-desc">{formatNumber(data.retail.visibilityReachGap)}% of all buyers in market didn't even look at your company as an option!</p>
+                <p className="stat-value">{formatNumber(Math.round(data.retail.visibilityReachGap))}%</p>
+                <p className="stat-desc">{formatNumber(Math.round(data.retail.visibilityReachGap))}% of all buyers in market didn't even look at your company as an option!</p>
               </div>
               
               <div className="stat-card">
                 <h3 className="stat-title">Close Rate Gap</h3>
-                <p className="stat-value">{formatNumber(data.retail.closeRateGap)}%</p>
-                <p className="stat-desc">{formatNumber(data.retail.closeRateGap)}% of all opportunities given you are saying no too! Why?</p>
+                <p className="stat-value">{formatNumber(Math.round(data.retail.closeRateGap))}%</p>
+                <p className="stat-desc">{formatNumber(Math.round(data.retail.closeRateGap))}% of all opportunities given you are saying no too! Why?</p>
               </div>
             </div>
           )}
