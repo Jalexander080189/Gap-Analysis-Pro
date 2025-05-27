@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@babel/runtime": "^7.27.3",
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
     "@tiptap/extension-color": "^2.2.4",
@@ -35,4 +36,3 @@
     "typescript": "^5"
   }
 }
-

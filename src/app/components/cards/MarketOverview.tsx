@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { formatNumber } from '../../utils/numberFormatting';
-import DriveLogoToggle from './DriveLogoToggle';
+import DriveLogoToggle from '../../components/DriveLogoToggle';
 
 interface MarketOverviewProps {
   data: {
