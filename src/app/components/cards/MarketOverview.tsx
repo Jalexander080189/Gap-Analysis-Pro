@@ -13,7 +13,7 @@ interface MarketOverviewProps {
     totalMarketRevShare: number;
     showBack: boolean;
   };
-  setData: React.Dispatch<React.SetStateAction<any>>;
+  setData: React.Dispatch<React.SetStateAction<MarketOverviewProps['data']>>;
 }
 
 const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
@@ -43,7 +43,7 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
       calculatedBuyers,
       totalMarketRevShare
     });
-  }, [data.audienceSize, data.buyerPercentage, data.avgYearlyCustomerValue]);
+  }, [data.audienceSize, data.buyerPercentage, data.avgYearlyCustomerValue, data, setData]);
 
   // Function to handle toggle click
   const handleToggle = (value: boolean) => {

@@ -10,7 +10,7 @@ interface ToggleViewProps {
 
 const DriveLogoToggle: React.FC<ToggleViewProps> = ({ showBack, setShowBack, className = '' }) => {
   // Function to handle the toggle click
-  const handleToggleClick = (e: React.MouseEvent) => {
+  const handleToggleClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
     e.preventDefault();
     e.stopPropagation(); // Prevent event bubbling
     console.log('Toggle clicked, current state:', showBack);

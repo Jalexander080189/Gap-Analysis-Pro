@@ -1,29 +1,35 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { formatNumber } from '../../utils/numberFormatting';
 import DriveLogoToggle from '../../components/DriveLogoToggle';
 
+interface LeadgenData {
+  annualWebsiteVisitors: string;
+  annualLeadsGenerated: string;
+  annualNewAccountsClosed: string;
+  visibilityReachGap: number;
+  leadGenGap: number;
+  closeRateGap: number;
+}
+
+interface RetailData {
+  annualStoreVisitors: string;
+  annualNewAccountsClosed: string;
+  visibilityReachGap: number;
+  closeRateGap: number;
+}
+
+interface GapsAndOppsData {
+  mode: 'leadgen' | 'retail';
+  leadgen: LeadgenData;
+  retail: RetailData;
+  showBack: boolean;
+}
+
 interface GapsAndOppsProps {
-  data: {
-    mode: 'leadgen' | 'retail';
-    leadgen: {
-      annualWebsiteVisitors: string;
-      annualLeadsGenerated: string;
-      annualNewAccountsClosed: string;
-      visibilityReachGap: number;
-      leadGenGap: number;
-      closeRateGap: number;
-    };
-    retail: {
-      annualStoreVisitors: string;
-      annualNewAccountsClosed: string;
-      visibilityReachGap: number;
-      closeRateGap: number;
-    };
-    showBack: boolean;
-  };
-  setData: React.Dispatch<React.SetStateAction<any>>;
+  data: GapsAndOppsData;
+  setData: React.Dispatch<React.SetStateAction<GapsAndOppsData>>;
   annualRevenue: number;
   calculatedBuyers: number;
 }
@@ -167,12 +173,14 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
               <button
                 onClick={() => toggleMode('leadgen')}
                 className={`px-4 py-2 rounded-md ${data.mode === 'leadgen' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                type="button"
               >
                 Lead Gen Business
               </button>
               <button
                 onClick={() => toggleMode('retail')}
                 className={`px-4 py-2 rounded-md ${data.mode === 'retail' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                type="button"
               >
                 Retail Business
               </button>
@@ -303,13 +311,13 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
               <div className="stat-card">
                 <h3 className="stat-title">Visibility Reach Gap</h3>
                 <p className="stat-value">{formatNumber(Math.round(data.leadgen.visibilityReachGap))}%</p>
-                <p className="stat-desc">{formatNumber(Math.round(data.leadgen.visibilityReachGap))}% of all buyers in market didn't even look at your company as an option!</p>
+                <p className="stat-desc">{formatNumber(Math.round(data.leadgen.visibilityReachGap))}% of all buyers in market didn&apos;t even look at your company as an option!</p>
               </div>
               
               <div className="stat-card">
                 <h3 className="stat-title">Lead Gen Gap</h3>
                 <p className="stat-value">{formatNumber(Math.round(data.leadgen.leadGenGap))}%</p>
-                <p className="stat-desc">{formatNumber(Math.round(data.leadgen.leadGenGap))}% of all buyers that researched you didn't even leave a name or contact info?!? If you can't identify them how can you sell them?</p>
+                <p className="stat-desc">{formatNumber(Math.round(data.leadgen.leadGenGap))}% of all buyers that researched you didn&apos;t even leave a name or contact info?!? If you can&apos;t identify them how can you sell them?</p>
               </div>
               
               <div className="stat-card">
@@ -323,7 +331,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
               <div className="stat-card">
                 <h3 className="stat-title">Visibility Reach Gap</h3>
                 <p className="stat-value">{formatNumber(Math.round(data.retail.visibilityReachGap))}%</p>
-                <p className="stat-desc">{formatNumber(Math.round(data.retail.visibilityReachGap))}% of all buyers in market didn't even look at your company as an option!</p>
+                <p className="stat-desc">{formatNumber(Math.round(data.retail.visibilityReachGap))}% of all buyers in market didn&apos;t even look at your company as an option!</p>
               </div>
               
               <div className="stat-card">
@@ -337,19 +345,19 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
       )}
       
       <div className="mt-4 flex items-center space-x-2">
-        <button className="social-button">
+        <button className="social-button" type="button">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
           </svg>
           Like
         </button>
-        <button className="social-button">
+        <button className="social-button" type="button">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
           </svg>
           Comment
         </button>
-        <button className="social-button">
+        <button className="social-button" type="button">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>

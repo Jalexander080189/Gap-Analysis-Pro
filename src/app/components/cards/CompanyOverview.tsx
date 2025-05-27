@@ -4,17 +4,19 @@ import React, { useEffect } from 'react';
 import { formatNumber } from '../../utils/numberFormatting';
 import DriveLogoToggle from '../../components/DriveLogoToggle';
 
+interface CompanyOverviewData {
+  annualRevenue: string;
+  percentNewCustomers: string;
+  percentCurrentCustomers: string;
+  calculatedTotalCustomers: number;
+  calculatedNewCustomers: number;
+  percentOfMarketRevShare: number;
+  showBack: boolean;
+}
+
 interface CompanyOverviewProps {
-  data: {
-    annualRevenue: string;
-    percentNewCustomers: string;
-    percentCurrentCustomers: string;
-    calculatedTotalCustomers: number;
-    calculatedNewCustomers: number;
-    percentOfMarketRevShare: number;
-    showBack: boolean;
-  };
-  setData: React.Dispatch<React.SetStateAction<any>>;
+  data: CompanyOverviewData;
+  setData: React.Dispatch<React.SetStateAction<CompanyOverviewData>>;
   avgYearlyCustomerValue: number;
   totalMarketRevShare: number;
 }
@@ -76,7 +78,7 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
       calculatedNewCustomers,
       percentOfMarketRevShare
     });
-  }, [data.annualRevenue, data.percentNewCustomers, data.percentCurrentCustomers, avgYearlyCustomerValue, totalMarketRevShare]);
+  }, [data, setData, avgYearlyCustomerValue, totalMarketRevShare, data.annualRevenue, data.percentNewCustomers, data.percentCurrentCustomers]);
 
   // Function to handle toggle click
   const handleToggle = (value: boolean) => {
