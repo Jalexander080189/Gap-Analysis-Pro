@@ -6,9 +6,14 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
-  }
+  },
   
-  // No headers section at all
+  // Add this to ensure proper hydration
+  experimental: {
+    optimizeCss: true,
+    scrollRestoration: true,
+  }
 }
 
 module.exports = nextConfig
+
