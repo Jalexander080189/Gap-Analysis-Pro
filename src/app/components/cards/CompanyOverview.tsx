@@ -54,12 +54,12 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
     }
   };
 
-  const toggleCardSide = () => {
-    setData({
-      ...data,
-      showBack: !data.showBack
-    });
-  };
+ const toggleCardSide = () => {
+  setData({
+    ...data,
+    showBack: !data.showBack
+  });
+};
 
   // Calculate customer metrics when inputs change
   useEffect(() => {
