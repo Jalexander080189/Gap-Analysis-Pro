@@ -47,8 +47,25 @@ export default function ClientPage() {
     showBack: false
   });
   
-  // Gaps and opportunities state
-  const [gapsData, setGapsData] = useState({
+  // Gaps and opportunities state with proper type definition
+  const [gapsData, setGapsData] = useState<{
+    mode: 'leadgen' | 'retail';
+    leadgen: {
+      annualWebsiteVisitors: string;
+      annualLeadsGenerated: string;
+      annualNewAccountsClosed: string;
+      visibilityReachGap: number;
+      leadGenGap: number;
+      closeRateGap: number;
+    };
+    retail: {
+      annualStoreVisitors: string;
+      annualNewAccountsClosed: string;
+      visibilityReachGap: number;
+      closeRateGap: number;
+    };
+    showBack: boolean;
+  }>({
     mode: 'leadgen',
     leadgen: {
       annualWebsiteVisitors: '0',
@@ -119,7 +136,14 @@ export default function ClientPage() {
       if (decodedData.clientData) setClientData(decodedData.clientData);
       if (decodedData.marketData) setMarketData(decodedData.marketData);
       if (decodedData.companyData) setCompanyData(decodedData.companyData);
-      if (decodedData.gapsData) setGapsData(decodedData.gapsData);
+      if (decodedData.gapsData) {
+        // Ensure mode is either 'leadgen' or 'retail'
+        const mode = decodedData.gapsData.mode === 'retail' ? 'retail' : 'leadgen';
+        setGapsData({
+          ...decodedData.gapsData,
+          mode
+        });
+      }
       if (decodedData.scenariosData) setScenariosData(decodedData.scenariosData);
       if (decodedData.marketingData) setMarketingData(decodedData.marketingData);
       if (decodedData.sbaData) setSbaData(decodedData.sbaData);
