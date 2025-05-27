@@ -26,13 +26,6 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
     });
   };
 
-  const toggleCardSide = () => {
-    setData({
-      ...data,
-      showBack: !data.showBack
-    });
-  };
-
   // Calculate buyers and market share when inputs change
   useEffect(() => {
     const audienceSize = parseFloat(data.audienceSize.replace(/,/g, '')) || 0;
@@ -58,7 +51,10 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
         <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="section-title">Market Overview</h2>
-            <DriveLogoToggle onClick={toggleCardSide} />
+            <DriveLogoToggle 
+              showBack={data.showBack} 
+              setShowBack={(value) => setData({...data, showBack: value})} 
+            />
           </div>
           
           <div className="mb-4">
@@ -107,7 +103,10 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
         <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="section-title">Market Overview Results</h2>
-            <DriveLogoToggle onClick={toggleCardSide} />
+            <DriveLogoToggle 
+              showBack={data.showBack} 
+              setShowBack={(value) => setData({...data, showBack: value})} 
+            />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

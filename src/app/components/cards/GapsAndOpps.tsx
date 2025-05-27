@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatNumber } from '../../utils/numberFormatting';
 import DriveLogoToggle from '../../components/DriveLogoToggle';
 
@@ -56,25 +56,26 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
     }
   };
 
-  const toggleCardSide = () => {
+  // Handle card flip with calculations
+  const handleCardFlip = (showBack: boolean) => {
     // Calculate gaps when flipping to back side
-    if (!data.showBack) {
+    if (showBack) {
       if (data.mode === 'leadgen') {
         const annualWebsiteVisitors = parseFloat(data.leadgen.annualWebsiteVisitors.replace(/,/g, '')) || 0;
         const annualLeadsGenerated = parseFloat(data.leadgen.annualLeadsGenerated.replace(/,/g, '')) || 0;
         const annualNewAccountsClosed = parseFloat(data.leadgen.annualNewAccountsClosed.replace(/,/g, '')) || 0;
         
-        // Fix: Calculate visibility reach gap correctly
+        // Calculate visibility reach gap correctly
         // (calculatedBuyers - annualWebsiteVisitors) / calculatedBuyers * 100, capped at 100%
         const visibilityReachGap = calculatedBuyers > 0 ? 
           Math.min(100, Math.max(0, ((calculatedBuyers - annualWebsiteVisitors) / calculatedBuyers) * 100)) : 0;
         
-        // Fix: Calculate lead gen gap correctly
+        // Calculate lead gen gap correctly
         // (annualWebsiteVisitors - annualLeadsGenerated) / annualWebsiteVisitors * 100, capped at 100%
         const leadGenGap = annualWebsiteVisitors > 0 ? 
           Math.min(100, Math.max(0, ((annualWebsiteVisitors - annualLeadsGenerated) / annualWebsiteVisitors) * 100)) : 0;
         
-        // Fix: Calculate close rate gap correctly
+        // Calculate close rate gap correctly
         // (annualLeadsGenerated - annualNewAccountsClosed) / annualLeadsGenerated * 100, capped at 100%
         const closeRateGap = annualLeadsGenerated > 0 ? 
           Math.min(100, Math.max(0, ((annualLeadsGenerated - annualNewAccountsClosed) / annualLeadsGenerated) * 100)) : 0;
@@ -132,7 +133,10 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
         <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="section-title">Gaps & Opportunities</h2>
-            <DriveLogoToggle onClick={toggleCardSide} />
+            <DriveLogoToggle 
+              showBack={data.showBack} 
+              setShowBack={handleCardFlip} 
+            />
           </div>
           
           <div className="mb-4">
@@ -232,7 +236,10 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
         <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="section-title">Gaps & Opportunities Results</h2>
-            <DriveLogoToggle onClick={toggleCardSide} />
+            <DriveLogoToggle 
+              showBack={data.showBack} 
+              setShowBack={handleCardFlip} 
+            />
           </div>
           
           {data.mode === 'leadgen' ? (

@@ -54,13 +54,6 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
     }
   };
 
- const toggleCardSide = () => {
-  setData({
-    ...data,
-    showBack: !data.showBack
-  });
-};
-
   // Calculate customer metrics when inputs change
   useEffect(() => {
     const annualRevenue = parseFloat(data.annualRevenue.replace(/,/g, '')) || 0;
@@ -91,7 +84,10 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
         <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="section-title">Company Overview</h2>
-            <DriveLogoToggle onClick={toggleCardSide} />
+            <DriveLogoToggle 
+              showBack={data.showBack} 
+              setShowBack={(value) => setData({...data, showBack: value})} 
+            />
           </div>
           
           <div className="mb-4">
@@ -140,7 +136,10 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
         <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="section-title">Company Overview Results</h2>
-            <DriveLogoToggle onClick={toggleCardSide} />
+            <DriveLogoToggle 
+              showBack={data.showBack} 
+              setShowBack={(value) => setData({...data, showBack: value})} 
+            />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
