@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { formatNumber } from '../utils/numberFormatting';
+import { formatNumber } from '../../utils/numberFormatting';
 import ReactSlider from 'react-slider';
 
 interface ScenariosProps {

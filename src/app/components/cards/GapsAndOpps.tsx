@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { formatNumber } from '../utils/numberFormatting';
-import DriveLogoToggle from './DriveLogoToggle';
+import { formatNumber } from '../../utils/numberFormatting';
+import DriveLogoToggle from '../../components/DriveLogoToggle';
 
 interface GapsAndOppsProps {
   data: {
