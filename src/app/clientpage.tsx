@@ -21,26 +21,148 @@ if (typeof window !== 'undefined') {
 }
 
 export default function ClientPage() {
-  // State hooks and other logic remain the same...
-  
-  // Your existing state and useEffect code here...
-  const searchParams = useSearchParams();
-  const [isClient, setIsClient] = useState(false);
-  
   // Initialize state with default values
   const [clientData, setClientData] = useState({
-    primaryOwner: '',
-    secondaryOwner: '',
+    primaryOwner: { name: '', email: '', phone: '' },
+    secondaryOwner: { name: '', email: '', phone: '' },
     companyName: '',
     companyUrl: '',
     companyFacebookUrl: '',
-    businessOverview: ''
+    businessOverview: '',
+    saved: false
   });
   
-  // Other state variables and useEffect hooks...
+  const [marketData, setMarketData] = useState({
+    audienceSize: '',
+    buyerPercentage: '',
+    avgYearlyCustomerValue: '',
+    calculatedBuyers: 0,
+    totalMarketRevShare: 0,
+    showBack: false
+  });
   
-  // Your existing state initialization and useEffect code here...
+  const [companyData, setCompanyData] = useState({
+    annualRevenue: '',
+    percentNewCustomers: '',
+    percentCurrentCustomers: '',
+    calculatedTotalCustomers: 0,
+    calculatedNewCustomers: 0,
+    percentOfMarketRevShare: 0,
+    showBack: false
+  });
   
+  const [gapsData, setGapsData] = useState({
+    mode: 'leadgen', // 'leadgen' or 'retail'
+    leadgen: {
+      annualWebsiteVisitors: '',
+      annualLeadsGenerated: '',
+      annualNewAccountsClosed: '',
+      visibilityReachGap: 0,
+      leadGenGap: 0,
+      closeRateGap: 0
+    },
+    retail: {
+      annualStoreVisitors: '',
+      annualNewAccountsClosed: '',
+      visibilityReachGap: 0,
+      closeRateGap: 0
+    },
+    showBack: false
+  });
+  
+  const [scenariosData, setScenariosData] = useState({
+    visibilityGapPercent: 0,
+    leadGenGapPercent: 0,
+    closeRateGapPercent: 0,
+    additionalAnnualLeads: 0,
+    additionalAnnualNewAccountsClosed: 0,
+    additionalAnnualRevenueCreated: 0,
+    totalCalculatedAnnualRevenue: 0
+  });
+  
+  const [marketingData, setMarketingData] = useState({
+    channels: [{ name: '', monthlyCost: '', monthlyAdSpend: '' }],
+    totalMonthlySpend: 0,
+    totalYearlySpend: 0,
+    additionalMonthlySpend: 0,
+    percentOfAnnualRevenue: 0
+  });
+  
+  const [sbaData, setSbaData] = useState({
+    annualRevenue: '',
+    years: [
+      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
+      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
+      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
+      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
+      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } }
+    ],
+    worstCaseRevenue: 0,
+    worstCaseSpend: 0
+  });
+  
+  const [notesData, setNotesData] = useState('');
+
+  const searchParams = useSearchParams();
+  const [isClient, setIsClient] = useState(false);
+  
+  // Load data from URL or localStorage when component mounts
+  useEffect(() => {
+    console.log('useEffect running, searchParams: ', searchParams);
+    setIsClient(true);
+    
+    const companySlug = searchParams.get('company');
+    if (companySlug) {
+      // Load data from localStorage based on company slug
+      const savedData = localStorage.getItem(`gap-analysis-${companySlug}`);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        setClientData(parsedData.clientData || clientData);
+        setMarketData(parsedData.marketData || marketData);
+        setCompanyData(parsedData.companyData || companyData);
+        setGapsData(parsedData.gapsData || gapsData);
+        setScenariosData(parsedData.scenariosData || scenariosData);
+        setMarketingData(parsedData.marketingData || marketingData);
+        setSbaData(parsedData.sbaData || sbaData);
+        setNotesData(parsedData.notesData || notesData);
+      }
+    } else {
+      console.log('No company slug in URL');
+    }
+  }, [searchParams]);
+  
+  // Save data to localStorage when client information is saved
+  useEffect(() => {
+    if (isClient && clientData.saved && clientData.companyName) {
+      const companySlug = clientData.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const dataToSave = {
+        clientData,
+        marketData,
+        companyData,
+        gapsData,
+        scenariosData,
+        marketingData,
+        sbaData,
+        notesData
+      };
+      localStorage.setItem(`gap-analysis-${companySlug}`, JSON.stringify(dataToSave));
+      
+      // Update URL with company slug if not already present
+      if (!searchParams.get('company')) {
+        window.history.pushState({}, '', `?company=${companySlug}`);
+      }
+    }
+  }, [isClient, clientData, marketData, companyData, gapsData, scenariosData, marketingData, sbaData, notesData, searchParams]);
+
+  // Function to generate shareable URL
+  const generateShareableUrl = () => {
+    if (clientData.companyName) {
+      const companySlug = clientData.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      return `${window.location.origin}?company=${companySlug}`;
+    }
+    return window.location.origin;
+  };
+
   return (
     <main className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8 text-center">Gap Analysis Pro</h1>
