@@ -72,6 +72,14 @@ function SearchParamsHandler({
 }
 
 export default function Home() {
+  // Add mounted state for client-side only rendering
+  const [mounted, setMounted] = useState(false);
+  
+  // Set mounted to true after component mounts
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [clientData, setClientData] = useState({
     primaryOwner: { name: '', email: '', phone: '' },
     secondaryOwner: { name: '', email: '', phone: '' },
@@ -155,66 +163,78 @@ export default function Home() {
 
   return (
     <main className="flex flex-col gap-6">
-      {/* SearchParamsHandler component to handle URL params and localStorage */}
-      <SearchParamsHandler
-        clientData={clientData}
-        setClientData={setClientData}
-        marketData={marketData}
-        setMarketData={setMarketData}
-        companyData={companyData}
-        setCompanyData={setCompanyData}
-        gapsData={gapsData}
-        setGapsData={setGapsData}
-        scenariosData={scenariosData}
-        setScenariosData={setScenariosData}
-        marketingData={marketingData}
-        setMarketingData={setMarketingData}
-        sbaData={sbaData}
-        setSbaData={setSbaData}
-        notesData={notesData}
-        setNotesData={setNotesData}
-      />
-      
-      <ClientInformation data={clientData} setData={setClientData} />
-      <MarketOverview data={marketData} setData={setMarketData} />
-      <CompanyOverview 
-        data={companyData} 
-        setData={setCompanyData} 
-        avgYearlyCustomerValue={parseFloat(marketData.avgYearlyCustomerValue) || 0}
-        totalMarketRevShare={marketData.totalMarketRevShare}
-      />
-      <GapsAndOpps 
-        data={gapsData} 
-        setData={setGapsData} 
-        annualRevenue={parseFloat(companyData.annualRevenue) || 0}
-        calculatedBuyers={marketData.calculatedBuyers}
-      />
-      <Scenarios 
-        data={scenariosData} 
-        setData={setScenariosData}
-        gapsData={gapsData}
-        avgYearlyCustomerValue={parseFloat(marketData.avgYearlyCustomerValue) || 0}
-        annualRevenue={parseFloat(companyData.annualRevenue) || 0}
-      />
-      <CurrentMarketingOverview 
-        data={marketingData} 
-        setData={setMarketingData}
-        annualRevenue={parseFloat(companyData.annualRevenue) || 0}
-      />
-      <SBAMarketingBudget 
-        data={sbaData} 
-        setData={setSbaData} 
-      />
-      <Notes data={notesData} setData={setNotesData} />
-      <GPTDataBlock 
-        setClientData={setClientData}
-        setMarketData={setMarketData}
-        setCompanyData={setCompanyData}
-        setGapsData={setGapsData}
-        setMarketingData={setMarketingData}
-        setSbaData={setSbaData}
-        setNotesData={setNotesData}
-      />
+      {/* Only render components that use client-side APIs when mounted */}
+      {mounted ? (
+        <>
+          {/* SearchParamsHandler component to handle URL params and localStorage */}
+          <SearchParamsHandler
+            clientData={clientData}
+            setClientData={setClientData}
+            marketData={marketData}
+            setMarketData={setMarketData}
+            companyData={companyData}
+            setCompanyData={setCompanyData}
+            gapsData={gapsData}
+            setGapsData={setGapsData}
+            scenariosData={scenariosData}
+            setScenariosData={setScenariosData}
+            marketingData={marketingData}
+            setMarketingData={setMarketingData}
+            sbaData={sbaData}
+            setSbaData={setSbaData}
+            notesData={notesData}
+            setNotesData={setNotesData}
+          />
+          
+          <ClientInformation data={clientData} setData={setClientData} />
+          <MarketOverview data={marketData} setData={setMarketData} />
+          <CompanyOverview 
+            data={companyData} 
+            setData={setCompanyData} 
+            avgYearlyCustomerValue={parseFloat(marketData.avgYearlyCustomerValue) || 0}
+            totalMarketRevShare={marketData.totalMarketRevShare}
+          />
+          <GapsAndOpps 
+            data={gapsData} 
+            setData={setGapsData} 
+            annualRevenue={parseFloat(companyData.annualRevenue) || 0}
+            calculatedBuyers={marketData.calculatedBuyers}
+          />
+          <Scenarios 
+            data={scenariosData} 
+            setData={setScenariosData}
+            gapsData={gapsData}
+            avgYearlyCustomerValue={parseFloat(marketData.avgYearlyCustomerValue) || 0}
+            annualRevenue={parseFloat(companyData.annualRevenue) || 0}
+          />
+          <CurrentMarketingOverview 
+            data={marketingData} 
+            setData={setMarketingData}
+            annualRevenue={parseFloat(companyData.annualRevenue) || 0}
+          />
+          <SBAMarketingBudget 
+            data={sbaData} 
+            setData={setSbaData} 
+          />
+          <Notes data={notesData} setData={setNotesData} />
+          <GPTDataBlock 
+            setClientData={setClientData}
+            setMarketData={setMarketData}
+            setCompanyData={setCompanyData}
+            setGapsData={setGapsData}
+            setMarketingData={setMarketingData}
+            setSbaData={setSbaData}
+            setNotesData={setNotesData}
+          />
+        </>
+      ) : (
+        <div className="flex justify-center items-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4 text-lg">Loading...</p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
