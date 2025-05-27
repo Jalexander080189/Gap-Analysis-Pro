@@ -62,4 +62,33 @@ body {
   .card-red {
     @apply bg-red-50 border-red-200;
   }
+  
+  /* Add these missing classes for the card components */
+  .stat-card {
+    @apply bg-gray-50 rounded-lg p-4 border border-gray-100;
+  }
+  
+  .stat-title {
+    @apply text-sm font-medium text-gray-500 mb-1;
+  }
+  
+  .stat-value {
+    @apply text-2xl font-bold;
+  }
+  
+  .stat-desc {
+    @apply text-sm text-gray-500 mt-1;
+  }
+  
+  .horizontal-slider {
+    @apply w-full h-4 bg-gray-200 rounded-full;
+  }
+  
+  .slider-thumb {
+    @apply w-6 h-6 bg-blue-600 rounded-full cursor-pointer focus:outline-none;
+  }
+  
+  .slider-track {
+    @apply h-4 bg-blue-600 rounded-full;
+  }
 }
