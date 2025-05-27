@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { formatNumber } from '../../utils/numberFormatting';
 import DriveLogoToggle from '../../components/DriveLogoToggle';
 
@@ -351,7 +351,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
         </button>
       </div>
     </div>
-   );
+    );
 };
 
 export default GapsAndOpps;

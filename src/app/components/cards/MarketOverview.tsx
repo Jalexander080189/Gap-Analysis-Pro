@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { formatNumber } from '../../utils/numberFormatting';
 import DriveLogoToggle from '../../components/DriveLogoToggle';
 
@@ -32,10 +32,10 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
     const buyerPercentage = parseFloat(data.buyerPercentage) || 0;
     const avgYearlyValue = parseFloat(data.avgYearlyCustomerValue.replace(/,/g, '')) || 0;
     
-    // Fix: Calculate buyers correctly (audienceSize * buyerPercentage / 100)
+    // Calculate buyers correctly (audienceSize * buyerPercentage / 100)
     const calculatedBuyers = audienceSize * (buyerPercentage / 100);
     
-    // Fix: Calculate total market revenue correctly (calculatedBuyers * avgYearlyValue)
+    // Calculate total market revenue correctly (calculatedBuyers * avgYearlyValue)
     const totalMarketRevShare = calculatedBuyers * avgYearlyValue;
     
     setData({
@@ -146,7 +146,7 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
         </button>
       </div>
     </div>
-   );
+    );
 };
 
 export default MarketOverview;

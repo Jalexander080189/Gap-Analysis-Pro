@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { formatNumber } from '../../utils/numberFormatting';
 import DriveLogoToggle from '../../components/DriveLogoToggle';
 
@@ -59,14 +59,14 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
     const annualRevenue = parseFloat(data.annualRevenue.replace(/,/g, '')) || 0;
     const percentNewCustomers = parseFloat(data.percentNewCustomers) || 0;
     
-    // Fix: Calculate total customers correctly (annualRevenue / avgYearlyCustomerValue)
+    // Calculate total customers correctly (annualRevenue / avgYearlyCustomerValue)
     const calculatedTotalCustomers = avgYearlyCustomerValue > 0 ? 
       annualRevenue / avgYearlyCustomerValue : 0;
     
-    // Fix: Calculate new customers correctly (calculatedTotalCustomers * percentNewCustomers / 100)
+    // Calculate new customers correctly (calculatedTotalCustomers * percentNewCustomers / 100)
     const calculatedNewCustomers = calculatedTotalCustomers * (percentNewCustomers / 100);
     
-    // Fix: Calculate market rev share percentage correctly (annualRevenue / totalMarketRevShare * 100)
+    // Calculate market rev share percentage correctly (annualRevenue / totalMarketRevShare * 100)
     const percentOfMarketRevShare = totalMarketRevShare > 0 ? 
       (annualRevenue / totalMarketRevShare) * 100 : 0;
     
@@ -185,7 +185,7 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
         </button>
       </div>
     </div>
-   );
+    );
 };
 
 export default CompanyOverview;
