@@ -1,16 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  images: {
-    unoptimized: true,
-  },
-  eslint: {
-    // Disable ESLint during build
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    // Disable TypeScript errors during build
-    ignoreBuildErrors: true,
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+          }
+        ]
+      }
+    ]
   }
 }
 
