@@ -12,6 +12,20 @@ import Notes from './components/cards/Notes';
 import GPTDataBlock from './components/cards/GPTDataBlock';
 import { useSearchParams } from 'next/navigation';
 
+console.log('Client-side JavaScript is running!');
+if (typeof window !== 'undefined') {
+  // This will only run on the client
+  window.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM fully loaded and parsed');
+    // Force a re-render of all buttons
+    document.querySelectorAll('button').forEach(button => {
+      button.addEventListener('click', (e) => {
+        console.log('Button clicked:', e.target);
+      });
+    });
+  });
+}
+
 // Separate component for handling useSearchParams
 function SearchParamsHandler({ 
   clientData, setClientData,
