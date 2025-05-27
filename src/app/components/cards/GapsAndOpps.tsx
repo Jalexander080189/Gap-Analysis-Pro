@@ -100,6 +100,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
       
       return {
         visibilityReachGap,
+        leadGenGap: 0, // Default value for retail mode
         closeRateGap
       };
     }
