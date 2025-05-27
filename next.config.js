@@ -1,19 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable TypeScript and ESLint checks
+  reactStrictMode: false,
+  swcMinify: false,
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
-  },
-  
-  // Add this to ensure proper hydration
-  experimental: {
-    optimizeCss: true,
-    scrollRestoration: true,
   }
+  // Remove the experimental section that's causing the error
 }
 
 module.exports = nextConfig
-
