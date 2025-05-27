@@ -2,25 +2,81 @@
 
 import React from 'react';
 
+interface ClientDataType {
+  companyName: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  businessType: string;
+  businessDescription: string;
+  showBack: boolean;
+}
+
+interface MarketDataType {
+  audienceSize: string;
+  buyerPercentage: string;
+  avgYearlyCustomerValue: string;
+  calculatedBuyers: number;
+  totalMarketRevShare: number;
+  showBack: boolean;
+}
+
+interface CompanyDataType {
+  annualRevenue: string;
+  percentNewCustomers: string;
+  percentCurrentCustomers: string;
+  calculatedTotalCustomers: number;
+  calculatedNewCustomers: number;
+  percentOfMarketRevShare: number;
+  showBack: boolean;
+}
+
+interface GapsDataType {
+  mode: 'leadgen' | 'retail';
+  leadgen: {
+    annualWebsiteVisitors: string;
+    annualLeadsGenerated: string;
+    annualNewAccountsClosed: string;
+    visibilityReachGap: number;
+    leadGenGap: number;
+    closeRateGap: number;
+  };
+  retail: {
+    annualStoreVisitors: string;
+    annualNewAccountsClosed: string;
+    visibilityReachGap: number;
+    closeRateGap: number;
+  };
+  showBack: boolean;
+}
+
+interface ScenariosDataType {
+  visibilityReachSlider: number;
+  leadGenSlider: number;
+  closeRateSlider: number;
+  additionalLeads: number;
+  additionalRevenue: number;
+  additionalNewAccounts: number;
+  totalCalculatedAnnualRevenue: number;
+  showBack: boolean;
+}
+
+interface MarketingDataType {
+  channels: Array<{name: string; monthlyAdspend: string; monthlyCost: string}>;
+  totalMonthlySpend: number;
+  totalYearlySpend: number;
+  additionalMonthlySpend: number;
+  percentOfAnnualRevenue: number;
+  showBack: boolean;
+}
+
 interface GPTDataBlockProps {
-  clientData: Record<string, string>;
-  marketData: Record<string, string | number>;
-  companyData: Record<string, string | number>;
-  gapsData: {
-    mode: string;
-    leadgen: Record<string, string | number>;
-    retail: Record<string, string | number>;
-    showBack: boolean;
-  };
-  scenariosData: Record<string, string | number>;
-  marketingData: {
-    channels: Array<{name: string; monthlyAdspend: string; monthlyCost: string}>;
-    totalMonthlySpend: number;
-    totalYearlySpend: number;
-    additionalMonthlySpend: number;
-    percentOfAnnualRevenue: number;
-    showBack: boolean;
-  };
+  clientData: ClientDataType;
+  marketData: MarketDataType;
+  companyData: CompanyDataType;
+  gapsData: GapsDataType;
+  scenariosData: ScenariosDataType;
+  marketingData: MarketingDataType;
 }
 
 const GPTDataBlock: React.FC<GPTDataBlockProps> = ({ 
