@@ -185,7 +185,7 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
         </button>
       </div>
     </div>
-    );
+   );
 };
 
 export default CompanyOverview;

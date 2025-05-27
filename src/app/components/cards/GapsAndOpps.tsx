@@ -56,67 +56,68 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
     }
   };
 
-  // Handle card flip with calculations
-  const handleCardFlip = (showBack: boolean) => {
-    // Calculate gaps when flipping to back side
-    if (showBack) {
-      if (data.mode === 'leadgen') {
-        const annualWebsiteVisitors = parseFloat(data.leadgen.annualWebsiteVisitors.replace(/,/g, '')) || 0;
-        const annualLeadsGenerated = parseFloat(data.leadgen.annualLeadsGenerated.replace(/,/g, '')) || 0;
-        const annualNewAccountsClosed = parseFloat(data.leadgen.annualNewAccountsClosed.replace(/,/g, '')) || 0;
-        
-        // Calculate visibility reach gap correctly
-        // (calculatedBuyers - annualWebsiteVisitors) / calculatedBuyers * 100, capped at 100%
-        const visibilityReachGap = calculatedBuyers > 0 ? 
-          Math.min(100, Math.max(0, ((calculatedBuyers - annualWebsiteVisitors) / calculatedBuyers) * 100)) : 0;
-        
-        // Calculate lead gen gap correctly
-        // (annualWebsiteVisitors - annualLeadsGenerated) / annualWebsiteVisitors * 100, capped at 100%
-        const leadGenGap = annualWebsiteVisitors > 0 ? 
-          Math.min(100, Math.max(0, ((annualWebsiteVisitors - annualLeadsGenerated) / annualWebsiteVisitors) * 100)) : 0;
-        
-        // Calculate close rate gap correctly
-        // (annualLeadsGenerated - annualNewAccountsClosed) / annualLeadsGenerated * 100, capped at 100%
-        const closeRateGap = annualLeadsGenerated > 0 ? 
-          Math.min(100, Math.max(0, ((annualLeadsGenerated - annualNewAccountsClosed) / annualLeadsGenerated) * 100)) : 0;
-        
-        setData({
-          ...data,
-          leadgen: {
-            ...data.leadgen,
-            visibilityReachGap,
-            leadGenGap,
-            closeRateGap
-          },
-          showBack: true
-        });
-      } else {
-        const annualStoreVisitors = parseFloat(data.retail.annualStoreVisitors.replace(/,/g, '')) || 0;
-        const annualNewAccountsClosed = parseFloat(data.retail.annualNewAccountsClosed.replace(/,/g, '')) || 0;
-        
-        // Calculate retail gaps
-        const visibilityReachGap = calculatedBuyers > 0 ? 
-          Math.min(100, Math.max(0, ((calculatedBuyers - annualStoreVisitors) / calculatedBuyers) * 100)) : 0;
-        
-        const closeRateGap = annualStoreVisitors > 0 ? 
-          Math.min(100, Math.max(0, ((annualStoreVisitors - annualNewAccountsClosed) / annualStoreVisitors) * 100)) : 0;
-        
-        setData({
-          ...data,
-          retail: {
-            ...data.retail,
-            visibilityReachGap,
-            closeRateGap
-          },
-          showBack: true
-        });
-      }
-    } else {
+  // Calculate gaps when flipping to back side
+  const calculateGaps = () => {
+    if (data.mode === 'leadgen') {
+      const annualWebsiteVisitors = parseFloat(data.leadgen.annualWebsiteVisitors.replace(/,/g, '')) || 0;
+      const annualLeadsGenerated = parseFloat(data.leadgen.annualLeadsGenerated.replace(/,/g, '')) || 0;
+      const annualNewAccountsClosed = parseFloat(data.leadgen.annualNewAccountsClosed.replace(/,/g, '')) || 0;
+      
+      // Calculate visibility reach gap correctly
+      // (calculatedBuyers - annualWebsiteVisitors) / calculatedBuyers * 100, capped at 100%
+      const visibilityReachGap = calculatedBuyers > 0 ? 
+        Math.min(100, Math.max(0, ((calculatedBuyers - annualWebsiteVisitors) / calculatedBuyers) * 100)) : 0;
+      
+      // Calculate lead gen gap correctly
+      // (annualWebsiteVisitors - annualLeadsGenerated) / annualWebsiteVisitors * 100, capped at 100%
+      const leadGenGap = annualWebsiteVisitors > 0 ? 
+        Math.min(100, Math.max(0, ((annualWebsiteVisitors - annualLeadsGenerated) / annualWebsiteVisitors) * 100)) : 0;
+      
+      // Calculate close rate gap correctly
+      // (annualLeadsGenerated - annualNewAccountsClosed) / annualLeadsGenerated * 100, capped at 100%
+      const closeRateGap = annualLeadsGenerated > 0 ? 
+        Math.min(100, Math.max(0, ((annualLeadsGenerated - annualNewAccountsClosed) / annualLeadsGenerated) * 100)) : 0;
+      
       setData({
         ...data,
-        showBack: false
+        leadgen: {
+          ...data.leadgen,
+          visibilityReachGap,
+          leadGenGap,
+          closeRateGap
+        }
+      });
+    } else {
+      const annualStoreVisitors = parseFloat(data.retail.annualStoreVisitors.replace(/,/g, '')) || 0;
+      const annualNewAccountsClosed = parseFloat(data.retail.annualNewAccountsClosed.replace(/,/g, '')) || 0;
+      
+      // Calculate retail gaps
+      const visibilityReachGap = calculatedBuyers > 0 ? 
+        Math.min(100, Math.max(0, ((calculatedBuyers - annualStoreVisitors) / calculatedBuyers) * 100)) : 0;
+      
+      const closeRateGap = annualStoreVisitors > 0 ? 
+        Math.min(100, Math.max(0, ((annualStoreVisitors - annualNewAccountsClosed) / annualStoreVisitors) * 100)) : 0;
+      
+      setData({
+        ...data,
+        retail: {
+          ...data.retail,
+          visibilityReachGap,
+          closeRateGap
+        }
       });
     }
+  };
+
+  // Handle toggle with calculations
+  const handleToggle = (showBack: boolean) => {
+    if (showBack) {
+      calculateGaps();
+    }
+    setData({
+      ...data,
+      showBack
+    });
   };
 
   const toggleMode = (mode: 'leadgen' | 'retail') => {
@@ -135,7 +136,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
             <h2 className="section-title">Gaps & Opportunities</h2>
             <DriveLogoToggle 
               showBack={data.showBack} 
-              setShowBack={handleCardFlip} 
+              setShowBack={handleToggle} 
             />
           </div>
           
@@ -238,7 +239,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
             <h2 className="section-title">Gaps & Opportunities Results</h2>
             <DriveLogoToggle 
               showBack={data.showBack} 
-              setShowBack={handleCardFlip} 
+              setShowBack={handleToggle} 
             />
           </div>
           
@@ -246,84 +247,34 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="stat-card">
                 <h3 className="stat-title">Visibility Reach Gap</h3>
-                <div className="flex items-center">
-                  <div className="w-full bg-gray-200 rounded-full h-4 mr-2">
-                    <div 
-                      className="bg-red-600 h-4 rounded-full" 
-                      style={{ width: `${data.leadgen.visibilityReachGap}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-lg font-semibold">{formatNumber(data.leadgen.visibilityReachGap)}%</span>
-                </div>
-                <p className="stat-desc text-red-600 mt-2">
-                  {formatNumber(data.leadgen.visibilityReachGap)}% of all buyers in market didn't even look at your company as an option!
-                </p>
+                <p className="stat-value">{formatNumber(data.leadgen.visibilityReachGap)}%</p>
+                <p className="stat-desc">{formatNumber(data.leadgen.visibilityReachGap)}% of all buyers in market didn't even look at your company as an option!</p>
               </div>
               
               <div className="stat-card">
-                <h3 className="stat-title">Lead Conversion Gap</h3>
-                <div className="flex items-center">
-                  <div className="w-full bg-gray-200 rounded-full h-4 mr-2">
-                    <div 
-                      className="bg-red-600 h-4 rounded-full" 
-                      style={{ width: `${data.leadgen.leadGenGap}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-lg font-semibold">{formatNumber(data.leadgen.leadGenGap)}%</span>
-                </div>
-                <p className="stat-desc text-red-600 mt-2">
-                  {formatNumber(data.leadgen.leadGenGap)}% of all buyers that researched you didn't even leave a name or contact info?!? If you can't identify them how can you sell them?
-                </p>
+                <h3 className="stat-title">Lead Gen Gap</h3>
+                <p className="stat-value">{formatNumber(data.leadgen.leadGenGap)}%</p>
+                <p className="stat-desc">{formatNumber(data.leadgen.leadGenGap)}% of all buyers that researched you didn't even leave a name or contact info?!? If you can't identify them how can you sell them?</p>
               </div>
               
               <div className="stat-card">
                 <h3 className="stat-title">Close Rate Gap</h3>
-                <div className="flex items-center">
-                  <div className="w-full bg-gray-200 rounded-full h-4 mr-2">
-                    <div 
-                      className="bg-red-600 h-4 rounded-full" 
-                      style={{ width: `${data.leadgen.closeRateGap}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-lg font-semibold">{formatNumber(data.leadgen.closeRateGap)}%</span>
-                </div>
-                <p className="stat-desc text-red-600 mt-2">
-                  {formatNumber(data.leadgen.closeRateGap)}% of all opportunities given you are saying no too! Why?
-                </p>
+                <p className="stat-value">{formatNumber(data.leadgen.closeRateGap)}%</p>
+                <p className="stat-desc">{formatNumber(data.leadgen.closeRateGap)}% of all opportunities given you are saying no too! Why?</p>
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="stat-card">
                 <h3 className="stat-title">Visibility Reach Gap</h3>
-                <div className="flex items-center">
-                  <div className="w-full bg-gray-200 rounded-full h-4 mr-2">
-                    <div 
-                      className="bg-red-600 h-4 rounded-full" 
-                      style={{ width: `${data.retail.visibilityReachGap}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-lg font-semibold">{formatNumber(data.retail.visibilityReachGap)}%</span>
-                </div>
-                <p className="stat-desc text-red-600 mt-2">
-                  {formatNumber(data.retail.visibilityReachGap)}% of all buyers in market didn't even visit your store!
-                </p>
+                <p className="stat-value">{formatNumber(data.retail.visibilityReachGap)}%</p>
+                <p className="stat-desc">{formatNumber(data.retail.visibilityReachGap)}% of all buyers in market didn't even look at your company as an option!</p>
               </div>
               
               <div className="stat-card">
                 <h3 className="stat-title">Close Rate Gap</h3>
-                <div className="flex items-center">
-                  <div className="w-full bg-gray-200 rounded-full h-4 mr-2">
-                    <div 
-                      className="bg-red-600 h-4 rounded-full" 
-                      style={{ width: `${data.retail.closeRateGap}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-lg font-semibold">{formatNumber(data.retail.closeRateGap)}%</span>
-                </div>
-                <p className="stat-desc text-red-600 mt-2">
-                  {formatNumber(data.retail.closeRateGap)}% of all store visitors didn't make a purchase! Why?
-                </p>
+                <p className="stat-value">{formatNumber(data.retail.closeRateGap)}%</p>
+                <p className="stat-desc">{formatNumber(data.retail.closeRateGap)}% of all opportunities given you are saying no too! Why?</p>
               </div>
             </div>
           )}
@@ -351,7 +302,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
         </button>
       </div>
     </div>
-    );
+  );
 };
 
 export default GapsAndOpps;

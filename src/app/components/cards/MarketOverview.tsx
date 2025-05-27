@@ -146,7 +146,7 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
         </button>
       </div>
     </div>
-    );
+   );
 };
 
 export default MarketOverview;
