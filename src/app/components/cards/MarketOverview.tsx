@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { formatNumber } from '../../utils/numberFormatting';
-import DriveLogoToggle from '../../components/DriveLogoToggle';
+import React, { useState } from 'react';
+import DriveLogoToggle from '../DriveLogoToggle';
 
 interface MarketOverviewProps {
   data: {
@@ -13,88 +12,120 @@ interface MarketOverviewProps {
     totalMarketRevShare: number;
     showBack: boolean;
   };
-  setData: React.Dispatch<React.SetStateAction<MarketOverviewProps['data']>>;
+  setData: React.Dispatch<React.SetStateAction<any>>;
 }
 
 const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
+  // Add state for social interactions
+  const [liked, setLiked] = useState(false);
+  const [commentOpen, setCommentOpen] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [comments, setComments] = useState<string[]>([]);
+  const [shared, setShared] = useState(false);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
     setData({
       ...data,
       [name]: value
     });
   };
 
-  // Calculate buyers and market share when inputs change
-  useEffect(() => {
-    const audienceSize = parseFloat(data.audienceSize.replace(/,/g, '')) || 0;
-    const buyerPercentage = parseFloat(data.buyerPercentage) || 0;
-    const avgYearlyValue = parseFloat(data.avgYearlyCustomerValue.replace(/,/g, '')) || 0;
-    
-    // Calculate buyers correctly (audienceSize * buyerPercentage / 100)
-    const calculatedBuyers = audienceSize * (buyerPercentage / 100);
-    
-    // Calculate total market revenue correctly (calculatedBuyers * avgYearlyValue)
-    const totalMarketRevShare = calculatedBuyers * avgYearlyValue;
-    
+  const toggleView = () => {
     setData({
       ...data,
-      calculatedBuyers,
-      totalMarketRevShare
-    });
-  }, [data.audienceSize, data.buyerPercentage, data.avgYearlyCustomerValue, data, setData]);
-
-  // Function to handle toggle click
-  const handleToggle = (value: boolean) => {
-    console.log('MarketOverview toggle clicked, setting showBack to:', value);
-    setData({
-      ...data,
-      showBack: value
+      showBack: !data.showBack
     });
   };
 
+  // Add event handlers for social interactions
+  const handleLikeClick = () => {
+    setLiked(!liked);
+    console.log('Like button clicked, new state:', !liked);
+  };
+
+  const handleCommentClick = () => {
+    setCommentOpen(!commentOpen);
+    console.log('Comment button clicked, new state:', !commentOpen);
+  };
+
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCommentText(e.target.value);
+  };
+
+  const handleCommentSubmit = () => {
+    if (commentText.trim()) {
+      setComments([...comments, commentText]);
+      setCommentText('');
+      console.log('Comment submitted:', commentText);
+    }
+  };
+
+  const handleShareClick = () => {
+    setShared(!shared);
+    console.log('Share button clicked, new state:', !shared);
+  };
+
+  // Calculate values when inputs change
+  React.useEffect(() => {
+    const audienceSize = parseFloat(data.audienceSize.replace(/[^0-9.]/g, '')) || 0;
+    const buyerPercentage = parseFloat(data.buyerPercentage.replace(/[^0-9.]/g, '')) || 0;
+    const avgYearlyCustomerValue = parseFloat(data.avgYearlyCustomerValue.replace(/[^0-9.]/g, '')) || 0;
+    
+    const calculatedBuyers = audienceSize * (buyerPercentage / 100);
+    const totalMarketRevShare = calculatedBuyers * avgYearlyCustomerValue;
+    
+    setData(prev => ({
+      ...prev,
+      calculatedBuyers,
+      totalMarketRevShare
+    }));
+  }, [data.audienceSize, data.buyerPercentage, data.avgYearlyCustomerValue]);
+
   return (
-    <div className="card">
-      {!data.showBack ? (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="section-title">Market Overview</h2>
-            <DriveLogoToggle 
-              showBack={data.showBack} 
-              setShowBack={handleToggle} 
-            />
+    <div className="card relative">
+      <DriveLogoToggle 
+        showBack={data.showBack} 
+        setShowBack={() => toggleView()} 
+      />
+      
+      <h2 className="section-title">Market Overview</h2>
+      
+      {data.showBack ? (
+        <div className="card-green p-4 rounded-lg">
+          <h3 className="card-title text-green-800">Market Overview - Full View</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Audience Size
+              </label>
+              <input
+                type="text"
+                name="audienceSize"
+                value={data.audienceSize}
+                onChange={handleInputChange}
+                className="input-field"
+                placeholder="e.g. 1M or 1,000,000"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Buyer %
+              </label>
+              <input
+                type="text"
+                name="buyerPercentage"
+                value={data.buyerPercentage}
+                onChange={handleInputChange}
+                className="input-field"
+                placeholder="e.g. 5 or 5%"
+              />
+            </div>
           </div>
           
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Audience Size
-            </label>
-            <input
-              type="text"
-              name="audienceSize"
-              value={data.audienceSize}
-              onChange={handleInputChange}
-              className="input-field"
-              placeholder="e.g., 1,000,000"
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Buyer %
-            </label>
-            <input
-              type="text"
-              name="buyerPercentage"
-              value={data.buyerPercentage}
-              onChange={handleInputChange}
-              className="input-field"
-              placeholder="e.g., 10"
-            />
-          </div>
-          
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Avg. Yearly Customer Value
             </label>
@@ -104,73 +135,108 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
               value={data.avgYearlyCustomerValue}
               onChange={handleInputChange}
               className="input-field"
-              placeholder="e.g., 1,000"
+              placeholder="e.g. 1k or $1,000"
             />
           </div>
           
-          {/* Preview of calculations on front */}
-          {(data.calculatedBuyers > 0 || data.totalMarketRevShare > 0) && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-md">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Calculation Preview:</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="font-medium">Calculated Buyers:</span> {formatNumber(Math.round(data.calculatedBuyers))}
-                </div>
-                <div>
-                  <span className="font-medium">Total Market Rev:</span> ${formatNumber(Math.round(data.totalMarketRevShare))}
-                </div>
-              </div>
+          {(data.audienceSize && data.buyerPercentage) && (
+            <div className="bg-green-100 p-3 rounded-lg mb-4">
+              <p className="text-green-800 font-medium">
+                Calculated Buyers: {data.calculatedBuyers.toLocaleString()}
+              </p>
+            </div>
+          )}
+          
+          {(data.audienceSize && data.buyerPercentage && data.avgYearlyCustomerValue) && (
+            <div className="bg-green-100 p-3 rounded-lg">
+              <p className="text-green-800 font-medium">
+                Total Market Rev Share: ${data.totalMarketRevShare.toLocaleString()}
+              </p>
             </div>
           )}
         </div>
       ) : (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="section-title">Market Overview Results</h2>
-            <DriveLogoToggle 
-              showBack={data.showBack} 
-              setShowBack={handleToggle} 
-            />
-          </div>
+        <div className="p-4 border border-green-200 rounded-lg">
+          <h3 className="card-title">Market Overview - Preview</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="stat-card">
-              <h3 className="stat-title">Calculated Buyers</h3>
-              <p className="stat-value">{formatNumber(Math.round(data.calculatedBuyers))}</p>
-              <p className="stat-desc">Total potential buyers in your market</p>
+          {(data.audienceSize && data.buyerPercentage && data.avgYearlyCustomerValue) ? (
+            <div>
+              <p className="mb-2">Audience Size: {data.audienceSize}</p>
+              <p className="mb-2">Buyer %: {data.buyerPercentage}</p>
+              <p className="mb-2">Avg. Yearly Customer Value: {data.avgYearlyCustomerValue}</p>
+              <p className="font-medium text-green-800">Total Market: ${data.totalMarketRevShare.toLocaleString()}</p>
             </div>
-            
-            <div className="stat-card">
-              <h3 className="stat-title">Total Market Rev Share</h3>
-              <p className="stat-value">${formatNumber(Math.round(data.totalMarketRevShare))}</p>
-              <p className="stat-desc">Total revenue potential in your market</p>
-            </div>
-          </div>
+          ) : (
+            <p className="text-gray-500 italic">Enter market information to see preview</p>
+          )}
         </div>
       )}
       
       <div className="mt-4 flex items-center space-x-2">
-        <button className="social-button">
+        {/* Refactored Like button with React event handler */}
+        <button 
+          className={`social-button ${liked ? 'bg-blue-100' : ''}`}
+          onClick={handleLikeClick}
+        >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
           </svg>
-          Like
+          {liked ? 'Liked' : 'Like'}
         </button>
-        <button className="social-button">
+        
+        {/* Refactored Comment button with React event handler */}
+        <button 
+          className={`social-button ${commentOpen ? 'bg-blue-100' : ''}`}
+          onClick={handleCommentClick}
+        >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
           </svg>
           Comment
         </button>
-        <button className="social-button">
+        
+        {/* Refactored Share button with React event handler */}
+        <button 
+          className={`social-button ${shared ? 'bg-blue-100' : ''}`}
+          onClick={handleShareClick}
+        >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
-          Share
+          {shared ? 'Shared' : 'Share'}
         </button>
       </div>
+      
+      {/* Comment form - conditionally rendered */}
+      {commentOpen && (
+        <div className="mt-2 p-3 border border-gray-200 rounded-lg">
+          <textarea 
+            value={commentText}
+            onChange={handleCommentChange}
+            className="w-full p-2 border border-gray-300 rounded mb-2"
+            placeholder="Write a comment..."
+            rows={2}
+          />
+          <button 
+            onClick={handleCommentSubmit}
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Submit
+          </button>
+        </div>
+      )}
+      
+      {/* Comments list */}
+      {comments.length > 0 && (
+        <div className="mt-2 p-3 border border-gray-200 rounded-lg">
+          <h4 className="font-medium mb-2">Comments</h4>
+          {comments.map((comment, index) => (
+            <div key={index} className="p-2 bg-gray-50 rounded mb-1">{comment}</div>
+          ))}
+        </div>
+      )}
     </div>
-   );
+  );
 };
 
 export default MarketOverview;
