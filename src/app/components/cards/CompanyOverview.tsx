@@ -3,23 +3,29 @@
 import React, { useState, useEffect } from 'react';
 import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
 
+// Define the exact type to match clientpage.tsx
+interface CompanyData {
+  annualRevenue: string;
+  percentNewCustomers: string;
+  percentCurrentCustomers: string;
+  calculatedTotalCustomers: number;
+  calculatedNewCustomers: number;
+  percentOfMarketRevShare: number;
+  showBack: boolean;
+}
+
 interface CompanyOverviewProps {
-  data: {
-    annualRevenue: string;
-    percentNewCustomers: string;
-    avgYearlyCustomerValue: string;
-    calculatedTotalCustomers: number;
-    calculatedNewCustomers: number;
-    marketRevSharePercent: number;
-  };
-  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
-  totalMarketShareRev: number;
+  data: CompanyData;
+  setData: React.Dispatch<React.SetStateAction<CompanyData>>;
+  avgYearlyCustomerValue: number;
+  totalMarketRevShare: number;
 }
 
 const CompanyOverview: React.FC<CompanyOverviewProps> = ({ 
   data, 
   setData, 
-  totalMarketShareRev 
+  avgYearlyCustomerValue,
+  totalMarketRevShare
 }) => {
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
@@ -68,19 +74,18 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
   useEffect(() => {
     const annualRevenue = parseHumanFriendlyNumber(data.annualRevenue);
     const percentNewCustomers = parseHumanFriendlyNumber(data.percentNewCustomers) / 100;
-    const avgYearlyCustomerValue = parseHumanFriendlyNumber(data.avgYearlyCustomerValue);
     
     const calculatedTotalCustomers = avgYearlyCustomerValue > 0 ? annualRevenue / avgYearlyCustomerValue : 0;
     const calculatedNewCustomers = calculatedTotalCustomers * percentNewCustomers;
-    const marketRevSharePercent = totalMarketShareRev > 0 ? (annualRevenue / totalMarketShareRev) * 100 : 0;
+    const percentOfMarketRevShare = totalMarketRevShare > 0 ? (annualRevenue / totalMarketRevShare) * 100 : 0;
     
     setData({
       ...data,
       calculatedTotalCustomers,
       calculatedNewCustomers,
-      marketRevSharePercent
+      percentOfMarketRevShare
     });
-  }, [data.annualRevenue, data.percentNewCustomers, data.avgYearlyCustomerValue, totalMarketShareRev, data, setData]);
+  }, [data.annualRevenue, data.percentNewCustomers, avgYearlyCustomerValue, totalMarketRevShare, data, setData]);
 
   return (
     <div className="card">
@@ -117,51 +122,53 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
         
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Avg. Yearly Customer Value
+            % Current Customers
           </label>
           <input
             type="text"
-            name="avgYearlyCustomerValue"
-            value={data.avgYearlyCustomerValue}
+            name="percentCurrentCustomers"
+            value={data.percentCurrentCustomers}
             onChange={handleInputChange}
             className="input-field"
-            placeholder="e.g. $5k or $5,000"
+            placeholder="e.g. 50 or 50%"
           />
         </div>
         
         <button
-          onClick={() => document.getElementById('company-overview-card')?.classList.toggle('flipped')}
+          onClick={() => setData({ ...data, showBack: !data.showBack })}
           className="button-secondary"
         >
           View Back
         </button>
       </div>
       
-      <div className="card-back">
-        <h2 className="section-title">Company Overview Results</h2>
-        
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-1">Calculated Total Customers</p>
-          <p className="font-medium">{Math.round(data.calculatedTotalCustomers).toLocaleString()}</p>
+      {data.showBack && (
+        <div className="card-back">
+          <h2 className="section-title">Company Overview Results</h2>
+          
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 mb-1">Calculated Total Customers</p>
+            <p className="font-medium">{Math.round(data.calculatedTotalCustomers).toLocaleString()}</p>
+          </div>
+          
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 mb-1">Calculated New Customers</p>
+            <p className="font-medium">{Math.round(data.calculatedNewCustomers).toLocaleString()}</p>
+          </div>
+          
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 mb-1">% of Market Rev Share</p>
+            <p className="font-medium">{formatPercentage(data.percentOfMarketRevShare / 100)}</p>
+          </div>
+          
+          <button
+            onClick={() => setData({ ...data, showBack: !data.showBack })}
+            className="button-secondary"
+          >
+            View Front
+          </button>
         </div>
-        
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-1">Calculated New Customers</p>
-          <p className="font-medium">{Math.round(data.calculatedNewCustomers).toLocaleString()}</p>
-        </div>
-        
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-1">% of Market Rev Share</p>
-          <p className="font-medium">{formatPercentage(data.marketRevSharePercent / 100)}</p>
-        </div>
-        
-        <button
-          onClick={() => document.getElementById('company-overview-card')?.classList.toggle('flipped')}
-          className="button-secondary"
-        >
-          View Front
-        </button>
-      </div>
+      )}
       
       <div className="mt-4 flex items-center space-x-2">
         {/* Refactored Like button with React event handler */}
