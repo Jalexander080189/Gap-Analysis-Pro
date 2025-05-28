@@ -20,13 +20,27 @@ interface ScenariosProps {
   setData: React.Dispatch<React.SetStateAction<ScenariosData>>;
   annualRevenue: number;
   calculatedBuyers: number;
+  visibilityReachGap: number;
+  leadGenGap: number;
+  closeRateGap: number;
+  annualWebsiteVisitors?: number;
+  annualLeadsGenerated?: number;
+  annualNewAccountsClosed?: number;
+  avgYearlyCustomerValue?: number;
 }
 
 const Scenarios: React.FC<ScenariosProps> = ({
   data,
   setData,
   annualRevenue,
-  calculatedBuyers
+  calculatedBuyers,
+  visibilityReachGap,
+  leadGenGap,
+  closeRateGap,
+  annualWebsiteVisitors,
+  annualLeadsGenerated,
+  annualNewAccountsClosed,
+  avgYearlyCustomerValue
 }) => {
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
@@ -58,22 +72,22 @@ const Scenarios: React.FC<ScenariosProps> = ({
     const closeRateImprovement = data.closeRateSlider;
     
     // Calculate additional leads based on improvements
-    const baseVisitors = calculatedBuyers * 0.3; // Assuming 30% of market as base
+    const baseVisitors = annualWebsiteVisitors || calculatedBuyers * 0.3; // Use actual visitors if available
     const improvedVisitors = baseVisitors * (1 + visibilityReachImprovement);
     const additionalVisitors = improvedVisitors - baseVisitors;
     
     // Calculate additional leads
-    const baseLeadConversion = 0.1; // Assuming 10% base conversion
+    const baseLeadConversion = annualLeadsGenerated ? annualLeadsGenerated / baseVisitors : 0.1;
     const improvedLeadConversion = baseLeadConversion * (1 + leadGenImprovement);
     const additionalLeads = additionalVisitors * improvedLeadConversion;
     
     // Calculate additional closed accounts
-    const baseCloseRate = 0.2; // Assuming 20% base close rate
+    const baseCloseRate = annualNewAccountsClosed ? annualNewAccountsClosed / (annualLeadsGenerated || 1) : 0.2;
     const improvedCloseRate = baseCloseRate * (1 + closeRateImprovement);
     const additionalNewAccounts = additionalLeads * improvedCloseRate;
     
     // Calculate additional revenue
-    const avgCustomerValue = annualRevenue / (baseVisitors * baseLeadConversion * baseCloseRate);
+    const avgCustomerValue = avgYearlyCustomerValue || (annualRevenue / ((annualNewAccountsClosed || 1) || (baseVisitors * baseLeadConversion * baseCloseRate)));
     const additionalRevenue = additionalNewAccounts * avgCustomerValue;
     
     // Calculate total revenue
@@ -92,6 +106,13 @@ const Scenarios: React.FC<ScenariosProps> = ({
     data.closeRateSlider,
     annualRevenue,
     calculatedBuyers,
+    visibilityReachGap,
+    leadGenGap,
+    closeRateGap,
+    annualWebsiteVisitors,
+    annualLeadsGenerated,
+    annualNewAccountsClosed,
+    avgYearlyCustomerValue,
     data,
     setData
   ]);
