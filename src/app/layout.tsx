@@ -1,4 +1,5 @@
 import React from 'react';
+import '../globals.css'; // Make sure this import is present
 
 export const metadata = {
   title: 'Gap Analysis Pro',
@@ -13,7 +14,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* CSP meta tag removed to avoid conflicts with vercel.json */}
+        {/* No CSP meta tag, but ensure all style links are present */}
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
       </head>
       <body>{children}</body>
     </html>
