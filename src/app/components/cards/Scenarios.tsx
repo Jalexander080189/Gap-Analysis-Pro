@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
+import { formatPercentage } from '../../utils/numberFormatting';
 
 // Define the exact type to match clientpage.tsx
 interface ScenariosData {
@@ -48,7 +48,7 @@ const Scenarios: React.FC<ScenariosProps> = ({
       leadGenSlider: initialLeadGenSlider,
       closeRateSlider: initialCloseRateSlider
     });
-  }, [setData]);
+  }, [setData, data]);
 
   // Calculate scenario results when inputs change
   useEffect(() => {
