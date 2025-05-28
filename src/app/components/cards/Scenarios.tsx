@@ -1,40 +1,32 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { formatPercentage } from '../../utils/numberFormatting';
+import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
+
+// Define the exact type to match clientpage.tsx
+interface ScenariosData {
+  visibilityReachSlider: number;
+  leadGenSlider: number;
+  closeRateSlider: number;
+  additionalLeads: number;
+  additionalRevenue: number;
+  additionalNewAccounts: number;
+  totalCalculatedAnnualRevenue: number;
+  showBack: boolean;
+}
 
 interface ScenariosProps {
-  data: {
-    visibilityReachImprovement: number;
-    leadGenerationImprovement: number;
-    closeRateImprovement: number;
-    additionalLeads: number;
-    additionalClosedAccounts: number;
-    additionalRevenue: number;
-    totalCalculatedAnnualRevenue: number;
-  };
-  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  data: ScenariosData;
+  setData: React.Dispatch<React.SetStateAction<ScenariosData>>;
   annualRevenue: number;
-  visibilityReachGap: number;
-  leadGenGap: number;
-  closeRateGap: number;
-  annualWebsiteVisitors: number;
-  annualLeadsGenerated: number;
-  annualNewAccountsClosed: number;
-  avgYearlyCustomerValue: number;
+  calculatedBuyers: number;
 }
 
 const Scenarios: React.FC<ScenariosProps> = ({
   data,
   setData,
   annualRevenue,
-  visibilityReachGap,
-  leadGenGap,
-  closeRateGap,
-  annualWebsiteVisitors,
-  annualLeadsGenerated,
-  annualNewAccountsClosed,
-  avgYearlyCustomerValue
+  calculatedBuyers
 }) => {
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
@@ -46,39 +38,43 @@ const Scenarios: React.FC<ScenariosProps> = ({
   // Set initial slider values
   useEffect(() => {
     // Initial values for sliders
-    const initialVisibilityReachImprovement = 0.05; // 5%
-    const initialLeadGenerationImprovement = 0.20; // 20%
-    const initialCloseRateImprovement = 0.20; // 20%
+    const initialVisibilityReachSlider = 0.05; // 5%
+    const initialLeadGenSlider = 0.20; // 20%
+    const initialCloseRateSlider = 0.20; // 20%
     
     setData({
       ...data,
-      visibilityReachImprovement: initialVisibilityReachImprovement,
-      leadGenerationImprovement: initialLeadGenerationImprovement,
-      closeRateImprovement: initialCloseRateImprovement
+      visibilityReachSlider: initialVisibilityReachSlider,
+      leadGenSlider: initialLeadGenSlider,
+      closeRateSlider: initialCloseRateSlider
     });
-  }, [setData, data]);
+  }, [setData]);
 
   // Calculate scenario results when inputs change
   useEffect(() => {
-    // Calculate additional website visitors
-    const baseVisitors = annualWebsiteVisitors;
-    const improvedVisitors = baseVisitors / (1 - visibilityReachGap * data.visibilityReachImprovement);
+    // Simplified calculations for demo purposes
+    const visibilityReachImprovement = data.visibilityReachSlider;
+    const leadGenImprovement = data.leadGenSlider;
+    const closeRateImprovement = data.closeRateSlider;
+    
+    // Calculate additional leads based on improvements
+    const baseVisitors = calculatedBuyers * 0.3; // Assuming 30% of market as base
+    const improvedVisitors = baseVisitors * (1 + visibilityReachImprovement);
     const additionalVisitors = improvedVisitors - baseVisitors;
     
     // Calculate additional leads
-    const baseLeadConversion = annualLeadsGenerated / annualWebsiteVisitors;
-    const improvedLeadConversion = baseLeadConversion + (leadGenGap * data.leadGenerationImprovement);
-    const additionalLeads = (additionalVisitors * baseLeadConversion) + 
-                           (improvedVisitors * (improvedLeadConversion - baseLeadConversion));
+    const baseLeadConversion = 0.1; // Assuming 10% base conversion
+    const improvedLeadConversion = baseLeadConversion * (1 + leadGenImprovement);
+    const additionalLeads = additionalVisitors * improvedLeadConversion;
     
     // Calculate additional closed accounts
-    const baseCloseRate = annualNewAccountsClosed / annualLeadsGenerated;
-    const improvedCloseRate = baseCloseRate + (closeRateGap * data.closeRateImprovement);
-    const additionalClosedAccounts = (additionalLeads * baseCloseRate) + 
-                                    ((annualLeadsGenerated + additionalLeads) * (improvedCloseRate - baseCloseRate));
+    const baseCloseRate = 0.2; // Assuming 20% base close rate
+    const improvedCloseRate = baseCloseRate * (1 + closeRateImprovement);
+    const additionalNewAccounts = additionalLeads * improvedCloseRate;
     
     // Calculate additional revenue
-    const additionalRevenue = additionalClosedAccounts * avgYearlyCustomerValue;
+    const avgCustomerValue = annualRevenue / (baseVisitors * baseLeadConversion * baseCloseRate);
+    const additionalRevenue = additionalNewAccounts * avgCustomerValue;
     
     // Calculate total revenue
     const totalCalculatedAnnualRevenue = annualRevenue + additionalRevenue;
@@ -86,22 +82,16 @@ const Scenarios: React.FC<ScenariosProps> = ({
     setData({
       ...data,
       additionalLeads,
-      additionalClosedAccounts,
+      additionalNewAccounts,
       additionalRevenue,
       totalCalculatedAnnualRevenue
     });
   }, [
-    data.visibilityReachImprovement,
-    data.leadGenerationImprovement,
-    data.closeRateImprovement,
+    data.visibilityReachSlider,
+    data.leadGenSlider,
+    data.closeRateSlider,
     annualRevenue,
-    visibilityReachGap,
-    leadGenGap,
-    closeRateGap,
-    annualWebsiteVisitors,
-    annualLeadsGenerated,
-    annualNewAccountsClosed,
-    avgYearlyCustomerValue,
+    calculatedBuyers,
     data,
     setData
   ]);
@@ -154,15 +144,15 @@ const Scenarios: React.FC<ScenariosProps> = ({
         <div className="mb-4">
           <div className="flex justify-between mb-1">
             <span className="text-sm font-medium">Visibility Reach Improvement</span>
-            <span className="text-sm text-gray-600">{formatPercentage(data.visibilityReachImprovement)}</span>
+            <span className="text-sm text-gray-600">{formatPercentage(data.visibilityReachSlider)}</span>
           </div>
           <input
             type="range"
-            name="visibilityReachImprovement"
+            name="visibilityReachSlider"
             min="0"
             max="1"
             step="0.01"
-            value={data.visibilityReachImprovement}
+            value={data.visibilityReachSlider}
             onChange={handleSliderChange}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
@@ -174,15 +164,15 @@ const Scenarios: React.FC<ScenariosProps> = ({
         <div className="mb-4">
           <div className="flex justify-between mb-1">
             <span className="text-sm font-medium">Lead Generation Improvement</span>
-            <span className="text-sm text-gray-600">{formatPercentage(data.leadGenerationImprovement)}</span>
+            <span className="text-sm text-gray-600">{formatPercentage(data.leadGenSlider)}</span>
           </div>
           <input
             type="range"
-            name="leadGenerationImprovement"
+            name="leadGenSlider"
             min="0"
             max="1"
             step="0.01"
-            value={data.leadGenerationImprovement}
+            value={data.leadGenSlider}
             onChange={handleSliderChange}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
@@ -194,15 +184,15 @@ const Scenarios: React.FC<ScenariosProps> = ({
         <div className="mb-4">
           <div className="flex justify-between mb-1">
             <span className="text-sm font-medium">Close Rate Improvement</span>
-            <span className="text-sm text-gray-600">{formatPercentage(data.closeRateImprovement)}</span>
+            <span className="text-sm text-gray-600">{formatPercentage(data.closeRateSlider)}</span>
           </div>
           <input
             type="range"
-            name="closeRateImprovement"
+            name="closeRateSlider"
             min="0"
             max="1"
             step="0.01"
-            value={data.closeRateImprovement}
+            value={data.closeRateSlider}
             onChange={handleSliderChange}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
@@ -222,8 +212,8 @@ const Scenarios: React.FC<ScenariosProps> = ({
           </div>
           
           <div>
-            <p className="text-sm text-gray-600 mb-1">Additional Closed Accounts</p>
-            <p className="font-medium">{Math.round(data.additionalClosedAccounts).toLocaleString()}</p>
+            <p className="text-sm text-gray-600 mb-1">Additional New Accounts</p>
+            <p className="font-medium">{Math.round(data.additionalNewAccounts).toLocaleString()}</p>
           </div>
           
           <div>
@@ -301,6 +291,13 @@ const Scenarios: React.FC<ScenariosProps> = ({
           ))}
         </div>
       )}
+      
+      <button 
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        onClick={() => setData({ ...data, showBack: !data.showBack })}
+      >
+        {data.showBack ? 'Show Front' : 'Show Back'}
+      </button>
     </div>
   );
 };
