@@ -69,7 +69,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
     } else {
       setData({
         ...data,
-        [name]: value as any
+        [name]: value as string // Changed from 'any' to 'string' to fix TypeScript error
       });
     }
   };
@@ -134,7 +134,6 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
     data.leadgen.annualLeadsGenerated,
     data.leadgen.annualNewAccountsClosed,
     calculatedBuyers,
-    data,
     setData
   ]);
 
@@ -164,7 +163,6 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
     data.retail.annualStoreVisitors,
     data.retail.annualNewAccountsClosed,
     calculatedBuyers,
-    data,
     setData
   ]);
 
@@ -416,10 +414,19 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
         <div className="mt-2 p-3 border border-gray-200 rounded-lg">
           <h4 className="font-medium mb-2">Comments</h4>
           {comments.map((comment, index) => (
-            <div key={index} className="p-2 bg-gray-50 rounded mb-1">{comment}</div>
+            <div key={index} className="mb-2 pb-2 border-b border-gray-100 last:border-b-0">
+              <p className="text-sm">{comment}</p>
+            </div>
           ))}
         </div>
       )}
+      
+      <button 
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        onClick={() => setData({ ...data, showBack: !data.showBack })}
+      >
+        {data.showBack ? 'Show Front' : 'Show Back'}
+      </button>
     </div>
   );
 };
