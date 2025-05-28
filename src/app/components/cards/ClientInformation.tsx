@@ -7,23 +7,16 @@ import dynamic from 'next/dynamic';
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
 
+// Updated interface to match the structure in clientpage.tsx
 interface ClientInformationProps {
   data: {
-    primaryOwner: {
-      name: string;
-      email: string;
-      phone: string;
-    };
-    secondaryOwner: {
-      name: string;
-      email: string;
-      phone: string;
-    };
     companyName: string;
-    companyUrl: string;
-    companyFacebookUrl: string;
-    businessOverview: string;
-    saved: boolean;
+    contactName: string;
+    contactEmail: string;
+    contactPhone: string;
+    businessType: string;
+    businessDescription: string;
+    showBack?: boolean;
   };
   setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 }
@@ -37,39 +30,25 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<string[]>([]);
   const [shared, setShared] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setData({
-        ...data,
-        [parent]: {
-          ...data[parent as keyof typeof data] as Record<string, unknown>,
-          [child]: value
-        }
-      });
-    } else {
-      setData({
-        ...data,
-        [name]: value
-      });
-    }
-  };
-
-  const handleBusinessOverviewChange = (content: string) => {
     setData({
       ...data,
-      businessOverview: content
+      [name]: value
+    });
+  };
+
+  const handleBusinessDescriptionChange = (content: string) => {
+    setData({
+      ...data,
+      businessDescription: content
     });
   };
 
   const handleSave = () => {
-    setData({
-      ...data,
-      saved: true
-    });
+    setSaved(true);
     
     // Generate unique URL based on company name
     const companySlug = data.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
@@ -77,10 +56,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
   };
 
   const handleEdit = () => {
-    setData({
-      ...data,
-      saved: false
-    });
+    setSaved(false);
   };
   
   // Add event handlers for social interactions
@@ -124,7 +100,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
 
   return (
     <div className="card">
-      {data.saved ? (
+      {saved ? (
         <div>
           <div className="profile-header mb-6">
             <div className="flex items-center mb-4">
@@ -133,18 +109,6 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
               </div>
               <div>
                 <h2 className="text-xl font-bold">{data.companyName}</h2>
-                <div className="flex space-x-2 text-sm text-gray-500">
-                  {data.companyUrl && (
-                    <a href={data.companyUrl} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500">
-                      Website
-                    </a>
-                  )}
-                  {data.companyFacebookUrl && (
-                    <a href={data.companyFacebookUrl} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500">
-                      Facebook
-                    </a>
-                  )}
-                </div>
               </div>
               <button
                 onClick={handleEdit}
@@ -156,26 +120,22 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="font-medium text-gray-700 mb-1">Primary Owner</h3>
-                <p>{data.primaryOwner.name}</p>
-                <p className="text-sm text-gray-500">{data.primaryOwner.email}</p>
-                <p className="text-sm text-gray-500">{data.primaryOwner.phone}</p>
+                <h3 className="font-medium text-gray-700 mb-1">Contact Information</h3>
+                <p>{data.contactName}</p>
+                <p className="text-sm text-gray-500">{data.contactEmail}</p>
+                <p className="text-sm text-gray-500">{data.contactPhone}</p>
               </div>
               
-              {(data.secondaryOwner.name || data.secondaryOwner.email || data.secondaryOwner.phone) && (
-                <div>
-                  <h3 className="font-medium text-gray-700 mb-1">Secondary Owner</h3>
-                  <p>{data.secondaryOwner.name}</p>
-                  <p className="text-sm text-gray-500">{data.secondaryOwner.email}</p>
-                  <p className="text-sm text-gray-500">{data.secondaryOwner.phone}</p>
-                </div>
-              )}
+              <div>
+                <h3 className="font-medium text-gray-700 mb-1">Business Type</h3>
+                <p>{data.businessType}</p>
+              </div>
             </div>
           </div>
           
           <div>
             <div className="flex items-center mb-2">
-              <h3 className="font-medium text-gray-700">Business Overview</h3>
+              <h3 className="font-medium text-gray-700">Business Description</h3>
               <button
                 onClick={() => setShowBusinessOverview(!showBusinessOverview)}
                 className="ml-2 text-sm text-blue-600 hover:text-blue-800"
@@ -185,101 +145,13 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
             </div>
             
             {showBusinessOverview && (
-              <div className="bg-gray-50 p-4 rounded-lg" dangerouslySetInnerHTML={{ __html: data.businessOverview }} />
+              <div className="bg-gray-50 p-4 rounded-lg" dangerouslySetInnerHTML={{ __html: data.businessDescription }} />
             )}
           </div>
         </div>
       ) : (
         <div>
           <h2 className="section-title">Client Information</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <h3 className="card-title">Primary Owner</h3>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  name="primaryOwner.name"
-                  value={data.primaryOwner.name}
-                  onChange={handleInputChange}
-                  className="input-field"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="primaryOwner.email"
-                  value={data.primaryOwner.email}
-                  onChange={handleInputChange}
-                  className="input-field"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone
-                </label>
-                <input
-                  type="tel"
-                  name="primaryOwner.phone"
-                  value={data.primaryOwner.phone}
-                  onChange={handleInputChange}
-                  className="input-field"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="card-title">Secondary Owner (Optional)</h3>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  name="secondaryOwner.name"
-                  value={data.secondaryOwner.name}
-                  onChange={handleInputChange}
-                  className="input-field"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="secondaryOwner.email"
-                  value={data.secondaryOwner.email}
-                  onChange={handleInputChange}
-                  className="input-field"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone
-                </label>
-                <input
-                  type="tel"
-                  name="secondaryOwner.phone"
-                  value={data.secondaryOwner.phone}
-                  onChange={handleInputChange}
-                  className="input-field"
-                />
-              </div>
-            </div>
-          </div>
           
           <div className="mb-6">
             <h3 className="card-title">Company Information</h3>
@@ -299,40 +171,68 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
             
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Company URL
+                Business Type
               </label>
               <input
-                type="url"
-                name="companyUrl"
-                value={data.companyUrl}
+                type="text"
+                name="businessType"
+                value={data.businessType}
                 onChange={handleInputChange}
                 className="input-field"
-                placeholder="https://example.com"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Company Facebook URL
-              </label>
-              <input
-                type="url"
-                name="companyFacebookUrl"
-                value={data.companyFacebookUrl}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="https://facebook.com/example"
               />
             </div>
           </div>
           
           <div className="mb-6">
-            <h3 className="card-title">Business Overview</h3>
+            <h3 className="card-title">Contact Information</h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contact Name
+              </label>
+              <input
+                type="text"
+                name="contactName"
+                value={data.contactName}
+                onChange={handleInputChange}
+                className="input-field"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contact Email
+              </label>
+              <input
+                type="email"
+                name="contactEmail"
+                value={data.contactEmail}
+                onChange={handleInputChange}
+                className="input-field"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contact Phone
+              </label>
+              <input
+                type="tel"
+                name="contactPhone"
+                value={data.contactPhone}
+                onChange={handleInputChange}
+                className="input-field"
+              />
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h3 className="card-title">Business Description</h3>
             
             {typeof window !== 'undefined' && (
               <ReactQuill
-                value={data.businessOverview}
-                onChange={handleBusinessOverviewChange}
+                value={data.businessDescription}
+                onChange={handleBusinessDescriptionChange}
                 modules={modules}
                 className="bg-white"
               />
@@ -341,8 +241,8 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
           
           <button
             onClick={handleSave}
-            disabled={!data.companyName || !data.primaryOwner.name}
-            className={`button-primary ${(!data.companyName || !data.primaryOwner.name) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!data.companyName || !data.contactName}
+            className={`button-primary ${(!data.companyName || !data.contactName) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Save Client Information
           </button>
