@@ -1,5 +1,5 @@
 import React from 'react';
-// Remove or correct this import based on your project structure
+// Remove the globals.css import since it doesn't exist in your project
 // import '../globals.css';
 
 export const metadata = {
@@ -20,6 +20,6 @@ export default function RootLayout({
       </head>
       <body>{children}</body>
     </html>
-   )
+  )
 }
 
