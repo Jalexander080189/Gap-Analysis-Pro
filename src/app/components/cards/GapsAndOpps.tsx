@@ -3,25 +3,29 @@
 import React, { useState, useEffect } from 'react';
 import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
 
-interface GapsAndOppsProps {
-  data: {
-    mode: string;
-    leadgen: {
-      annualWebsiteVisitors: string;
-      annualLeadsGenerated: string;
-      annualNewAccountsClosed: string;
-      visibilityReachGap: number;
-      leadGenGap: number;
-      closeRateGap: number;
-    };
-    retail: {
-      annualStoreVisitors: string;
-      annualNewAccountsClosed: string;
-      visibilityReachGap: number;
-      closeRateGap: number;
-    };
+// Define the exact type to match clientpage.tsx
+interface GapsData {
+  mode: "leadgen" | "retail";
+  leadgen: {
+    annualWebsiteVisitors: string;
+    annualLeadsGenerated: string;
+    annualNewAccountsClosed: string;
+    visibilityReachGap: number;
+    leadGenGap: number;
+    closeRateGap: number;
   };
-  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  retail: {
+    annualStoreVisitors: string;
+    annualNewAccountsClosed: string;
+    visibilityReachGap: number;
+    closeRateGap: number;
+  };
+  showBack: boolean;
+}
+
+interface GapsAndOppsProps {
+  data: GapsData;
+  setData: React.Dispatch<React.SetStateAction<GapsData>>;
   calculatedBuyers: number;
 }
 
@@ -33,7 +37,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
   const [comments, setComments] = useState<string[]>([]);
   const [shared, setShared] = useState(false);
 
-  const handleModeChange = (mode: string) => {
+  const handleModeChange = (mode: "leadgen" | "retail") => {
     setData({
       ...data,
       mode
@@ -45,17 +49,27 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
     
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setData({
-        ...data,
-        [parent]: {
-          ...data[parent as keyof typeof data] as Record<string, unknown>,
-          [child]: value
-        }
-      });
+      if (parent === 'leadgen') {
+        setData({
+          ...data,
+          leadgen: {
+            ...data.leadgen,
+            [child]: value
+          }
+        });
+      } else if (parent === 'retail') {
+        setData({
+          ...data,
+          retail: {
+            ...data.retail,
+            [child]: value
+          }
+        });
+      }
     } else {
       setData({
         ...data,
-        [name]: value
+        [name]: value as any
       });
     }
   };
