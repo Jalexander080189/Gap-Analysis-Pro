@@ -5,26 +5,36 @@ import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFo
 
 interface ScenariosProps {
   data: {
-    visibilityGapPercent: number;
-    leadGenGapPercent: number;
-    closeRateGapPercent: number;
-    additionalAnnualLeads: number;
-    additionalAnnualNewAccountsClosed: number;
-    additionalAnnualRevenueCreated: number;
+    visibilityReachImprovement: number;
+    leadGenerationImprovement: number;
+    closeRateImprovement: number;
+    additionalLeads: number;
+    additionalClosedAccounts: number;
+    additionalRevenue: number;
     totalCalculatedAnnualRevenue: number;
   };
-  setData: React.Dispatch<React.SetStateAction<any>>;
-  gapsData: any;
-  avgYearlyCustomerValue: number;
+  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
   annualRevenue: number;
+  visibilityReachGap: number;
+  leadGenGap: number;
+  closeRateGap: number;
+  annualWebsiteVisitors: number;
+  annualLeadsGenerated: number;
+  annualNewAccountsClosed: number;
+  avgYearlyCustomerValue: number;
 }
 
-const Scenarios: React.FC<ScenariosProps> = ({ 
-  data, 
-  setData, 
-  gapsData,
-  avgYearlyCustomerValue,
-  annualRevenue
+const Scenarios: React.FC<ScenariosProps> = ({
+  data,
+  setData,
+  annualRevenue,
+  visibilityReachGap,
+  leadGenGap,
+  closeRateGap,
+  annualWebsiteVisitors,
+  annualLeadsGenerated,
+  annualNewAccountsClosed,
+  avgYearlyCustomerValue
 }) => {
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
@@ -33,6 +43,77 @@ const Scenarios: React.FC<ScenariosProps> = ({
   const [comments, setComments] = useState<string[]>([]);
   const [shared, setShared] = useState(false);
 
+  // Set initial slider values
+  useEffect(() => {
+    // Initial values for sliders
+    const initialVisibilityReachImprovement = 0.05; // 5%
+    const initialLeadGenerationImprovement = 0.20; // 20%
+    const initialCloseRateImprovement = 0.20; // 20%
+    
+    setData({
+      ...data,
+      visibilityReachImprovement: initialVisibilityReachImprovement,
+      leadGenerationImprovement: initialLeadGenerationImprovement,
+      closeRateImprovement: initialCloseRateImprovement
+    });
+  }, [setData, data]);
+
+  // Calculate scenario results when inputs change
+  useEffect(() => {
+    // Calculate additional website visitors
+    const baseVisitors = annualWebsiteVisitors;
+    const improvedVisitors = baseVisitors / (1 - visibilityReachGap * data.visibilityReachImprovement);
+    const additionalVisitors = improvedVisitors - baseVisitors;
+    
+    // Calculate additional leads
+    const baseLeadConversion = annualLeadsGenerated / annualWebsiteVisitors;
+    const improvedLeadConversion = baseLeadConversion + (leadGenGap * data.leadGenerationImprovement);
+    const additionalLeads = (additionalVisitors * baseLeadConversion) + 
+                           (improvedVisitors * (improvedLeadConversion - baseLeadConversion));
+    
+    // Calculate additional closed accounts
+    const baseCloseRate = annualNewAccountsClosed / annualLeadsGenerated;
+    const improvedCloseRate = baseCloseRate + (closeRateGap * data.closeRateImprovement);
+    const additionalClosedAccounts = (additionalLeads * baseCloseRate) + 
+                                    ((annualLeadsGenerated + additionalLeads) * (improvedCloseRate - baseCloseRate));
+    
+    // Calculate additional revenue
+    const additionalRevenue = additionalClosedAccounts * avgYearlyCustomerValue;
+    
+    // Calculate total revenue
+    const totalCalculatedAnnualRevenue = annualRevenue + additionalRevenue;
+    
+    setData({
+      ...data,
+      additionalLeads,
+      additionalClosedAccounts,
+      additionalRevenue,
+      totalCalculatedAnnualRevenue
+    });
+  }, [
+    data.visibilityReachImprovement,
+    data.leadGenerationImprovement,
+    data.closeRateImprovement,
+    annualRevenue,
+    visibilityReachGap,
+    leadGenGap,
+    closeRateGap,
+    annualWebsiteVisitors,
+    annualLeadsGenerated,
+    annualNewAccountsClosed,
+    avgYearlyCustomerValue,
+    data,
+    setData
+  ]);
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setData({
+      ...data,
+      [name]: parseFloat(value)
+    });
+  };
+  
   // Add event handlers for social interactions
   const handleLikeClick = () => {
     setLiked(!liked);
@@ -61,175 +142,101 @@ const Scenarios: React.FC<ScenariosProps> = ({
     console.log('Share button clicked, new state:', !shared);
   };
 
-  // Auto-position sliders based on current gap percentages
-  useEffect(() => {
-    if (gapsData.mode === 'leadgen') {
-      setData(prev => ({
-        ...prev,
-        visibilityGapPercent: Math.round(gapsData.leadgen.visibilityReachGap * 100),
-        leadGenGapPercent: Math.round(gapsData.leadgen.leadGenGap * 100),
-        closeRateGapPercent: Math.round(gapsData.leadgen.closeRateGap * 100)
-      }));
-    } else {
-      setData(prev => ({
-        ...prev,
-        visibilityGapPercent: Math.round(gapsData.retail.visibilityReachGap * 100),
-        leadGenGapPercent: 0,
-        closeRateGapPercent: Math.round(gapsData.retail.closeRateGap * 100)
-      }));
-    }
-  }, [
-    gapsData.mode, 
-    gapsData.leadgen.visibilityReachGap, 
-    gapsData.leadgen.leadGenGap, 
-    gapsData.leadgen.closeRateGap,
-    gapsData.retail.visibilityReachGap,
-    gapsData.retail.closeRateGap
-  ]);
-
-  // Calculate scenario results when sliders change
-  useEffect(() => {
-    // Only calculate if we have the necessary values
-    if (annualRevenue <= 0 || avgYearlyCustomerValue <= 0) return;
-    
-    // Get base values from gaps data
-    let baseVisitors = 0;
-    let baseLeads = 0;
-    let baseClosed = 0;
-    
-    if (gapsData.mode === 'leadgen') {
-      baseVisitors = parseHumanFriendlyNumber(gapsData.leadgen.annualWebsiteVisitors);
-      baseLeads = parseHumanFriendlyNumber(gapsData.leadgen.annualLeadsGenerated);
-      baseClosed = parseHumanFriendlyNumber(gapsData.leadgen.annualNewAccountsClosed);
-    } else {
-      baseVisitors = parseHumanFriendlyNumber(gapsData.retail.annualStoreVisitors);
-      baseClosed = parseHumanFriendlyNumber(gapsData.retail.annualNewAccountsClosed);
-    }
-    
-    // Calculate additional leads based on visibility gap improvement
-    const additionalVisitors = baseVisitors * (data.visibilityGapPercent / 100);
-    
-    // Calculate additional leads based on lead gen gap improvement
-    let additionalLeads = 0;
-    if (gapsData.mode === 'leadgen') {
-      additionalLeads = additionalVisitors * (1 - (data.leadGenGapPercent / 100)) + 
-                        baseVisitors * (data.leadGenGapPercent / 100);
-    } else {
-      additionalLeads = additionalVisitors;
-    }
-    
-    // Calculate additional closed accounts based on close rate gap improvement
-    const additionalClosed = additionalLeads * (1 - (data.closeRateGapPercent / 100)) + 
-                             (gapsData.mode === 'leadgen' ? baseLeads : baseVisitors) * (data.closeRateGapPercent / 100);
-    
-    // Calculate additional revenue
-    const additionalRevenue = additionalClosed * avgYearlyCustomerValue;
-    
-    // Calculate total revenue
-    const totalRevenue = annualRevenue + additionalRevenue;
-    
-    setData(prev => ({
-      ...prev,
-      additionalAnnualLeads: additionalLeads,
-      additionalAnnualNewAccountsClosed: additionalClosed,
-      additionalAnnualRevenueCreated: additionalRevenue,
-      totalCalculatedAnnualRevenue: totalRevenue
-    }));
-  }, [
-    data.visibilityGapPercent,
-    data.leadGenGapPercent,
-    data.closeRateGapPercent,
-    gapsData,
-    avgYearlyCustomerValue,
-    annualRevenue
-  ]);
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setData({
-      ...data,
-      [name]: parseInt(value)
-    });
-  };
-
   return (
     <div className="card">
-      <h2 className="section-title">Scenario "What-Ifs"</h2>
+      <h2 className="section-title">Scenarios</h2>
       
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Visibility Gap: {formatPercentage(data.visibilityGapPercent / 100)}
-        </label>
-        <input
-          type="range"
-          name="visibilityGapPercent"
-          min="0"
-          max="100"
-          value={data.visibilityGapPercent}
-          onChange={handleSliderChange}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-        />
-      </div>
-      
-      {gapsData.mode === 'leadgen' && (
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Lead Gen Gap: {formatPercentage(data.leadGenGapPercent / 100)}
-          </label>
+        <p className="text-sm text-gray-600 mb-4">
+          Adjust the sliders below to see how improvements in each area would impact your business.
+        </p>
+        
+        <div className="mb-4">
+          <div className="flex justify-between mb-1">
+            <span className="text-sm font-medium">Visibility Reach Improvement</span>
+            <span className="text-sm text-gray-600">{formatPercentage(data.visibilityReachImprovement)}</span>
+          </div>
           <input
             type="range"
-            name="leadGenGapPercent"
+            name="visibilityReachImprovement"
             min="0"
-            max="100"
-            value={data.leadGenGapPercent}
+            max="1"
+            step="0.01"
+            value={data.visibilityReachImprovement}
             onChange={handleSliderChange}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
+          <p className="text-xs text-gray-500 mt-1">
+            What if you could reach more of your potential customers?
+          </p>
         </div>
-      )}
-      
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Close Rate Gap: {formatPercentage(data.closeRateGapPercent / 100)}
-        </label>
-        <input
-          type="range"
-          name="closeRateGapPercent"
-          min="0"
-          max="100"
-          value={data.closeRateGapPercent}
-          onChange={handleSliderChange}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-        />
+        
+        <div className="mb-4">
+          <div className="flex justify-between mb-1">
+            <span className="text-sm font-medium">Lead Generation Improvement</span>
+            <span className="text-sm text-gray-600">{formatPercentage(data.leadGenerationImprovement)}</span>
+          </div>
+          <input
+            type="range"
+            name="leadGenerationImprovement"
+            min="0"
+            max="1"
+            step="0.01"
+            value={data.leadGenerationImprovement}
+            onChange={handleSliderChange}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            What if you could convert more visitors into leads?
+          </p>
+        </div>
+        
+        <div className="mb-4">
+          <div className="flex justify-between mb-1">
+            <span className="text-sm font-medium">Close Rate Improvement</span>
+            <span className="text-sm text-gray-600">{formatPercentage(data.closeRateImprovement)}</span>
+          </div>
+          <input
+            type="range"
+            name="closeRateImprovement"
+            min="0"
+            max="1"
+            step="0.01"
+            value={data.closeRateImprovement}
+            onChange={handleSliderChange}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            What if you could close more of your leads?
+          </p>
+        </div>
       </div>
       
-      {(data.visibilityGapPercent > 0 || data.leadGenGapPercent > 0 || data.closeRateGapPercent > 0) && (
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-blue-800 mb-3">Scenario Results</h3>
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h3 className="font-medium mb-3">Scenario Results</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Additional Leads</p>
+            <p className="font-medium">{Math.round(data.additionalLeads).toLocaleString()}</p>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Additional Annual Leads</p>
-              <p className="font-medium">{Math.round(data.additionalAnnualLeads).toLocaleString()}</p>
-            </div>
-            
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Additional Annual New Accounts Closed</p>
-              <p className="font-medium">{Math.round(data.additionalAnnualNewAccountsClosed).toLocaleString()}</p>
-            </div>
-            
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Additional Annual Revenue Created</p>
-              <p className="font-medium">${Math.round(data.additionalAnnualRevenueCreated).toLocaleString()}</p>
-            </div>
-            
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Total Calculated Annual Revenue</p>
-              <p className="font-medium text-blue-800">${Math.round(data.totalCalculatedAnnualRevenue).toLocaleString()}</p>
-            </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Additional Closed Accounts</p>
+            <p className="font-medium">{Math.round(data.additionalClosedAccounts).toLocaleString()}</p>
+          </div>
+          
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Additional Revenue</p>
+            <p className="font-medium">${Math.round(data.additionalRevenue).toLocaleString()}</p>
+          </div>
+          
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Total Calculated Annual Revenue</p>
+            <p className="font-medium">${Math.round(data.totalCalculatedAnnualRevenue).toLocaleString()}</p>
           </div>
         </div>
-      )}
+      </div>
       
       <div className="mt-4 flex items-center space-x-2">
         {/* Refactored Like button with React event handler */}

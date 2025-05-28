@@ -1,21 +1,23 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { parseHumanFriendlyNumber, formatCurrency, formatPercentage } from '../../utils/numberFormatting';
+import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
 
 interface CurrentMarketingOverviewProps {
   data: {
     channels: Array<{
+      id: string;
       name: string;
       monthlyCost: string;
-      monthlyAdSpend: string;
+      monthlyAdspend: string;
+      totalMonthlyCost: number;
     }>;
     totalMonthlySpend: number;
     totalYearlySpend: number;
-    additionalMonthlySpend: number;
-    percentOfAnnualRevenue: number;
+    additionalMonthlySpendToHit8Percent: number;
+    percentOfAnnualRevenueSpent: number;
   };
-  setData: React.Dispatch<React.SetStateAction<any>>;
+  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
   annualRevenue: number;
 }
 
@@ -30,14 +32,22 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<string[]>([]);
   const [shared, setShared] = useState(false);
+  const [newChannelName, setNewChannelName] = useState('');
+  const [newChannelMonthlyCost, setNewChannelMonthlyCost] = useState('');
+  const [newChannelMonthlyAdspend, setNewChannelMonthlyAdspend] = useState('');
 
-  const handleInputChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const updatedChannels = [...data.channels];
-    updatedChannels[index] = {
-      ...updatedChannels[index],
-      [name]: value
-    };
+  const handleChannelInputChange = (e: React.ChangeEvent<HTMLInputElement>, id: string, field: string) => {
+    const { value } = e.target;
+    
+    const updatedChannels = data.channels.map(channel => {
+      if (channel.id === id) {
+        return {
+          ...channel,
+          [field]: value
+        };
+      }
+      return channel;
+    });
     
     setData({
       ...data,
@@ -45,23 +55,36 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
     });
   };
 
-  const addChannel = () => {
-    setData({
-      ...data,
-      channels: [...data.channels, { name: '', monthlyCost: '', monthlyAdSpend: '' }]
-    });
+  const handleAddChannel = () => {
+    if (newChannelName) {
+      const newChannel = {
+        id: `channel-${Date.now()}`,
+        name: newChannelName,
+        monthlyCost: newChannelMonthlyCost || '0',
+        monthlyAdspend: newChannelMonthlyAdspend || '0',
+        totalMonthlyCost: parseHumanFriendlyNumber(newChannelMonthlyCost) + parseHumanFriendlyNumber(newChannelMonthlyAdspend)
+      };
+      
+      setData({
+        ...data,
+        channels: [...data.channels, newChannel]
+      });
+      
+      setNewChannelName('');
+      setNewChannelMonthlyCost('');
+      setNewChannelMonthlyAdspend('');
+    }
   };
 
-  const removeChannel = (index: number) => {
-    const updatedChannels = [...data.channels];
-    updatedChannels.splice(index, 1);
+  const handleRemoveChannel = (id: string) => {
+    const updatedChannels = data.channels.filter(channel => channel.id !== id);
     
     setData({
       ...data,
       channels: updatedChannels
     });
   };
-
+  
   // Add event handlers for social interactions
   const handleLikeClick = () => {
     setLiked(!liked);
@@ -92,125 +115,183 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
 
   // Calculate totals when channels change
   useEffect(() => {
-    let totalMonthly = 0;
+    // Calculate total monthly spend
+    let totalMonthlySpend = 0;
     
-    data.channels.forEach(channel => {
+    const updatedChannels = data.channels.map(channel => {
       const monthlyCost = parseHumanFriendlyNumber(channel.monthlyCost);
-      const monthlyAdSpend = parseHumanFriendlyNumber(channel.monthlyAdSpend);
+      const monthlyAdspend = parseHumanFriendlyNumber(channel.monthlyAdspend);
+      const totalMonthlyCost = monthlyCost + monthlyAdspend;
       
-      totalMonthly += monthlyCost + monthlyAdSpend;
+      totalMonthlySpend += totalMonthlyCost;
+      
+      return {
+        ...channel,
+        totalMonthlyCost
+      };
     });
     
-    const totalYearly = totalMonthly * 12;
-    const targetYearlySpend = annualRevenue * 0.08; // 8% of annual revenue
-    const additionalMonthlyNeeded = Math.max(0, (targetYearlySpend - totalYearly) / 12);
-    const percentOfRevenue = annualRevenue > 0 ? (totalYearly / annualRevenue) * 100 : 0;
+    // Calculate total yearly spend
+    const totalYearlySpend = totalMonthlySpend * 12;
     
-    setData(prev => ({
-      ...prev,
-      totalMonthlySpend: totalMonthly,
-      totalYearlySpend: totalYearly,
-      additionalMonthlySpend: additionalMonthlyNeeded,
-      percentOfAnnualRevenue: percentOfRevenue
-    }));
-  }, [data.channels, annualRevenue]);
+    // Calculate additional monthly spend to hit 8% of annual revenue
+    const targetMonthlySpend = (annualRevenue * 0.08) / 12;
+    const additionalMonthlySpendToHit8Percent = targetMonthlySpend - totalMonthlySpend;
+    
+    // Calculate percentage of annual revenue spent on marketing
+    const percentOfAnnualRevenueSpent = annualRevenue > 0 ? (totalYearlySpend / annualRevenue) * 100 : 0;
+    
+    setData({
+      ...data,
+      channels: updatedChannels,
+      totalMonthlySpend,
+      totalYearlySpend,
+      additionalMonthlySpendToHit8Percent,
+      percentOfAnnualRevenueSpent
+    });
+  }, [data.channels, annualRevenue, data, setData]);
 
   return (
     <div className="card">
       <h2 className="section-title">Current Marketing Overview</h2>
       
-      <div className="mb-4">
-        <div className="grid grid-cols-12 gap-2 mb-2 font-medium text-gray-700">
-          <div className="col-span-4">Marketing Channel</div>
-          <div className="col-span-3">Monthly Cost</div>
-          <div className="col-span-3">Monthly Ad Spend</div>
-          <div className="col-span-2"></div>
+      <div className="mb-6">
+        <h3 className="card-title">Marketing Channels</h3>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Channel
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Monthly Cost
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Monthly Adspend
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total Monthly
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {data.channels.map(channel => (
+                <tr key={channel.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="text"
+                      value={channel.name}
+                      onChange={(e) => handleChannelInputChange(e, channel.id, 'name')}
+                      className="input-field"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="text"
+                      value={channel.monthlyCost}
+                      onChange={(e) => handleChannelInputChange(e, channel.id, 'monthlyCost')}
+                      className="input-field"
+                      placeholder="e.g. $1k or $1,000"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="text"
+                      value={channel.monthlyAdspend}
+                      onChange={(e) => handleChannelInputChange(e, channel.id, 'monthlyAdspend')}
+                      className="input-field"
+                      placeholder="e.g. $1k or $1,000"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    ${channel.totalMonthlyCost.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => handleRemoveChannel(channel.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="text"
+                    value={newChannelName}
+                    onChange={(e) => setNewChannelName(e.target.value)}
+                    className="input-field"
+                    placeholder="New Channel Name"
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="text"
+                    value={newChannelMonthlyCost}
+                    onChange={(e) => setNewChannelMonthlyCost(e.target.value)}
+                    className="input-field"
+                    placeholder="e.g. $1k or $1,000"
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="text"
+                    value={newChannelMonthlyAdspend}
+                    onChange={(e) => setNewChannelMonthlyAdspend(e.target.value)}
+                    className="input-field"
+                    placeholder="e.g. $1k or $1,000"
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  ${(parseHumanFriendlyNumber(newChannelMonthlyCost) + parseHumanFriendlyNumber(newChannelMonthlyAdspend)).toLocaleString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <button
+                    onClick={handleAddChannel}
+                    className="text-blue-600 hover:text-blue-900"
+                    disabled={!newChannelName}
+                  >
+                    Add Channel
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        
-        {data.channels.map((channel, index) => (
-          <div key={index} className="grid grid-cols-12 gap-2 mb-2">
-            <div className="col-span-4">
-              <input
-                type="text"
-                name="name"
-                value={channel.name}
-                onChange={(e) => handleInputChange(index, e)}
-                className="input-field"
-                placeholder="Channel name"
-              />
-            </div>
-            <div className="col-span-3">
-              <input
-                type="text"
-                name="monthlyCost"
-                value={channel.monthlyCost}
-                onChange={(e) => handleInputChange(index, e)}
-                className="input-field"
-                placeholder="e.g. $500"
-              />
-            </div>
-            <div className="col-span-3">
-              <input
-                type="text"
-                name="monthlyAdSpend"
-                value={channel.monthlyAdSpend}
-                onChange={(e) => handleInputChange(index, e)}
-                className="input-field"
-                placeholder="e.g. $1k"
-              />
-            </div>
-            <div className="col-span-2">
-              {index > 0 && (
-                <button
-                  onClick={() => removeChannel(index)}
-                  className="px-2 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-        
-        <button
-          onClick={addChannel}
-          className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
-        >
-          Add Marketing Channel
-        </button>
       </div>
       
-      <div className="bg-orange-100 p-4 rounded-lg">
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h3 className="font-medium mb-3">Marketing Budget Analysis</h3>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <p className="text-sm text-gray-600 mb-1">Total Monthly Spend</p>
-            <p className="font-medium">{formatCurrency(data.totalMonthlySpend)}</p>
+            <p className="font-medium">${Math.round(data.totalMonthlySpend).toLocaleString()}</p>
           </div>
           
           <div>
             <p className="text-sm text-gray-600 mb-1">Total Yearly Spend</p>
-            <p className="font-medium">{formatCurrency(data.totalYearlySpend)}</p>
+            <p className="font-medium">${Math.round(data.totalYearlySpend).toLocaleString()}</p>
           </div>
           
-          {annualRevenue > 0 && (
-            <>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Additional Monthly Spend to Hit 8% of Annual Revenue</p>
-                <p className="font-medium">{formatCurrency(data.additionalMonthlySpend)}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-600 mb-1">% of Annual Revenue Spent</p>
-                <p className={`font-medium ${
-                  data.percentOfAnnualRevenue < 6 ? 'text-red-600' : 
-                  data.percentOfAnnualRevenue >= 8 ? 'text-green-600' : 
-                  'text-yellow-600'
-                }`}>
-                  {formatPercentage(data.percentOfAnnualRevenue / 100)}
-                </p>
-              </div>
-            </>
-          )}
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Additional Monthly Spend to Hit 8% of Annual Revenue</p>
+            <p className="font-medium">${Math.round(data.additionalMonthlySpendToHit8Percent).toLocaleString()}</p>
+          </div>
+          
+          <div>
+            <p className="text-sm text-gray-600 mb-1">% of Annual Revenue Spent</p>
+            <p className={`font-medium ${data.percentOfAnnualRevenueSpent >= 8 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatPercentage(data.percentOfAnnualRevenueSpent / 100)}
+            </p>
+          </div>
         </div>
       </div>
       

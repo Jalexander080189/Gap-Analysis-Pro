@@ -1,18 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
-import DriveLogoToggle from '../DriveLogoToggle';
+import React, { useState, useEffect } from 'react';
+import { parseHumanFriendlyNumber } from '../../utils/numberFormatting';
 
 interface MarketOverviewProps {
   data: {
     audienceSize: string;
-    buyerPercentage: string;
+    buyerPercent: string;
     avgYearlyCustomerValue: string;
     calculatedBuyers: number;
-    totalMarketRevShare: number;
-    showBack: boolean;
+    totalMarketShareRev: number;
   };
-  setData: React.Dispatch<React.SetStateAction<any>>;
+  setData: React.Dispatch<React.SetStateAction<Record<string, any>>>;
 }
 
 const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
@@ -28,13 +27,6 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
     setData({
       ...data,
       [name]: value
-    });
-  };
-
-  const toggleView = () => {
-    setData({
-      ...data,
-      showBack: !data.showBack
     });
   };
 
@@ -66,111 +58,97 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
     console.log('Share button clicked, new state:', !shared);
   };
 
-  // Calculate values when inputs change
-  React.useEffect(() => {
-    const audienceSize = parseFloat(data.audienceSize.replace(/[^0-9.]/g, '')) || 0;
-    const buyerPercentage = parseFloat(data.buyerPercentage.replace(/[^0-9.]/g, '')) || 0;
-    const avgYearlyCustomerValue = parseFloat(data.avgYearlyCustomerValue.replace(/[^0-9.]/g, '')) || 0;
+  // Calculate derived values when inputs change
+  useEffect(() => {
+    const audienceSize = parseHumanFriendlyNumber(data.audienceSize);
+    const buyerPercent = parseHumanFriendlyNumber(data.buyerPercent) / 100;
+    const avgYearlyCustomerValue = parseHumanFriendlyNumber(data.avgYearlyCustomerValue);
     
-    const calculatedBuyers = audienceSize * (buyerPercentage / 100);
-    const totalMarketRevShare = calculatedBuyers * avgYearlyCustomerValue;
+    const calculatedBuyers = audienceSize * buyerPercent;
+    const totalMarketShareRev = calculatedBuyers * avgYearlyCustomerValue;
     
-    setData(prev => ({
-      ...prev,
+    setData({
+      ...data,
       calculatedBuyers,
-      totalMarketRevShare
-    }));
-  }, [data.audienceSize, data.buyerPercentage, data.avgYearlyCustomerValue]);
+      totalMarketShareRev
+    });
+  }, [data.audienceSize, data.buyerPercent, data.avgYearlyCustomerValue, data, setData]);
 
   return (
-    <div className="card relative">
-      <DriveLogoToggle 
-        showBack={data.showBack} 
-        setShowBack={() => toggleView()} 
-      />
-      
-      <h2 className="section-title">Market Overview</h2>
-      
-      {data.showBack ? (
-        <div className="card-green p-4 rounded-lg">
-          <h3 className="card-title text-green-800">Market Overview - Full View</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Audience Size
-              </label>
-              <input
-                type="text"
-                name="audienceSize"
-                value={data.audienceSize}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="e.g. 1M or 1,000,000"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Buyer %
-              </label>
-              <input
-                type="text"
-                name="buyerPercentage"
-                value={data.buyerPercentage}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="e.g. 5 or 5%"
-              />
-            </div>
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Avg. Yearly Customer Value
-            </label>
-            <input
-              type="text"
-              name="avgYearlyCustomerValue"
-              value={data.avgYearlyCustomerValue}
-              onChange={handleInputChange}
-              className="input-field"
-              placeholder="e.g. 1k or $1,000"
-            />
-          </div>
-          
-          {(data.audienceSize && data.buyerPercentage) && (
-            <div className="bg-green-100 p-3 rounded-lg mb-4">
-              <p className="text-green-800 font-medium">
-                Calculated Buyers: {data.calculatedBuyers.toLocaleString()}
-              </p>
-            </div>
-          )}
-          
-          {(data.audienceSize && data.buyerPercentage && data.avgYearlyCustomerValue) && (
-            <div className="bg-green-100 p-3 rounded-lg">
-              <p className="text-green-800 font-medium">
-                Total Market Rev Share: ${data.totalMarketRevShare.toLocaleString()}
-              </p>
-            </div>
-          )}
+    <div className="card">
+      <div className="card-front">
+        <h2 className="section-title">Market Overview</h2>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Audience Size
+          </label>
+          <input
+            type="text"
+            name="audienceSize"
+            value={data.audienceSize}
+            onChange={handleInputChange}
+            className="input-field"
+            placeholder="e.g. 1M or 1,000,000"
+          />
         </div>
-      ) : (
-        <div className="p-4 border border-green-200 rounded-lg">
-          <h3 className="card-title">Market Overview - Preview</h3>
-          
-          {(data.audienceSize && data.buyerPercentage && data.avgYearlyCustomerValue) ? (
-            <div>
-              <p className="mb-2">Audience Size: {data.audienceSize}</p>
-              <p className="mb-2">Buyer %: {data.buyerPercentage}</p>
-              <p className="mb-2">Avg. Yearly Customer Value: {data.avgYearlyCustomerValue}</p>
-              <p className="font-medium text-green-800">Total Market: ${data.totalMarketRevShare.toLocaleString()}</p>
-            </div>
-          ) : (
-            <p className="text-gray-500 italic">Enter market information to see preview</p>
-          )}
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Buyer %
+          </label>
+          <input
+            type="text"
+            name="buyerPercent"
+            value={data.buyerPercent}
+            onChange={handleInputChange}
+            className="input-field"
+            placeholder="e.g. 10 or 10%"
+          />
         </div>
-      )}
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Avg. Yearly Customer Value
+          </label>
+          <input
+            type="text"
+            name="avgYearlyCustomerValue"
+            value={data.avgYearlyCustomerValue}
+            onChange={handleInputChange}
+            className="input-field"
+            placeholder="e.g. $1k or $1,000"
+          />
+        </div>
+        
+        <button
+          onClick={() => document.getElementById('market-overview-card')?.classList.toggle('flipped')}
+          className="button-secondary"
+        >
+          View Back
+        </button>
+      </div>
+      
+      <div className="card-back">
+        <h2 className="section-title">Market Overview Results</h2>
+        
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 mb-1">Calculated Buyers</p>
+          <p className="font-medium">{Math.round(data.calculatedBuyers).toLocaleString()}</p>
+        </div>
+        
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 mb-1">Total Market Share Rev</p>
+          <p className="font-medium">${Math.round(data.totalMarketShareRev).toLocaleString()}</p>
+        </div>
+        
+        <button
+          onClick={() => document.getElementById('market-overview-card')?.classList.toggle('flipped')}
+          className="button-secondary"
+        >
+          View Front
+        </button>
+      </div>
       
       <div className="mt-4 flex items-center space-x-2">
         {/* Refactored Like button with React event handler */}

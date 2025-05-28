@@ -1,33 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { parseHumanFriendlyNumber, formatCurrency } from '../../utils/numberFormatting';
+import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
 
 interface SBAMarketingBudgetProps {
   data: {
     annualRevenue: string;
-    years: Array<{
-      startRevenue: number;
-      spendIncrease: number;
-      yearlyBudget: number;
-      monthlyBudget: number;
-      minimumROI: number;
-      endRevenue: number;
-      percentIncrease: number;
-      customers: {
-        annual: number;
-        monthly: number;
-        weekly: number;
-        daily: number;
-      };
-    }>;
-    worstCaseRevenue: number;
-    worstCaseSpend: number;
+    recommendedMarketingBudget: number;
+    recommendedMonthlyBudget: number;
+    currentMonthlySpend: number;
+    additionalMonthlyBudgetNeeded: number;
+    percentOfRevenueSpent: number;
   };
-  setData: React.Dispatch<React.SetStateAction<any>>;
+  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  totalMonthlySpend: number;
 }
 
-const SBAMarketingBudget: React.FC<SBAMarketingBudgetProps> = ({ data, setData }) => {
+const SBAMarketingBudget: React.FC<SBAMarketingBudgetProps> = ({ 
+  data, 
+  setData, 
+  totalMonthlySpend 
+}) => {
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
@@ -42,7 +35,7 @@ const SBAMarketingBudget: React.FC<SBAMarketingBudgetProps> = ({ data, setData }
       [name]: value
     });
   };
-
+  
   // Add event handlers for social interactions
   const handleLikeClick = () => {
     setLiked(!liked);
@@ -71,203 +64,99 @@ const SBAMarketingBudget: React.FC<SBAMarketingBudgetProps> = ({ data, setData }
     console.log('Share button clicked, new state:', !shared);
   };
 
-  // Calculate 5-year forecast when annual revenue changes
+  // Calculate budget recommendations when inputs change
   useEffect(() => {
     const annualRevenue = parseHumanFriendlyNumber(data.annualRevenue);
-    if (annualRevenue <= 0) return;
     
-    const years = [];
-    let currentRevenue = annualRevenue;
-    let totalSpend = 0;
+    // SBA recommends 7-8% of revenue for marketing
+    const recommendedMarketingBudget = annualRevenue * 0.08;
+    const recommendedMonthlyBudget = recommendedMarketingBudget / 12;
     
-    for (let i = 0; i < 5; i++) {
-      const startRevenue = currentRevenue;
-      const yearlyBudget = startRevenue * 0.08; // 8% of revenue
-      const monthlyBudget = yearlyBudget / 12;
-      const minimumROI = yearlyBudget * 3; // 3x ROI
-      const endRevenue = startRevenue + minimumROI;
-      const percentIncrease = (endRevenue - startRevenue) / startRevenue * 100;
-      const spendIncrease = i > 0 ? yearlyBudget - years[i-1].yearlyBudget : 0;
-      
-      // Calculate customers needed for 3x ROI
-      const avgCustomerValue = 1000; // Placeholder, should be from Market Overview
-      const annualCustomers = minimumROI / avgCustomerValue;
-      const monthlyCustomers = annualCustomers / 12;
-      const weeklyCustomers = monthlyCustomers / 4.33;
-      const dailyCustomers = weeklyCustomers / 7;
-      
-      years.push({
-        startRevenue,
-        spendIncrease,
-        yearlyBudget,
-        monthlyBudget,
-        minimumROI,
-        endRevenue,
-        percentIncrease,
-        customers: {
-          annual: annualCustomers,
-          monthly: monthlyCustomers,
-          weekly: weeklyCustomers,
-          daily: dailyCustomers
-        }
-      });
-      
-      currentRevenue = endRevenue;
-      totalSpend += yearlyBudget;
-    }
+    // Calculate additional budget needed
+    const additionalMonthlyBudgetNeeded = recommendedMonthlyBudget - totalMonthlySpend;
     
-    setData(prev => ({
-      ...prev,
-      years,
-      worstCaseRevenue: years[4].endRevenue,
-      worstCaseSpend: totalSpend
-    }));
-  }, [data.annualRevenue]);
+    // Calculate percentage of revenue spent
+    const percentOfRevenueSpent = annualRevenue > 0 ? (totalMonthlySpend * 12) / annualRevenue : 0;
+    
+    setData({
+      ...data,
+      recommendedMarketingBudget,
+      recommendedMonthlyBudget,
+      currentMonthlySpend: totalMonthlySpend,
+      additionalMonthlyBudgetNeeded,
+      percentOfRevenueSpent
+    });
+  }, [data.annualRevenue, totalMonthlySpend, data, setData]);
 
   return (
     <div className="card">
-      <h2 className="section-title">SBA 5-Year Marketing Budget Forecast</h2>
+      <h2 className="section-title">SBA Marketing Budget</h2>
       
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Annual Revenue
-        </label>
-        <input
-          type="text"
-          name="annualRevenue"
-          value={data.annualRevenue}
-          onChange={handleInputChange}
-          className="input-field"
-          placeholder="e.g. 1M or $1,000,000"
-        />
+      <div className="mb-6">
+        <p className="text-sm text-gray-600 mb-4">
+          The Small Business Administration (SBA) recommends that businesses spend 7-8% of their gross revenue on marketing.
+        </p>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Annual Revenue
+          </label>
+          <input
+            type="text"
+            name="annualRevenue"
+            value={data.annualRevenue}
+            onChange={handleInputChange}
+            className="input-field"
+            placeholder="e.g. $1M or $1,000,000"
+          />
+        </div>
       </div>
       
-      {parseHumanFriendlyNumber(data.annualRevenue) > 0 && (
-        <>
-          <div className="overflow-x-auto mb-4">
-            <table className="min-w-full bg-white border border-gray-200">
-              <thead>
-                <tr>
-                  <th className="py-2 px-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Metric
-                  </th>
-                  {data.years.map((_, index) => (
-                    <th key={index} className="py-2 px-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Year {index + 1}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="py-2 px-3 border-b border-gray-200 text-sm">Start of Year Revenue</td>
-                  {data.years.map((year, index) => (
-                    <td key={index} className="py-2 px-3 border-b border-gray-200 text-sm">
-                      {formatCurrency(year.startRevenue)}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="py-2 px-3 border-b border-gray-200 text-sm">Spend Increase</td>
-                  {data.years.map((year, index) => (
-                    <td key={index} className="py-2 px-3 border-b border-gray-200 text-sm">
-                      {formatCurrency(year.spendIncrease)}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="py-2 px-3 border-b border-gray-200 text-sm">Yearly Marketing Budget (8%)</td>
-                  {data.years.map((year, index) => (
-                    <td key={index} className="py-2 px-3 border-b border-gray-200 text-sm">
-                      {formatCurrency(year.yearlyBudget)}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="py-2 px-3 border-b border-gray-200 text-sm">Monthly Marketing Budget</td>
-                  {data.years.map((year, index) => (
-                    <td key={index} className="py-2 px-3 border-b border-gray-200 text-sm">
-                      {formatCurrency(year.monthlyBudget)}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="py-2 px-3 border-b border-gray-200 text-sm">Minimum 3× ROI</td>
-                  {data.years.map((year, index) => (
-                    <td key={index} className="py-2 px-3 border-b border-gray-200 text-sm">
-                      {formatCurrency(year.minimumROI)}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="py-2 px-3 border-b border-gray-200 text-sm">End-of-Year Revenue</td>
-                  {data.years.map((year, index) => (
-                    <td key={index} className="py-2 px-3 border-b border-gray-200 text-sm">
-                      {formatCurrency(year.endRevenue)}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="py-2 px-3 border-b border-gray-200 text-sm">% Revenue Increase</td>
-                  {data.years.map((year, index) => (
-                    <td key={index} className="py-2 px-3 border-b border-gray-200 text-sm">
-                      {year.percentIncrease.toFixed(1)}%
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="py-2 px-3 border-b border-gray-200 text-sm"># Customers for 3× ROI (Annual)</td>
-                  {data.years.map((year, index) => (
-                    <td key={index} className="py-2 px-3 border-b border-gray-200 text-sm">
-                      {Math.round(year.customers.annual).toLocaleString()}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="py-2 px-3 border-b border-gray-200 text-sm"># Customers for 3× ROI (Monthly)</td>
-                  {data.years.map((year, index) => (
-                    <td key={index} className="py-2 px-3 border-b border-gray-200 text-sm">
-                      {Math.round(year.customers.monthly).toLocaleString()}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="py-2 px-3 border-b border-gray-200 text-sm"># Customers for 3× ROI (Weekly)</td>
-                  {data.years.map((year, index) => (
-                    <td key={index} className="py-2 px-3 border-b border-gray-200 text-sm">
-                      {Math.round(year.customers.weekly).toLocaleString()}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="py-2 px-3 border-b border-gray-200 text-sm"># Customers for 3× ROI (Daily)</td>
-                  {data.years.map((year, index) => (
-                    <td key={index} className="py-2 px-3 border-b border-gray-200 text-sm">
-                      {Math.round(year.customers.daily).toLocaleString()}
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h3 className="font-medium mb-3">Budget Recommendations</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Recommended Marketing Budget (8%)</p>
+            <p className="font-medium">${Math.round(data.recommendedMarketingBudget).toLocaleString()}/year</p>
           </div>
           
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold text-blue-800 mb-3">Summary</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Worst-Case 5-Year Annual Revenue</p>
-                <p className="font-medium">{formatCurrency(data.worstCaseRevenue)}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-600 mb-1">5-Year Marketing Spend</p>
-                <p className="font-medium">{formatCurrency(data.worstCaseSpend)}</p>
-              </div>
-            </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Recommended Monthly Budget</p>
+            <p className="font-medium">${Math.round(data.recommendedMonthlyBudget).toLocaleString()}/month</p>
           </div>
-        </>
-      )}
+          
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Current Monthly Spend</p>
+            <p className="font-medium">${Math.round(data.currentMonthlySpend).toLocaleString()}/month</p>
+          </div>
+          
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Additional Monthly Budget Needed</p>
+            <p className="font-medium">${Math.round(data.additionalMonthlyBudgetNeeded).toLocaleString()}/month</p>
+          </div>
+          
+          <div className="md:col-span-2">
+            <p className="text-sm text-gray-600 mb-1">Percentage of Revenue Spent on Marketing</p>
+            <div className="flex items-center">
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
+                <div 
+                  className={`h-2.5 rounded-full ${data.percentOfRevenueSpent >= 0.08 ? 'bg-green-600' : 'bg-red-600'}`} 
+                  style={{ width: `${Math.min(data.percentOfRevenueSpent * 100, 100)}%` }}
+                ></div>
+              </div>
+              <span className={`text-sm font-medium ${data.percentOfRevenueSpent >= 0.08 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatPercentage(data.percentOfRevenueSpent)}
+              </span>
+            </div>
+            <p className="text-xs mt-1">
+              {data.percentOfRevenueSpent >= 0.08 
+                ? 'You are meeting or exceeding the SBA recommendation.' 
+                : 'You are below the SBA recommended marketing budget.'}
+            </p>
+          </div>
+        </div>
+      </div>
       
       <div className="mt-4 flex items-center space-x-2">
         {/* Refactored Like button with React event handler */}

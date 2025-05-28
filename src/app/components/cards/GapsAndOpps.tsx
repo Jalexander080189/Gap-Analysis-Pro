@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import DriveLogoToggle from '../DriveLogoToggle';
+import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
 
 interface GapsAndOppsProps {
   data: {
@@ -20,19 +20,12 @@ interface GapsAndOppsProps {
       visibilityReachGap: number;
       closeRateGap: number;
     };
-    showBack: boolean;
   };
-  setData: React.Dispatch<React.SetStateAction<any>>;
-  annualRevenue: number;
+  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
   calculatedBuyers: number;
 }
 
-const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ 
-  data, 
-  setData, 
-  annualRevenue,
-  calculatedBuyers
-}) => {
+const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuyers }) => {
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
@@ -40,40 +33,31 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
   const [comments, setComments] = useState<string[]>([]);
   const [shared, setShared] = useState(false);
 
+  const handleModeChange = (mode: string) => {
+    setData({
+      ...data,
+      mode
+    });
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
-    if (data.mode === 'leadgen') {
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
       setData({
         ...data,
-        leadgen: {
-          ...data.leadgen,
-          [name]: value
+        [parent]: {
+          ...data[parent as keyof typeof data] as Record<string, unknown>,
+          [child]: value
         }
       });
     } else {
       setData({
         ...data,
-        retail: {
-          ...data.retail,
-          [name]: value
-        }
+        [name]: value
       });
     }
-  };
-
-  const toggleView = () => {
-    setData({
-      ...data,
-      showBack: !data.showBack
-    });
-  };
-
-  const toggleMode = () => {
-    setData({
-      ...data,
-      mode: data.mode === 'leadgen' ? 'retail' : 'leadgen'
-    });
   };
 
   // Add event handlers for social interactions
@@ -104,300 +88,260 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
     console.log('Share button clicked, new state:', !shared);
   };
 
-  // Calculate gaps for Lead Gen mode
+  // Calculate lead gen gaps when inputs change
   useEffect(() => {
-    if (data.mode !== 'leadgen') return;
-    
-    const visitors = parseFloat(data.leadgen.annualWebsiteVisitors.replace(/[^0-9.]/g, '')) || 0;
-    const leads = parseFloat(data.leadgen.annualLeadsGenerated.replace(/[^0-9.]/g, '')) || 0;
-    const closed = parseFloat(data.leadgen.annualNewAccountsClosed.replace(/[^0-9.]/g, '')) || 0;
-    
-    // Visibility Reach Gap = (Calculated buyers total - Yearly website visitors) / Calculated buyers total
-    const visibilityReachGap = calculatedBuyers > 0 ? 
-      Math.min(Math.max((calculatedBuyers - visitors) / calculatedBuyers, 0), 1) : 0;
-    
-    // Lead Conversion Gap = (Yearly Website Visitors - Yearly Leads) / Yearly Website Visitors
-    const leadGenGap = visitors > 0 ? 
-      Math.min(Math.max((visitors - leads) / visitors, 0), 1) : 0;
-    
-    // Close Rate Gap = (Yearly Leads - Yearly New Closed Accounts) / Yearly Leads
-    const closeRateGap = leads > 0 ? 
-      Math.min(Math.max((leads - closed) / leads, 0), 1) : 0;
-    
-    setData(prev => ({
-      ...prev,
-      leadgen: {
-        ...prev.leadgen,
-        visibilityReachGap,
-        leadGenGap,
-        closeRateGap
-      }
-    }));
+    if (data.mode === 'leadgen') {
+      const annualWebsiteVisitors = parseHumanFriendlyNumber(data.leadgen.annualWebsiteVisitors);
+      const annualLeadsGenerated = parseHumanFriendlyNumber(data.leadgen.annualLeadsGenerated);
+      const annualNewAccountsClosed = parseHumanFriendlyNumber(data.leadgen.annualNewAccountsClosed);
+      
+      // Calculate visibility reach gap
+      const visibilityReachGap = calculatedBuyers > 0 ? 1 - (annualWebsiteVisitors / calculatedBuyers) : 0;
+      
+      // Calculate lead gen gap
+      const leadGenGap = annualWebsiteVisitors > 0 ? 1 - (annualLeadsGenerated / annualWebsiteVisitors) : 0;
+      
+      // Calculate close rate gap
+      const closeRateGap = annualLeadsGenerated > 0 ? 1 - (annualNewAccountsClosed / annualLeadsGenerated) : 0;
+      
+      setData({
+        ...data,
+        leadgen: {
+          ...data.leadgen,
+          visibilityReachGap: Math.min(1, Math.max(0, visibilityReachGap)),
+          leadGenGap: Math.min(1, Math.max(0, leadGenGap)),
+          closeRateGap: Math.min(1, Math.max(0, closeRateGap))
+        }
+      });
+    }
   }, [
-    data.mode, 
-    data.leadgen.annualWebsiteVisitors, 
-    data.leadgen.annualLeadsGenerated, 
+    data.mode,
+    data.leadgen.annualWebsiteVisitors,
+    data.leadgen.annualLeadsGenerated,
     data.leadgen.annualNewAccountsClosed,
-    calculatedBuyers
+    calculatedBuyers,
+    data,
+    setData
   ]);
 
-  // Calculate gaps for Retail mode
+  // Calculate retail gaps when inputs change
   useEffect(() => {
-    if (data.mode !== 'retail') return;
-    
-    const visitors = parseFloat(data.retail.annualStoreVisitors.replace(/[^0-9.]/g, '')) || 0;
-    const closed = parseFloat(data.retail.annualNewAccountsClosed.replace(/[^0-9.]/g, '')) || 0;
-    
-    // Visibility Reach Gap = (Visitors - Closed) / Visitors
-    const visibilityReachGap = calculatedBuyers > 0 ? 
-      Math.min(Math.max((calculatedBuyers - visitors) / calculatedBuyers, 0), 1) : 0;
-    
-    // Close Rate Gap = (Closed / Visitors)
-    const closeRateGap = visitors > 0 ? 
-      Math.min(Math.max((visitors - closed) / visitors, 0), 1) : 0;
-    
-    setData(prev => ({
-      ...prev,
-      retail: {
-        ...prev.retail,
-        visibilityReachGap,
-        closeRateGap
-      }
-    }));
+    if (data.mode === 'retail') {
+      const annualStoreVisitors = parseHumanFriendlyNumber(data.retail.annualStoreVisitors);
+      const annualNewAccountsClosed = parseHumanFriendlyNumber(data.retail.annualNewAccountsClosed);
+      
+      // Calculate visibility reach gap
+      const visibilityReachGap = calculatedBuyers > 0 ? 1 - (annualStoreVisitors / calculatedBuyers) : 0;
+      
+      // Calculate close rate gap
+      const closeRateGap = annualStoreVisitors > 0 ? 1 - (annualNewAccountsClosed / annualStoreVisitors) : 0;
+      
+      setData({
+        ...data,
+        retail: {
+          ...data.retail,
+          visibilityReachGap: Math.min(1, Math.max(0, visibilityReachGap)),
+          closeRateGap: Math.min(1, Math.max(0, closeRateGap))
+        }
+      });
+    }
   }, [
-    data.mode, 
-    data.retail.annualStoreVisitors, 
+    data.mode,
+    data.retail.annualStoreVisitors,
     data.retail.annualNewAccountsClosed,
-    calculatedBuyers
+    calculatedBuyers,
+    data,
+    setData
   ]);
 
   return (
-    <div className="card relative">
-      <DriveLogoToggle 
-        showBack={data.showBack} 
-        setShowBack={() => toggleView()} 
-      />
-      
+    <div className="card">
       <h2 className="section-title">Gaps & Opportunities</h2>
       
       <div className="mb-4">
-        <button
-          className={`mr-2 px-3 py-1 rounded-md ${data.mode === 'leadgen' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-          onClick={() => data.mode !== 'leadgen' && toggleMode()}
-        >
-          Lead Gen
-        </button>
-        <button
-          className={`px-3 py-1 rounded-md ${data.mode === 'retail' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-          onClick={() => data.mode !== 'retail' && toggleMode()}
-        >
-          Retail
-        </button>
+        <div className="flex space-x-4 mb-4">
+          <button
+            onClick={() => handleModeChange('leadgen')}
+            className={`px-4 py-2 rounded-md ${
+              data.mode === 'leadgen' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+            }`}
+          >
+            Lead Gen Business
+          </button>
+          <button
+            onClick={() => handleModeChange('retail')}
+            className={`px-4 py-2 rounded-md ${
+              data.mode === 'retail' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+            }`}
+          >
+            Retail Business
+          </button>
+        </div>
+        
+        {data.mode === 'leadgen' ? (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Annual Website Visitors
+              </label>
+              <input
+                type="text"
+                name="leadgen.annualWebsiteVisitors"
+                value={data.leadgen.annualWebsiteVisitors}
+                onChange={handleInputChange}
+                className="input-field"
+                placeholder="e.g. 10k or 10,000"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Annual Leads Generated
+              </label>
+              <input
+                type="text"
+                name="leadgen.annualLeadsGenerated"
+                value={data.leadgen.annualLeadsGenerated}
+                onChange={handleInputChange}
+                className="input-field"
+                placeholder="e.g. 1k or 1,000"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Annual New Accounts Closed
+              </label>
+              <input
+                type="text"
+                name="leadgen.annualNewAccountsClosed"
+                value={data.leadgen.annualNewAccountsClosed}
+                onChange={handleInputChange}
+                className="input-field"
+                placeholder="e.g. 100"
+              />
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium mb-3">Gap Analysis</h3>
+              
+              <div className="mb-4">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm text-gray-600">Visibility Reach Gap</span>
+                  <span className="text-sm font-medium">{formatPercentage(data.leadgen.visibilityReachGap)}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-red-600 h-2.5 rounded-full" 
+                    style={{ width: `${data.leadgen.visibilityReachGap * 100}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-red-600 mt-1">
+                  {formatPercentage(data.leadgen.visibilityReachGap)} of all buyers in market didn&apos;t even look at your company as an option!
+                </p>
+              </div>
+              
+              <div className="mb-4">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm text-gray-600">Lead Gen Gap</span>
+                  <span className="text-sm font-medium">{formatPercentage(data.leadgen.leadGenGap)}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-red-600 h-2.5 rounded-full" 
+                    style={{ width: `${data.leadgen.leadGenGap * 100}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-red-600 mt-1">
+                  {formatPercentage(data.leadgen.leadGenGap)} of all buyers that researched you didn&apos;t even leave a name or contact info?!? If you can&apos;t identify them how can you sell them?
+                </p>
+              </div>
+              
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm text-gray-600">Close Rate Gap</span>
+                  <span className="text-sm font-medium">{formatPercentage(data.leadgen.closeRateGap)}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-red-600 h-2.5 rounded-full" 
+                    style={{ width: `${data.leadgen.closeRateGap * 100}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-red-600 mt-1">
+                  {formatPercentage(data.leadgen.closeRateGap)} of all opportunities given you are saying no too! Why?
+                </p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Annual Store Visitors
+              </label>
+              <input
+                type="text"
+                name="retail.annualStoreVisitors"
+                value={data.retail.annualStoreVisitors}
+                onChange={handleInputChange}
+                className="input-field"
+                placeholder="e.g. 10k or 10,000"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Annual New Accounts Closed
+              </label>
+              <input
+                type="text"
+                name="retail.annualNewAccountsClosed"
+                value={data.retail.annualNewAccountsClosed}
+                onChange={handleInputChange}
+                className="input-field"
+                placeholder="e.g. 1k or 1,000"
+              />
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium mb-3">Gap Analysis</h3>
+              
+              <div className="mb-4">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm text-gray-600">Visibility Reach Gap</span>
+                  <span className="text-sm font-medium">{formatPercentage(data.retail.visibilityReachGap)}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-red-600 h-2.5 rounded-full" 
+                    style={{ width: `${data.retail.visibilityReachGap * 100}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-red-600 mt-1">
+                  {formatPercentage(data.retail.visibilityReachGap)} of all buyers in market didn&apos;t even look at your company as an option!
+                </p>
+              </div>
+              
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm text-gray-600">Close Rate Gap</span>
+                  <span className="text-sm font-medium">{formatPercentage(data.retail.closeRateGap)}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-red-600 h-2.5 rounded-full" 
+                    style={{ width: `${data.retail.closeRateGap * 100}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-red-600 mt-1">
+                  {formatPercentage(data.retail.closeRateGap)} of all opportunities given you are saying no too! Why?
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-      
-      {data.showBack ? (
-        <div className="card-red p-4 rounded-lg">
-          <h3 className="card-title text-red-800">Gaps & Opportunities - Full View</h3>
-          
-          {data.mode === 'leadgen' ? (
-            <div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Annual Website Visitors
-                  </label>
-                  <input
-                    type="text"
-                    name="annualWebsiteVisitors"
-                    value={data.leadgen.annualWebsiteVisitors}
-                    onChange={handleInputChange}
-                    className="input-field"
-                    placeholder="e.g. 10k or 10,000"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Annual Leads Generated
-                  </label>
-                  <input
-                    type="text"
-                    name="annualLeadsGenerated"
-                    value={data.leadgen.annualLeadsGenerated}
-                    onChange={handleInputChange}
-                    className="input-field"
-                    placeholder="e.g. 1k or 1,000"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Annual New Accounts Closed
-                  </label>
-                  <input
-                    type="text"
-                    name="annualNewAccountsClosed"
-                    value={data.leadgen.annualNewAccountsClosed}
-                    onChange={handleInputChange}
-                    className="input-field"
-                    placeholder="e.g. 100"
-                  />
-                </div>
-              </div>
-              
-              {(calculatedBuyers > 0 && data.leadgen.annualWebsiteVisitors) && (
-                <div className="bg-red-100 p-3 rounded-lg mb-4">
-                  <p className="text-red-800 font-medium">
-                    Visibility Reach Gap: {(data.leadgen.visibilityReachGap * 100).toFixed(0)}%
-                  </p>
-                  <p className="text-red-700 text-sm">
-                    {(data.leadgen.visibilityReachGap * 100).toFixed(0)}% of all buyers in market didn't even look at your company as an option!
-                  </p>
-                  {annualRevenue > 0 && (
-                    <p className="text-red-800 font-medium mt-1">
-                      Dollar Lost: ${(data.leadgen.visibilityReachGap * annualRevenue).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-              )}
-              
-              {(data.leadgen.annualWebsiteVisitors && data.leadgen.annualLeadsGenerated) && (
-                <div className="bg-red-100 p-3 rounded-lg mb-4">
-                  <p className="text-red-800 font-medium">
-                    Lead Conversion Gap: {(data.leadgen.leadGenGap * 100).toFixed(0)}%
-                  </p>
-                  <p className="text-red-700 text-sm">
-                    {(data.leadgen.leadGenGap * 100).toFixed(0)}% of all buyers that researched you didn't even leave a name or contact info?!? If you can't identify them how can you sell them?
-                  </p>
-                  {annualRevenue > 0 && (
-                    <p className="text-red-800 font-medium mt-1">
-                      Dollar Lost: ${(data.leadgen.leadGenGap * annualRevenue).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-              )}
-              
-              {(data.leadgen.annualLeadsGenerated && data.leadgen.annualNewAccountsClosed) && (
-                <div className="bg-red-100 p-3 rounded-lg">
-                  <p className="text-red-800 font-medium">
-                    Close Rate Gap: {(data.leadgen.closeRateGap * 100).toFixed(0)}%
-                  </p>
-                  <p className="text-red-700 text-sm">
-                    {(data.leadgen.closeRateGap * 100).toFixed(0)}% of all opportunities given you are saying no too! Why?
-                  </p>
-                  {annualRevenue > 0 && (
-                    <p className="text-red-800 font-medium mt-1">
-                      Dollar Lost: ${(data.leadgen.closeRateGap * annualRevenue).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Annual Store Visitors
-                  </label>
-                  <input
-                    type="text"
-                    name="annualStoreVisitors"
-                    value={data.retail.annualStoreVisitors}
-                    onChange={handleInputChange}
-                    className="input-field"
-                    placeholder="e.g. 10k or 10,000"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Annual New Accounts Closed
-                  </label>
-                  <input
-                    type="text"
-                    name="annualNewAccountsClosed"
-                    value={data.retail.annualNewAccountsClosed}
-                    onChange={handleInputChange}
-                    className="input-field"
-                    placeholder="e.g. 1k or 1,000"
-                  />
-                </div>
-              </div>
-              
-              {(calculatedBuyers > 0 && data.retail.annualStoreVisitors) && (
-                <div className="bg-red-100 p-3 rounded-lg mb-4">
-                  <p className="text-red-800 font-medium">
-                    Visibility Reach Gap: {(data.retail.visibilityReachGap * 100).toFixed(0)}%
-                  </p>
-                  <p className="text-red-700 text-sm">
-                    {(data.retail.visibilityReachGap * 100).toFixed(0)}% of all buyers in market didn't even look at your company as an option!
-                  </p>
-                  {annualRevenue > 0 && (
-                    <p className="text-red-800 font-medium mt-1">
-                      Dollar Lost: ${(data.retail.visibilityReachGap * annualRevenue).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-              )}
-              
-              {(data.retail.annualStoreVisitors && data.retail.annualNewAccountsClosed) && (
-                <div className="bg-red-100 p-3 rounded-lg">
-                  <p className="text-red-800 font-medium">
-                    Close Rate Gap: {(data.retail.closeRateGap * 100).toFixed(0)}%
-                  </p>
-                  <p className="text-red-700 text-sm">
-                    {(data.retail.closeRateGap * 100).toFixed(0)}% of all opportunities given you are saying no too! Why?
-                  </p>
-                  {annualRevenue > 0 && (
-                    <p className="text-red-800 font-medium mt-1">
-                      Dollar Lost: ${(data.retail.closeRateGap * annualRevenue).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="p-4 border border-red-200 rounded-lg">
-          <h3 className="card-title">Gaps & Opportunities - Preview</h3>
-          
-          {data.mode === 'leadgen' ? (
-            <div>
-              {(data.leadgen.annualWebsiteVisitors && data.leadgen.annualLeadsGenerated && data.leadgen.annualNewAccountsClosed) ? (
-                <div>
-                  <p className="mb-2">Annual Website Visitors: {data.leadgen.annualWebsiteVisitors}</p>
-                  <p className="mb-2">Annual Leads Generated: {data.leadgen.annualLeadsGenerated}</p>
-                  <p className="mb-2">Annual New Accounts Closed: {data.leadgen.annualNewAccountsClosed}</p>
-                  <div className="mt-3">
-                    <p className="font-medium text-red-800">Visibility Gap: {(data.leadgen.visibilityReachGap * 100).toFixed(0)}%</p>
-                    <p className="font-medium text-red-800">Lead Conversion Gap: {(data.leadgen.leadGenGap * 100).toFixed(0)}%</p>
-                    <p className="font-medium text-red-800">Close Rate Gap: {(data.leadgen.closeRateGap * 100).toFixed(0)}%</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-500 italic">Enter lead generation information to see preview</p>
-              )}
-            </div>
-          ) : (
-            <div>
-              {(data.retail.annualStoreVisitors && data.retail.annualNewAccountsClosed) ? (
-                <div>
-                  <p className="mb-2">Annual Store Visitors: {data.retail.annualStoreVisitors}</p>
-                  <p className="mb-2">Annual New Accounts Closed: {data.retail.annualNewAccountsClosed}</p>
-                  <div className="mt-3">
-                    <p className="font-medium text-red-800">Visibility Gap: {(data.retail.visibilityReachGap * 100).toFixed(0)}%</p>
-                    <p className="font-medium text-red-800">Close Rate Gap: {(data.retail.closeRateGap * 100).toFixed(0)}%</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-500 italic">Enter retail information to see preview</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
       
       <div className="mt-4 flex items-center space-x-2">
         {/* Refactored Like button with React event handler */}

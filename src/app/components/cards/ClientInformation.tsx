@@ -25,7 +25,7 @@ interface ClientInformationProps {
     businessOverview: string;
     saved: boolean;
   };
-  setData: React.Dispatch<React.SetStateAction<any>>;
+  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 }
 
 const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) => {
@@ -46,7 +46,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
       setData({
         ...data,
         [parent]: {
-          ...data[parent as keyof typeof data],
+          ...data[parent as keyof typeof data] as Record<string, unknown>,
           [child]: value
         }
       });
@@ -82,7 +82,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
       saved: false
     });
   };
-
+  
   // Add event handlers for social interactions
   const handleLikeClick = () => {
     setLiked(!liked);
