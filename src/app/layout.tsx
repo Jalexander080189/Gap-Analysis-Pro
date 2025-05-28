@@ -1,5 +1,6 @@
 import React from 'react';
-import '../globals.css'; // Make sure this import is present
+// Remove or correct this import based on your project structure
+// import '../globals.css';
 
 export const metadata = {
   title: 'Gap Analysis Pro',
@@ -19,5 +20,6 @@ export default function RootLayout({
       </head>
       <body>{children}</body>
     </html>
-  )
+   )
 }
+
