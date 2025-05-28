@@ -3,15 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { parseHumanFriendlyNumber } from '../../utils/numberFormatting';
 
+// Define the exact type to match clientpage.tsx
+interface MarketData {
+  audienceSize: string;
+  buyerPercentage: string;
+  avgYearlyCustomerValue: string;
+  calculatedBuyers: number;
+  totalMarketRevShare: number;
+  showBack: boolean;
+}
+
 interface MarketOverviewProps {
-  data: {
-    audienceSize: string;
-    buyerPercent: string;
-    avgYearlyCustomerValue: string;
-    calculatedBuyers: number;
-    totalMarketShareRev: number;
-  };
-  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  data: MarketData;
+  setData: React.Dispatch<React.SetStateAction<MarketData>>;
 }
 
 const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
@@ -61,18 +65,18 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
   // Calculate derived values when inputs change
   useEffect(() => {
     const audienceSize = parseHumanFriendlyNumber(data.audienceSize);
-    const buyerPercent = parseHumanFriendlyNumber(data.buyerPercent) / 100;
+    const buyerPercentage = parseHumanFriendlyNumber(data.buyerPercentage) / 100;
     const avgYearlyCustomerValue = parseHumanFriendlyNumber(data.avgYearlyCustomerValue);
     
-    const calculatedBuyers = audienceSize * buyerPercent;
-    const totalMarketShareRev = calculatedBuyers * avgYearlyCustomerValue;
+    const calculatedBuyers = audienceSize * buyerPercentage;
+    const totalMarketRevShare = calculatedBuyers * avgYearlyCustomerValue;
     
     setData({
       ...data,
       calculatedBuyers,
-      totalMarketShareRev
+      totalMarketRevShare
     });
-  }, [data.audienceSize, data.buyerPercent, data.avgYearlyCustomerValue, data, setData]);
+  }, [data.audienceSize, data.buyerPercentage, data.avgYearlyCustomerValue, data, setData]);
 
   return (
     <div className="card">
@@ -99,8 +103,8 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
           </label>
           <input
             type="text"
-            name="buyerPercent"
-            value={data.buyerPercent}
+            name="buyerPercentage"
+            value={data.buyerPercentage}
             onChange={handleInputChange}
             className="input-field"
             placeholder="e.g. 10 or 10%"
@@ -122,33 +126,35 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
         </div>
         
         <button
-          onClick={() => document.getElementById('market-overview-card')?.classList.toggle('flipped')}
+          onClick={() => setData({ ...data, showBack: !data.showBack })}
           className="button-secondary"
         >
           View Back
         </button>
       </div>
       
-      <div className="card-back">
-        <h2 className="section-title">Market Overview Results</h2>
-        
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-1">Calculated Buyers</p>
-          <p className="font-medium">{Math.round(data.calculatedBuyers).toLocaleString()}</p>
+      {data.showBack && (
+        <div className="card-back">
+          <h2 className="section-title">Market Overview Results</h2>
+          
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 mb-1">Calculated Buyers</p>
+            <p className="font-medium">{Math.round(data.calculatedBuyers).toLocaleString()}</p>
+          </div>
+          
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 mb-1">Total Market Share Rev</p>
+            <p className="font-medium">${Math.round(data.totalMarketRevShare).toLocaleString()}</p>
+          </div>
+          
+          <button
+            onClick={() => setData({ ...data, showBack: !data.showBack })}
+            className="button-secondary"
+          >
+            View Front
+          </button>
         </div>
-        
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-1">Total Market Share Rev</p>
-          <p className="font-medium">${Math.round(data.totalMarketShareRev).toLocaleString()}</p>
-        </div>
-        
-        <button
-          onClick={() => document.getElementById('market-overview-card')?.classList.toggle('flipped')}
-          className="button-secondary"
-        >
-          View Front
-        </button>
-      </div>
+      )}
       
       <div className="mt-4 flex items-center space-x-2">
         {/* Refactored Like button with React event handler */}
