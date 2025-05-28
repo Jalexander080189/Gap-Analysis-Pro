@@ -7,18 +7,21 @@ import dynamic from 'next/dynamic';
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
 
-// Updated interface to match the structure in clientpage.tsx
+// Define the exact type to match clientpage.tsx
+interface ClientData {
+  companyName: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  businessType: string;
+  businessDescription: string;
+  showBack: boolean;
+}
+
+// Updated interface with exact types matching clientpage.tsx
 interface ClientInformationProps {
-  data: {
-    companyName: string;
-    contactName: string;
-    contactEmail: string;
-    contactPhone: string;
-    businessType: string;
-    businessDescription: string;
-    showBack?: boolean;
-  };
-  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  data: ClientData;
+  setData: React.Dispatch<React.SetStateAction<ClientData>>;
 }
 
 const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) => {
