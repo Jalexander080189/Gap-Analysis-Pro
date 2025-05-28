@@ -1,6 +1,4 @@
 import React from 'react';
-// Remove the globals.css import since it doesn't exist in your project
-// import '../globals.css';
 
 export const metadata = {
   title: 'Gap Analysis Pro',
