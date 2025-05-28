@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
+import { formatPercentage } from '../../utils/numberFormatting';
 
 interface ScenariosProps {
   data: {

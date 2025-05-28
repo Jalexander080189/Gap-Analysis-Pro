@@ -11,7 +11,7 @@ interface MarketOverviewProps {
     calculatedBuyers: number;
     totalMarketShareRev: number;
   };
-  setData: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 }
 
 const MarketOverview: React.FC<MarketOverviewProps> = ({ data, setData }) => {
