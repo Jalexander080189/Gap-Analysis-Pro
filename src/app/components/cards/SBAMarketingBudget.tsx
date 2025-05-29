@@ -3,23 +3,28 @@
 import React, { useState, useEffect } from 'react';
 import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
 
+// Define the exact type to match clientpage.tsx
+interface SBAData {
+  recommendedMonthlyBudget: string;
+  recommendedYearlyBudget: string;
+  recommendedChannels: Array<{
+    name: string;
+    monthlyBudget: string;
+    description: string;
+  }>;
+  showBack: boolean;
+}
+
 interface SBAMarketingBudgetProps {
-  data: {
-    annualRevenue: string;
-    recommendedMarketingBudget: number;
-    recommendedMonthlyBudget: number;
-    currentMonthlySpend: number;
-    additionalMonthlyBudgetNeeded: number;
-    percentOfRevenueSpent: number;
-  };
-  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
-  totalMonthlySpend: number;
+  data: SBAData;
+  setData: React.Dispatch<React.SetStateAction<SBAData>>;
+  annualRevenue: number;
 }
 
 const SBAMarketingBudget: React.FC<SBAMarketingBudgetProps> = ({ 
   data, 
   setData, 
-  totalMonthlySpend 
+  annualRevenue 
 }) => {
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
@@ -27,14 +32,54 @@ const SBAMarketingBudget: React.FC<SBAMarketingBudgetProps> = ({
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<string[]>([]);
   const [shared, setShared] = useState(false);
+  const [userAnnualRevenue, setUserAnnualRevenue] = useState(annualRevenue.toString());
+  const [showForecast, setShowForecast] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  // Calculate 5-year forecast when annual revenue changes
+  useEffect(() => {
+    // Update recommended budgets based on annual revenue
+    const annualRevenueValue = parseFloat(userAnnualRevenue.replace(/,/g, '')) || annualRevenue;
+    const recommendedYearlyBudget = (annualRevenueValue * 0.08).toLocaleString();
+    const recommendedMonthlyBudget = (annualRevenueValue * 0.08 / 12).toLocaleString();
+    
+    // Update recommended channels
+    const updatedChannels = [
+      {
+        name: 'Digital Marketing',
+        monthlyBudget: (annualRevenueValue * 0.03 / 12).toLocaleString(),
+        description: 'SEO, PPC, Social Media'
+      },
+      {
+        name: 'Content Marketing',
+        monthlyBudget: (annualRevenueValue * 0.02 / 12).toLocaleString(),
+        description: 'Blogs, Videos, Podcasts'
+      },
+      {
+        name: 'Traditional Marketing',
+        monthlyBudget: (annualRevenueValue * 0.015 / 12).toLocaleString(),
+        description: 'Print, Radio, TV'
+      },
+      {
+        name: 'Events & Sponsorships',
+        monthlyBudget: (annualRevenueValue * 0.015 / 12).toLocaleString(),
+        description: 'Trade Shows, Local Events'
+      }
+    ];
+    
     setData({
       ...data,
-      [name]: value
+      recommendedMonthlyBudget: recommendedMonthlyBudget,
+      recommendedYearlyBudget: recommendedYearlyBudget,
+      recommendedChannels: updatedChannels
     });
-  };
+    
+    // Show forecast if annual revenue is entered
+    if (annualRevenueValue > 0) {
+      setShowForecast(true);
+    } else {
+      setShowForecast(false);
+    }
+  }, [userAnnualRevenue, annualRevenue, setData]);
   
   // Add event handlers for social interactions
   const handleLikeClick = () => {
@@ -64,99 +109,158 @@ const SBAMarketingBudget: React.FC<SBAMarketingBudgetProps> = ({
     console.log('Share button clicked, new state:', !shared);
   };
 
-  // Calculate budget recommendations when inputs change
-  useEffect(() => {
-    const annualRevenue = parseHumanFriendlyNumber(data.annualRevenue);
+  // Calculate 5-year forecast data
+  const calculateForecast = () => {
+    const startRevenue = parseFloat(userAnnualRevenue.replace(/,/g, '')) || annualRevenue;
+    const forecast = [];
     
-    // SBA recommends 7-8% of revenue for marketing
-    const recommendedMarketingBudget = annualRevenue * 0.08;
-    const recommendedMonthlyBudget = recommendedMarketingBudget / 12;
+    let currentRevenue = startRevenue;
+    let previousYearlyBudget = 0;
     
-    // Calculate additional budget needed
-    const additionalMonthlyBudgetNeeded = recommendedMonthlyBudget - totalMonthlySpend;
+    for (let year = 1; year <= 5; year++) {
+      const yearlyMarketingBudget = currentRevenue * 0.08;
+      const monthlyMarketingBudget = yearlyMarketingBudget / 12;
+      const spendIncrease = yearlyMarketingBudget - previousYearlyBudget;
+      const minimumROI = yearlyMarketingBudget * 3;
+      const endOfYearRevenue = currentRevenue + minimumROI;
+      const percentRevenueIncrease = ((endOfYearRevenue - currentRevenue) / currentRevenue) * 100;
+      
+      // Calculate customers needed for 3x ROI
+      const avgCustomerValue = 1000; // Assuming $1000 average customer value
+      const annualCustomers = minimumROI / avgCustomerValue;
+      const monthlyCustomers = annualCustomers / 12;
+      const weeklyCustomers = monthlyCustomers / 4.33;
+      const dailyCustomers = weeklyCustomers / 7;
+      
+      forecast.push({
+        year,
+        startOfYearRevenue: currentRevenue,
+        spendIncrease,
+        yearlyMarketingBudget,
+        monthlyMarketingBudget,
+        minimumROI,
+        endOfYearRevenue,
+        percentRevenueIncrease,
+        customers: {
+          annual: annualCustomers,
+          monthly: monthlyCustomers,
+          weekly: weeklyCustomers,
+          daily: dailyCustomers
+        }
+      });
+      
+      // Set up for next year
+      previousYearlyBudget = yearlyMarketingBudget;
+      currentRevenue = endOfYearRevenue;
+    }
     
-    // Calculate percentage of revenue spent
-    const percentOfRevenueSpent = annualRevenue > 0 ? (totalMonthlySpend * 12) / annualRevenue : 0;
-    
-    setData({
-      ...data,
-      recommendedMarketingBudget,
-      recommendedMonthlyBudget,
-      currentMonthlySpend: totalMonthlySpend,
-      additionalMonthlyBudgetNeeded,
-      percentOfRevenueSpent
-    });
-  }, [data.annualRevenue, totalMonthlySpend, data, setData]);
+    return forecast;
+  };
+  
+  const forecast = calculateForecast();
+  const finalYearData = forecast[4]; // Year 5 data
 
   return (
     <div className="card">
-      <h2 className="section-title">SBA Marketing Budget</h2>
+      <h2 className="section-title">SBA 5-Year Budget Forecast</h2>
       
       <div className="mb-6">
-        <p className="text-sm text-gray-600 mb-4">
-          The Small Business Administration (SBA) recommends that businesses spend 7-8% of their gross revenue on marketing.
-        </p>
-        
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Annual Revenue
+            Current Annual Revenue
           </label>
           <input
             type="text"
-            name="annualRevenue"
-            value={data.annualRevenue}
-            onChange={handleInputChange}
+            value={userAnnualRevenue}
+            onChange={(e) => setUserAnnualRevenue(e.target.value)}
             className="input-field"
-            placeholder="e.g. $1M or $1,000,000"
+            placeholder="e.g. 1000000"
           />
         </div>
       </div>
       
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="font-medium mb-3">Budget Recommendations</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Recommended Marketing Budget (8%)</p>
-            <p className="font-medium">${Math.round(data.recommendedMarketingBudget).toLocaleString()}/year</p>
+      {showForecast && (
+        <>
+          <div className="overflow-x-auto mb-6">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Year
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Start of Year Revenue
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 bg-green-50 uppercase tracking-wider">
+                    Spend Increase
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Yearly Marketing Budget (8%)
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Monthly Marketing Budget
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Minimum 3× ROI
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 bg-green-50 uppercase tracking-wider">
+                    End-of-Year Revenue
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    % Revenue Increase
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {forecast.map((year) => (
+                  <tr key={year.year}>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm">
+                      {year.year}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm">
+                      ${Math.round(year.startOfYearRevenue).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50 font-medium">
+                      ${Math.round(year.spendIncrease).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm">
+                      ${Math.round(year.yearlyMarketingBudget).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm">
+                      ${Math.round(year.monthlyMarketingBudget).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm">
+                      ${Math.round(year.minimumROI).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50 font-medium">
+                      ${Math.round(year.endOfYearRevenue).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm">
+                      {year.percentRevenueIncrease.toFixed(1)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Recommended Monthly Budget</p>
-            <p className="font-medium">${Math.round(data.recommendedMonthlyBudget).toLocaleString()}/month</p>
-          </div>
-          
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Current Monthly Spend</p>
-            <p className="font-medium">${Math.round(data.currentMonthlySpend).toLocaleString()}/month</p>
-          </div>
-          
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Additional Monthly Budget Needed</p>
-            <p className="font-medium">${Math.round(data.additionalMonthlyBudgetNeeded).toLocaleString()}/month</p>
-          </div>
-          
-          <div className="md:col-span-2">
-            <p className="text-sm text-gray-600 mb-1">Percentage of Revenue Spent on Marketing</p>
-            <div className="flex items-center">
-              <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                <div 
-                  className={`h-2.5 rounded-full ${data.percentOfRevenueSpent >= 0.08 ? 'bg-green-600' : 'bg-red-600'}`} 
-                  style={{ width: `${Math.min(data.percentOfRevenueSpent * 100, 100)}%` }}
-                ></div>
+          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <h3 className="font-medium mb-3">SBA End-of-Year 5 Worst-Case-Scenario</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Annual Marketing Spend</p>
+                <p className="font-medium">${Math.round(finalYearData.yearlyMarketingBudget).toLocaleString()}</p>
               </div>
-              <span className={`text-sm font-medium ${data.percentOfRevenueSpent >= 0.08 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatPercentage(data.percentOfRevenueSpent)}
-              </span>
+              
+              <div>
+                <p className="text-sm text-gray-600 mb-1">End-of-Year Revenue</p>
+                <p className="font-medium">${Math.round(finalYearData.endOfYearRevenue).toLocaleString()}</p>
+              </div>
             </div>
-            <p className="text-xs mt-1">
-              {data.percentOfRevenueSpent >= 0.08 
-                ? 'You are meeting or exceeding the SBA recommendation.' 
-                : 'You are below the SBA recommended marketing budget.'}
-            </p>
           </div>
-        </div>
-      </div>
+        </>
+      )}
       
       <div className="mt-4 flex items-center space-x-2">
         {/* Refactored Like button with React event handler */}
@@ -221,6 +325,13 @@ const SBAMarketingBudget: React.FC<SBAMarketingBudgetProps> = ({
           ))}
         </div>
       )}
+      
+      <button 
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        onClick={() => setData({ ...data, showBack: !data.showBack })}
+      >
+        {data.showBack ? 'Show Front' : 'Show Back'}
+      </button>
     </div>
   );
 };
