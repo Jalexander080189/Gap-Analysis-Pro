@@ -13,11 +13,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* No CSP meta tag, but ensure all style links are present */}
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+        <meta
+          httpEquiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self';"
+        />
       </head>
       <body>{children}</body>
     </html>
   )
 }
-
