@@ -91,20 +91,23 @@ const Scenarios: React.FC<ScenariosProps> = ({
       const additionalVisitors = improvedVisitors - baseVisitors;
       
       // Calculate additional leads
-      const baseLeadConversion = annualLeadsGenerated && baseVisitors > 0 ? annualLeadsGenerated / baseVisitors : 0.1;
+      const safeAnnualLeadsGenerated = annualLeadsGenerated || 0;
+      const baseLeadConversion = baseVisitors > 0 ? safeAnnualLeadsGenerated / baseVisitors : 0.1;
       const improvedLeadConversion = baseLeadConversion * (1 + leadGenImprovement);
       const additionalLeads = additionalVisitors * improvedLeadConversion;
       
       // Calculate additional closed accounts
-      const baseCloseRate = annualNewAccountsClosed && (annualLeadsGenerated || 0) > 0 ? 
-        annualNewAccountsClosed / annualLeadsGenerated : 0.2;
+      const safeAnnualNewAccountsClosed = annualNewAccountsClosed || 0;
+      // Fix the TypeScript error by ensuring annualLeadsGenerated is not undefined in the division
+      const baseCloseRate = safeAnnualLeadsGenerated > 0 ? 
+        safeAnnualNewAccountsClosed / safeAnnualLeadsGenerated : 0.2;
       const improvedCloseRate = baseCloseRate * (1 + closeRateImprovement);
       const additionalNewAccounts = additionalLeads * improvedCloseRate;
       
       // Calculate additional revenue
-      const avgCustomerValue = avgYearlyCustomerValue || 
-        (annualRevenue / (annualNewAccountsClosed || 1));
-      const additionalRevenue = additionalNewAccounts * avgCustomerValue;
+      const safeAvgYearlyCustomerValue = avgYearlyCustomerValue || 
+        (annualRevenue / (safeAnnualNewAccountsClosed || 1));
+      const additionalRevenue = additionalNewAccounts * safeAvgYearlyCustomerValue;
       
       // Calculate total revenue - always annual revenue plus additional revenue
       const totalCalculatedAnnualRevenue = annualRevenue + additionalRevenue;
@@ -122,7 +125,7 @@ const Scenarios: React.FC<ScenariosProps> = ({
         baseCloseRate,
         improvedCloseRate,
         additionalNewAccounts,
-        avgCustomerValue,
+        safeAvgYearlyCustomerValue,
         additionalRevenue,
         totalCalculatedAnnualRevenue
       });
