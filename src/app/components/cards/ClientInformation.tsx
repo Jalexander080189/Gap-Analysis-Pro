@@ -1,11 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import dynamic from 'next/dynamic';
-
-// Import ReactQuill dynamically to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
-import 'react-quill/dist/quill.snow.css';
 
 // Define the exact type to match clientpage.tsx
 interface ClientData {
@@ -43,10 +38,10 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     });
   };
 
-  const handleBusinessDescriptionChange = (content: string) => {
+  const handleBusinessDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setData({
       ...data,
-      businessDescription: content
+      businessDescription: e.target.value
     });
   };
 
@@ -65,12 +60,10 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
   // Add event handlers for social interactions
   const handleLikeClick = () => {
     setLiked(!liked);
-    console.log('Like button clicked, new state:', !liked);
   };
 
   const handleCommentClick = () => {
     setCommentOpen(!commentOpen);
-    console.log('Comment button clicked, new state:', !commentOpen);
   };
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -81,24 +74,18 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     if (commentText.trim()) {
       setComments([...comments, commentText]);
       setCommentText('');
-      console.log('Comment submitted:', commentText);
     }
   };
 
   const handleShareClick = () => {
     setShared(!shared);
-    console.log('Share button clicked, new state:', !shared);
   };
 
-  const modules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'color': [] }, { 'background': [] }],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-      ['link'],
-      ['clean']
-    ],
+  const handleFlipCard = () => {
+    setData({
+      ...data,
+      showBack: !data.showBack
+    });
   };
 
   return (
@@ -116,6 +103,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
               <button
                 onClick={handleEdit}
                 className="ml-auto px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                type="button"
               >
                 Edit
               </button>
@@ -142,13 +130,16 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
               <button
                 onClick={() => setShowBusinessOverview(!showBusinessOverview)}
                 className="ml-2 text-sm text-blue-600 hover:text-blue-800"
+                type="button"
               >
                 {showBusinessOverview ? 'Hide' : 'Show'}
               </button>
             </div>
             
             {showBusinessOverview && (
-              <div className="bg-gray-50 p-4 rounded-lg" dangerouslySetInnerHTML={{ __html: data.businessDescription }} />
+              <div className="bg-gray-50 p-4 rounded-lg whitespace-pre-wrap">
+                {data.businessDescription}
+              </div>
             )}
           </div>
         </div>
@@ -232,20 +223,19 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
           <div className="mb-6">
             <h3 className="card-title">Business Description</h3>
             
-            {typeof window !== 'undefined' && (
-              <ReactQuill
-                value={data.businessDescription}
-                onChange={handleBusinessDescriptionChange}
-                modules={modules}
-                className="bg-white"
-              />
-            )}
+            <textarea
+              value={data.businessDescription}
+              onChange={handleBusinessDescriptionChange}
+              className="w-full border border-gray-300 p-3 rounded h-40"
+              placeholder="Enter business description here..."
+            />
           </div>
           
           <button
             onClick={handleSave}
             disabled={!data.companyName || !data.contactName}
             className={`button-primary ${(!data.companyName || !data.contactName) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            type="button"
           >
             Save Client Information
           </button>
@@ -257,6 +247,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
         <button 
           className={`social-button ${liked ? 'bg-blue-100' : ''}`}
           onClick={handleLikeClick}
+          type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
@@ -268,6 +259,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
         <button 
           className={`social-button ${commentOpen ? 'bg-blue-100' : ''}`}
           onClick={handleCommentClick}
+          type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -279,6 +271,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
         <button 
           className={`social-button ${shared ? 'bg-blue-100' : ''}`}
           onClick={handleShareClick}
+          type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -300,6 +293,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
           <button 
             onClick={handleCommentSubmit}
             className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            type="button"
           >
             Submit
           </button>
@@ -315,6 +309,15 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
           ))}
         </div>
       )}
+      
+      {/* Flip card button */}
+      <button 
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        onClick={handleFlipCard}
+        type="button"
+      >
+        {data.showBack ? 'Show Front' : 'Show Back'}
+      </button>
     </div>
   );
 };
