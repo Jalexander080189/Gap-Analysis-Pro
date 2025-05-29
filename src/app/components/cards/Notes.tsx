@@ -1,11 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-import dynamic from 'next/dynamic';
-
-// Import ReactQuill dynamically to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
-import 'react-quill/dist/quill.snow.css';
+import React, { useState, useRef, useEffect } from 'react';
 
 // Define the exact type to match clientpage.tsx
 interface NotesData {
@@ -20,6 +15,8 @@ interface NotesProps {
 
 const Notes: React.FC<NotesProps> = ({ data, setData }) => {
   const [expanded, setExpanded] = useState(false);
+  const [editorLoaded, setEditorLoaded] = useState(false);
+  const editorRef = useRef<any>(null);
   
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
@@ -28,12 +25,69 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
   const [comments, setComments] = useState<string[]>([]);
   const [shared, setShared] = useState(false);
 
-  const handleChange = (content: string) => {
-    setData({
-      ...data,
-      content
-    });
-  };
+  // Load Quill dynamically on client side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Load Quill script
+      const script = document.createElement('script');
+      script.src = 'https://cdn.quilljs.com/1.3.7/quill.min.js';
+      script.async = true;
+      script.onload = () => {
+        // Load Quill CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.quilljs.com/1.3.7/quill.snow.css';
+        document.head.appendChild(link);
+        
+        // Initialize Quill
+        setEditorLoaded(true);
+      };
+      document.body.appendChild(script);
+      
+      return () => {
+        document.body.removeChild(script);
+      };
+    }
+  }, []);
+
+  // Initialize Quill editor after it's loaded
+  useEffect(() => {
+    if (editorLoaded && typeof window !== 'undefined') {
+      const Quill = (window as any).Quill;
+      if (Quill && !editorRef.current) {
+        const container = document.getElementById('quill-editor');
+        if (container) {
+          const quill = new Quill(container, {
+            theme: 'snow',
+            modules: {
+              toolbar: [
+                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['link'],
+                ['clean']
+              ]
+            }
+          });
+          
+          // Set initial content
+          quill.root.innerHTML = data.content || '';
+          
+          // Handle content changes
+          quill.on('text-change', () => {
+            const content = quill.root.innerHTML;
+            setData({
+              ...data,
+              content
+            });
+          });
+          
+          editorRef.current = quill;
+        }
+      }
+    }
+  }, [editorLoaded, data, setData]);
   
   // Add event handlers for social interactions
   const handleLikeClick = () => {
@@ -63,17 +117,6 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
     console.log('Share button clicked, new state:', !shared);
   };
 
-  const modules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'color': [] }, { 'background': [] }],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-      ['link'],
-      ['clean']
-    ],
-  };
-
   return (
     <div className="card">
       <div className="flex justify-between items-center mb-4">
@@ -87,13 +130,14 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
       </div>
       
       <div className={expanded ? 'h-96' : 'h-48'}>
-        {typeof window !== 'undefined' && (
-          <ReactQuill
-            value={data.content}
-            onChange={handleChange}
-            modules={modules}
-            className="bg-white h-full"
-          />
+        {/* Quill editor container */}
+        <div id="quill-editor" className="bg-white h-full"></div>
+        
+        {/* Fallback when editor is not loaded */}
+        {!editorLoaded && (
+          <div className="flex items-center justify-center h-full bg-gray-100">
+            <p className="text-gray-500">Loading editor...</p>
+          </div>
         )}
       </div>
       
