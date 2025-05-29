@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
 
 // Define the exact type to match what's in clientpage.tsx
 interface SBAData {
