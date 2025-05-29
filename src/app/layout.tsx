@@ -1,189 +1,241 @@
-import React from 'react';
+/* Updated styles for Gap Analysis Pro with horizontal card layout */
 
-export const metadata = {
-  title: 'Gap Analysis Pro',
-  description: 'Interactive gap analysis tool',
+/* Base styles */
+:root {
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary-color: #64748b;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --background-color: #f8fafc;
+  --card-background: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --radius: 0.375rem;
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="en">
-      <head>
-        <meta
-          httpEquiv="Content-Security-Policy"
-          content="default-src 'self'; script-src 'self' 'unsafe-inline'; script-src-elem 'self' 'unsafe-inline'; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self';"
-        />
-        <style>
-          {`
-          /* Card styling */
-          .card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1 ), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            position: relative;
-          }
+/* Global layout */
+body {
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  padding: 0;
+  margin: 0;
+}
 
-          /* Card headers */
-          .section-title {
-            color: #1e293b;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-top: 0;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 0.75rem;
-          }
+/* Main container with side margins */
+body > div {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+}
 
-          .card-title {
-            color: #1e293b;
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-top: 1.5rem;
-            margin-bottom: 1rem;
-          }
+/* Card styling */
+div[id^="card-"], 
+div[id*=" card-"],
+div:has(> h1),
+div:has(> h2),
+div:has(> h3) {
+  background-color: var(--card-background);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  position: relative;
+}
 
-          /* Form elements */
-          input[type="text"], 
-          input[type="email"], 
-          input[type="tel"], 
-          input[type="number"],
-          textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
-            font-size: 1rem;
-            margin-bottom: 1rem;
-          }
+/* Card headers */
+h1, h2, h3, .section-title {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.75rem;
+}
 
-          input[type="text"]:focus, 
-          input[type="email"]:focus, 
-          input[type="tel"]:focus, 
-          input[type="number"]:focus,
-          textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-          }
+/* Horizontal layout for cards 2, 3, 4 */
+.horizontal-cards {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
 
-          textarea {
-            min-height: 100px;
-            resize: vertical;
-          }
+.horizontal-cards > div {
+  flex: 1;
+  min-width: 0; /* Prevents flex items from overflowing */
+}
 
-          /* Labels */
-          label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #1e293b;
-          }
+/* Apply horizontal layout to specific cards */
+body > div > div:nth-child(2),
+body > div > div:nth-child(3),
+body > div > div:nth-child(4) {
+  width: calc(33.333% - 1rem);
+  display: inline-block;
+  vertical-align: top;
+  margin-right: 1rem;
+}
 
-          /* Buttons */
-          button {
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 0.375rem;
-            padding: 0.5rem 1rem;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-          }
+body > div > div:nth-child(4) {
+  margin-right: 0;
+}
 
-          button:hover {
-            background-color: #2563eb;
-          }
+/* Clear the float after the horizontal cards */
+body > div > div:nth-child(4)::after {
+  content: "";
+  display: table;
+  clear: both;
+}
 
-          button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-          }
+/* Form elements */
+input[type="text"], 
+input[type="email"], 
+input[type="tel"], 
+input[type="number"],
+textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
 
-          /* Social buttons */
-          .social-button {
-            display: inline-flex;
-            align-items: center;
-            background-color: transparent;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.875rem;
-          }
+input[type="text"]:focus, 
+input[type="email"]:focus, 
+input[type="tel"]:focus, 
+input[type="number"]:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
 
-          .social-button:hover {
-            background-color: rgba(59, 130, 246, 0.1);
-            color: #3b82f6;
-          }
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
 
-          /* Sliders */
-          input[type="range"] {
-            width: 100%;
-            height: 8px;
-            border-radius: 4px;
-            background: #e2e8f0;
-            outline: none;
-            -webkit-appearance: none;
-            margin: 0.5rem 0 1rem 0;
-          }
+/* Labels */
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
 
-          input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #3b82f6;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-          }
+/* Buttons */
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+}
 
-          /* Tables */
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 1.5rem;
-          }
+button:hover {
+  background-color: var(--primary-hover);
+}
 
-          th {
-            background-color: rgba(59, 130, 246, 0.1);
-            color: #1e293b;
-            font-weight: 600;
-            text-align: left;
-            padding: 0.75rem;
-            border-bottom: 2px solid #e2e8f0;
-          }
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-          td {
-            padding: 0.75rem;
-            border-bottom: 1px solid #e2e8f0;
-          }
+/* Social buttons */
+.social-button, button.like, button.comment, button.share {
+  display: inline-flex;
+  align-items: center;
+  background-color: transparent;
+  color: var(--secondary-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  margin-right: 0.5rem;
+}
 
-          tr:hover {
-            background-color: rgba(59, 130, 246, 0.05);
-          }
+.social-button:hover, button.like:hover, button.comment:hover, button.share:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--primary-color);
+}
 
-          /* Spacing between cards */
-          body > div > div {
-            margin-bottom: 2rem;
-          }
-          
-          /* Add container padding */
-          body {
-            background-color: #f8fafc;
-            padding: 1rem;
-          }
-          `}
-        </style>
-      </head>
-      <body>{children}</body>
-    </html>
-  )
+/* Sliders */
+input[type="range"] {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border-color);
+  outline: none;
+  -webkit-appearance: none;
+  margin: 0.5rem 0 1rem 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
+  border: none;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+}
+
+th {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+tr:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  body > div > div:nth-child(2),
+  body > div > div:nth-child(3),
+  body > div > div:nth-child(4) {
+    width: 100%;
+    display: block;
+    margin-right: 0;
+  }
+}
+
+/* Show Back button styling */
+button.show-back {
+  background-color: var(--primary-color);
+  color: white;
+  margin-top: 0.5rem;
+}
+
+/* Add some spacing between social buttons and show back button */
+div:has(> button.show-back) {
+  margin-top: 0.5rem;
 }
