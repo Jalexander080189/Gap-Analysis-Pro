@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
 
-// Define the exact type to match clientpage.tsx
+// Define the exact type to match what's in clientpage.tsx
 interface SBAData {
   recommendedMonthlyBudget: string;
   recommendedYearlyBudget: string;
@@ -79,7 +79,7 @@ const SBAMarketingBudget: React.FC<SBAMarketingBudgetProps> = ({
     } else {
       setShowForecast(false);
     }
-  }, [userAnnualRevenue, annualRevenue, setData]);
+  }, [userAnnualRevenue, annualRevenue, setData, data]);
   
   // Add event handlers for social interactions
   const handleLikeClick = () => {
