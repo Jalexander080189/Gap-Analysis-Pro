@@ -3,24 +3,27 @@
 import React, { useState, useEffect } from 'react';
 import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
 
+// Updated interface to match the data structure in clientpage.tsx
 interface CompanyOverviewProps {
   data: {
     annualRevenue: string;
     percentNewCustomers: string;
-    avgYearlyCustomerValue: string;
+    percentCurrentCustomers: string;
     calculatedTotalCustomers: number;
     calculatedNewCustomers: number;
-    marketRevSharePercent: number;
+    percentOfMarketRevShare: number;
     showBack: boolean;
   };
   setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
-  totalMarketShareRev: number;
+  totalMarketRevShare: number;
+  avgYearlyCustomerValue: number;
 }
 
 const CompanyOverview: React.FC<CompanyOverviewProps> = ({ 
   data, 
   setData, 
-  totalMarketShareRev 
+  totalMarketRevShare,
+  avgYearlyCustomerValue
 }) => {
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
@@ -74,7 +77,6 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
       // Ensure we're parsing all inputs with the human-friendly number parser
       const annualRevenue = parseHumanFriendlyNumber(data.annualRevenue);
       const percentNewCustomers = parseHumanFriendlyNumber(data.percentNewCustomers) / 100;
-      const avgYearlyCustomerValue = parseHumanFriendlyNumber(data.avgYearlyCustomerValue);
       
       console.log('Parsed values:', {
         annualRevenue,
@@ -85,24 +87,24 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
       // Perform calculations with parsed values
       const calculatedTotalCustomers = avgYearlyCustomerValue > 0 ? annualRevenue / avgYearlyCustomerValue : 0;
       const calculatedNewCustomers = calculatedTotalCustomers * percentNewCustomers;
-      const marketRevSharePercent = totalMarketShareRev > 0 ? (annualRevenue / totalMarketShareRev) * 100 : 0;
+      const percentOfMarketRevShare = totalMarketRevShare > 0 ? (annualRevenue / totalMarketRevShare) * 100 : 0;
       
       console.log('Calculated values:', {
         calculatedTotalCustomers,
         calculatedNewCustomers,
-        marketRevSharePercent
+        percentOfMarketRevShare
       });
       
       setData({
         ...data,
         calculatedTotalCustomers,
         calculatedNewCustomers,
-        marketRevSharePercent
+        percentOfMarketRevShare
       });
     } catch (error) {
       console.error('Error in Company Overview calculations:', error);
     }
-  }, [data.annualRevenue, data.percentNewCustomers, data.avgYearlyCustomerValue, totalMarketShareRev, data, setData]);
+  }, [data.annualRevenue, data.percentNewCustomers, avgYearlyCustomerValue, totalMarketRevShare, data, setData]);
 
   return (
     <div className="card">
@@ -140,15 +142,15 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
           
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Avg. Yearly Customer Value
+              % Current Customers
             </label>
             <input
               type="text"
-              name="avgYearlyCustomerValue"
-              value={data.avgYearlyCustomerValue}
+              name="percentCurrentCustomers"
+              value={data.percentCurrentCustomers}
               onChange={handleInputChange}
               className="input-field"
-              placeholder="e.g. $5k or $5,000"
+              placeholder="e.g. 50 or 50%"
             />
           </div>
         </div>
@@ -168,7 +170,7 @@ const CompanyOverview: React.FC<CompanyOverviewProps> = ({
           
           <div className="mb-4">
             <p className="text-sm text-gray-600 mb-1">% of Market Rev Share</p>
-            <p className="font-medium">{formatPercentage(data.marketRevSharePercent / 100)}</p>
+            <p className="font-medium">{formatPercentage(data.percentOfMarketRevShare / 100)}</p>
           </div>
         </div>
       )}
