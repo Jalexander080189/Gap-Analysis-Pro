@@ -7,9 +7,15 @@ import dynamic from 'next/dynamic';
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
 
+// Define the exact type to match clientpage.tsx
+interface NotesData {
+  content: string;
+  showBack: boolean;
+}
+
 interface NotesProps {
-  data: string;
-  setData: React.Dispatch<React.SetStateAction<string>>;
+  data: NotesData;
+  setData: React.Dispatch<React.SetStateAction<NotesData>>;
 }
 
 const Notes: React.FC<NotesProps> = ({ data, setData }) => {
@@ -23,7 +29,10 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
   const [shared, setShared] = useState(false);
 
   const handleChange = (content: string) => {
-    setData(content);
+    setData({
+      ...data,
+      content
+    });
   };
   
   // Add event handlers for social interactions
@@ -80,7 +89,7 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
       <div className={expanded ? 'h-96' : 'h-48'}>
         {typeof window !== 'undefined' && (
           <ReactQuill
-            value={data}
+            value={data.content}
             onChange={handleChange}
             modules={modules}
             className="bg-white h-full"
@@ -151,6 +160,13 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
           ))}
         </div>
       )}
+      
+      <button 
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        onClick={() => setData({ ...data, showBack: !data.showBack })}
+      >
+        {data.showBack ? 'Show Front' : 'Show Back'}
+      </button>
     </div>
   );
 };
