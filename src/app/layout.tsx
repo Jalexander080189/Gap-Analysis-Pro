@@ -1,3 +1,24 @@
+import React from 'react';
+
+export const metadata = {
+  title: 'Gap Analysis Pro',
+  description: 'Interactive gap analysis tool',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <head>
+        <meta
+          httpEquiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self' 'unsafe-inline'; script-src-elem 'self' 'unsafe-inline'; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self';"
+        />
+        <style>
+          {`
 /* Updated styles for Gap Analysis Pro with horizontal card layout */
 
 /* Base styles */
@@ -13,7 +34,7 @@
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --border-color: #e2e8f0;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05 );
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --radius: 0.375rem;
@@ -238,4 +259,11 @@ button.show-back {
 /* Add some spacing between social buttons and show back button */
 div:has(> button.show-back) {
   margin-top: 0.5rem;
+}
+          `}
+        </style>
+      </head>
+      <body>{children}</body>
+    </html>
+  )
 }
