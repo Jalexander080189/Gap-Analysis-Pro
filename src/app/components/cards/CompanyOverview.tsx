@@ -3,27 +3,29 @@
 import React, { useState, useEffect } from 'react';
 import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
 
-// Updated interface to match the data structure in clientpage.tsx
+// Updated interface to exactly match the data structure in clientpage.tsx
+interface CompanyData {
+  annualRevenue: string;
+  percentNewCustomers: string;
+  percentCurrentCustomers: string;
+  calculatedTotalCustomers: number;
+  calculatedNewCustomers: number;
+  percentOfMarketRevShare: number;
+  showBack: boolean;
+}
+
 interface CompanyOverviewProps {
-  data: {
-    annualRevenue: string;
-    percentNewCustomers: string;
-    percentCurrentCustomers: string;
-    calculatedTotalCustomers: number;
-    calculatedNewCustomers: number;
-    percentOfMarketRevShare: number;
-    showBack: boolean;
-  };
-  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
-  totalMarketRevShare: number;
+  data: CompanyData;
+  setData: React.Dispatch<React.SetStateAction<CompanyData>>;
   avgYearlyCustomerValue: number;
+  totalMarketRevShare: number;
 }
 
 const CompanyOverview: React.FC<CompanyOverviewProps> = ({ 
   data, 
   setData, 
-  totalMarketRevShare,
-  avgYearlyCustomerValue
+  avgYearlyCustomerValue,
+  totalMarketRevShare 
 }) => {
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
