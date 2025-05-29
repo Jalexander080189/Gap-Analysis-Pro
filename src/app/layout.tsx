@@ -15,7 +15,7 @@ export default function RootLayout({
       <head>
         <meta
           httpEquiv="Content-Security-Policy"
-          content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self';"
+          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self';"
         />
       </head>
       <body>{children}</body>
