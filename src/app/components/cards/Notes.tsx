@@ -2,25 +2,19 @@
 
 import React, { useState } from 'react';
 
-// Define the exact type to match clientpage.tsx
-interface ClientData {
-  companyName: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  businessType: string;
-  businessDescription: string;
+// Define the exact type to match what's passed from clientpage.tsx
+interface NotesData {
+  content: string;
   showBack: boolean;
 }
 
-// Updated interface with exact types matching clientpage.tsx
-interface ClientInformationProps {
-  data: ClientData;
-  setData: React.Dispatch<React.SetStateAction<ClientData>>;
+interface NotesProps {
+  data: NotesData;
+  setData: React.Dispatch<React.SetStateAction<NotesData>>;
 }
 
-const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) => {
-  const [showBusinessOverview, setShowBusinessOverview] = useState(false);
+const Notes: React.FC<NotesProps> = ({ data, setData }) => {
+  const [expanded, setExpanded] = useState(false);
   
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
@@ -28,35 +22,15 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<string[]>([]);
   const [shared, setShared] = useState(false);
-  const [saved, setSaved] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  // Handle content changes
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setData({
       ...data,
-      [name]: value
+      content: e.target.value
     });
   };
 
-  const handleBusinessDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setData({
-      ...data,
-      businessDescription: e.target.value
-    });
-  };
-
-  const handleSave = () => {
-    setSaved(true);
-    
-    // Generate unique URL based on company name
-    const companySlug = data.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    window.history.pushState({}, '', `/reports/${companySlug}`);
-  };
-
-  const handleEdit = () => {
-    setSaved(false);
-  };
-  
   // Add event handlers for social interactions
   const handleLikeClick = () => {
     setLiked(!liked);
@@ -90,160 +64,27 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
 
   return (
     <div className="card">
-      {saved ? (
-        <div>
-          <div className="profile-header mb-6">
-            <div className="flex items-center mb-4">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-2xl font-bold mr-4">
-                {data.companyName.charAt(0)}
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">{data.companyName}</h2>
-              </div>
-              <button
-                onClick={handleEdit}
-                className="ml-auto px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                type="button"
-              >
-                Edit
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="font-medium text-gray-700 mb-1">Contact Information</h3>
-                <p>{data.contactName}</p>
-                <p className="text-sm text-gray-500">{data.contactEmail}</p>
-                <p className="text-sm text-gray-500">{data.contactPhone}</p>
-              </div>
-              
-              <div>
-                <h3 className="font-medium text-gray-700 mb-1">Business Type</h3>
-                <p>{data.businessType}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <div className="flex items-center mb-2">
-              <h3 className="font-medium text-gray-700">Business Description</h3>
-              <button
-                onClick={() => setShowBusinessOverview(!showBusinessOverview)}
-                className="ml-2 text-sm text-blue-600 hover:text-blue-800"
-                type="button"
-              >
-                {showBusinessOverview ? 'Hide' : 'Show'}
-              </button>
-            </div>
-            
-            {showBusinessOverview && (
-              <div className="bg-gray-50 p-4 rounded-lg whitespace-pre-wrap">
-                {data.businessDescription}
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div>
-          <h2 className="section-title">Client Information</h2>
-          
-          <div className="mb-6">
-            <h3 className="card-title">Company Information</h3>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Company Name
-              </label>
-              <input
-                type="text"
-                name="companyName"
-                value={data.companyName}
-                onChange={handleInputChange}
-                className="input-field"
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Type
-              </label>
-              <input
-                type="text"
-                name="businessType"
-                value={data.businessType}
-                onChange={handleInputChange}
-                className="input-field"
-              />
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            <h3 className="card-title">Contact Information</h3>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Contact Name
-              </label>
-              <input
-                type="text"
-                name="contactName"
-                value={data.contactName}
-                onChange={handleInputChange}
-                className="input-field"
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Contact Email
-              </label>
-              <input
-                type="email"
-                name="contactEmail"
-                value={data.contactEmail}
-                onChange={handleInputChange}
-                className="input-field"
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Contact Phone
-              </label>
-              <input
-                type="tel"
-                name="contactPhone"
-                value={data.contactPhone}
-                onChange={handleInputChange}
-                className="input-field"
-              />
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            <h3 className="card-title">Business Description</h3>
-            
-            <textarea
-              value={data.businessDescription}
-              onChange={handleBusinessDescriptionChange}
-              className="w-full border border-gray-300 p-3 rounded h-40"
-              placeholder="Enter business description here..."
-            />
-          </div>
-          
-          <button
-            onClick={handleSave}
-            disabled={!data.companyName || !data.contactName}
-            className={`button-primary ${(!data.companyName || !data.contactName) ? 'opacity-50 cursor-not-allowed' : ''}`}
-            type="button"
-          >
-            Save Client Information
-          </button>
-        </div>
-      )}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="section-title">Notes</h2>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-sm text-blue-600 hover:text-blue-800"
+          type="button"
+        >
+          {expanded ? 'Collapse' : 'Expand'}
+        </button>
+      </div>
+      
+      {/* Simple textarea */}
+      <textarea
+        value={data.content}
+        onChange={handleContentChange}
+        className={`w-full border border-gray-300 p-3 rounded ${expanded ? 'h-80' : 'h-40'}`}
+        placeholder="Enter your notes here..."
+      />
       
       <div className="mt-4 flex items-center space-x-2">
-        {/* Refactored Like button with React event handler */}
+        {/* Like button */}
         <button 
           className={`social-button ${liked ? 'bg-blue-100' : ''}`}
           onClick={handleLikeClick}
@@ -255,7 +96,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
           {liked ? 'Liked' : 'Like'}
         </button>
         
-        {/* Refactored Comment button with React event handler */}
+        {/* Comment button */}
         <button 
           className={`social-button ${commentOpen ? 'bg-blue-100' : ''}`}
           onClick={handleCommentClick}
@@ -267,7 +108,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
           Comment
         </button>
         
-        {/* Refactored Share button with React event handler */}
+        {/* Share button */}
         <button 
           className={`social-button ${shared ? 'bg-blue-100' : ''}`}
           onClick={handleShareClick}
@@ -322,4 +163,4 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
   );
 };
 
-export default ClientInformation;
+export default Notes;
