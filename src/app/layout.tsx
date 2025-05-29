@@ -19,7 +19,7 @@ export default function RootLayout({
         />
         <style>
           {`
-/* Updated styles for Gap Analysis Pro with horizontal card layout */
+/* Social Media Style for Gap Analysis Pro */
 
 /* Base styles */
 :root {
@@ -29,7 +29,7 @@ export default function RootLayout({
   --success-color: #10b981;
   --danger-color: #ef4444;
   --warning-color: #f59e0b;
-  --background-color: #f8fafc;
+  --background-color: #f0f2f5; /* Facebook-like background */
   --card-background: #ffffff;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
@@ -37,7 +37,7 @@ export default function RootLayout({
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05 );
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --radius: 0.375rem;
+  --radius: 0.75rem; /* More rounded corners */
 }
 
 /* Global layout */
@@ -52,23 +52,35 @@ body {
 
 /* Main container with side margins */
 body > div {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: 2rem 4rem; /* Increased side padding */
 }
 
-/* Card styling */
+/* Card styling - social media post look */
 div[id^="card-"], 
 div[id*=" card-"],
 div:has(> h1),
 div:has(> h2),
-div:has(> h3) {
+div:has(> h3),
+div:has(> button.show-back) {
   background-color: var(--card-background);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   margin-bottom: 1.5rem;
   padding: 1.5rem;
   position: relative;
+  border: 1px solid var(--border-color);
+  transition: box-shadow 0.3s ease;
+}
+
+div[id^="card-"]:hover, 
+div[id*=" card-"]:hover,
+div:has(> h1):hover,
+div:has(> h2):hover,
+div:has(> h3):hover,
+div:has(> button.show-back):hover {
+  box-shadow: var(--shadow-lg);
 }
 
 /* Card headers */
@@ -82,37 +94,52 @@ h1, h2, h3, .section-title {
   padding-bottom: 0.75rem;
 }
 
-/* Horizontal layout for cards 2, 3, 4 */
-.horizontal-cards {
-  display: flex;
-  gap: 1.5rem;
+/* LinkedIn-style profile card (Card 1) */
+body > div > div:first-child {
+  background-color: var(--card-background);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   margin-bottom: 1.5rem;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
 }
 
-.horizontal-cards > div {
-  flex: 1;
-  min-width: 0; /* Prevents flex items from overflowing */
+/* Profile header/banner */
+body > div > div:first-child::before {
+  content: "";
+  display: block;
+  height: 80px;
+  background-color: var(--primary-color);
+  margin-bottom: 1rem;
 }
 
-/* Apply horizontal layout to specific cards */
+/* Profile content */
+body > div > div:first-child > div {
+  padding: 0 1.5rem 1.5rem;
+}
+
+/* Profile sections */
+body > div > div:first-child h2 {
+  font-size: 1.25rem;
+  color: var(--primary-color);
+  border-bottom: none;
+  margin-top: 1.5rem;
+}
+
+/* Horizontal layout for cards 2, 3, 4 */
 body > div > div:nth-child(2),
 body > div > div:nth-child(3),
 body > div > div:nth-child(4) {
   width: calc(33.333% - 1rem);
   display: inline-block;
   vertical-align: top;
-  margin-right: 1rem;
+  margin-right: 1.5rem;
+  box-sizing: border-box;
 }
 
 body > div > div:nth-child(4) {
   margin-right: 0;
-}
-
-/* Clear the float after the horizontal cards */
-body > div > div:nth-child(4)::after {
-  content: "";
-  display: table;
-  clear: both;
 }
 
 /* Form elements */
@@ -127,6 +154,7 @@ textarea {
   border-radius: var(--radius);
   font-size: 1rem;
   margin-bottom: 1rem;
+  box-sizing: border-box;
 }
 
 input[type="text"]:focus, 
@@ -162,10 +190,15 @@ button {
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
 }
 
 button:hover {
   background-color: var(--primary-hover);
+}
+
+button:active {
+  transform: translateY(1px);
 }
 
 button:disabled {
@@ -184,6 +217,7 @@ button:disabled {
   padding: 0.25rem 0.75rem;
   font-size: 0.875rem;
   margin-right: 0.5rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .social-button:hover, button.like:hover, button.comment:hover, button.share:hover {
@@ -218,6 +252,8 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 1.5rem;
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
 th {
@@ -240,6 +276,10 @@ tr:hover {
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
+  body > div {
+    padding: 1rem 2rem;
+  }
+  
   body > div > div:nth-child(2),
   body > div > div:nth-child(3),
   body > div > div:nth-child(4) {
@@ -259,6 +299,18 @@ button.show-back {
 /* Add some spacing between social buttons and show back button */
 div:has(> button.show-back) {
   margin-top: 0.5rem;
+}
+
+/* Save button styling */
+button[type="submit"], button.save {
+  background-color: var(--success-color);
+  color: white;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+}
+
+button[type="submit"]:hover, button.save:hover {
+  background-color: #0d9488;
 }
           `}
         </style>
