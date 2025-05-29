@@ -13,10 +13,14 @@ interface NotesProps {
   setData: React.Dispatch<React.SetStateAction<NotesData>>;
 }
 
+// Define proper types for the editor
+interface EditorRef {
+  contentDiv: HTMLDivElement | null;
+}
+
 const Notes: React.FC<NotesProps> = ({ data, setData }) => {
   const [expanded, setExpanded] = useState(false);
-  const [editorLoaded, setEditorLoaded] = useState(false);
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<EditorRef>({ contentDiv: null });
   
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
@@ -25,70 +29,31 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
   const [comments, setComments] = useState<string[]>([]);
   const [shared, setShared] = useState(false);
 
-  // Load Quill dynamically on client side
+  // Initialize the content editable div
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Load Quill script
-      const script = document.createElement('script');
-      script.src = 'https://cdn.quilljs.com/1.3.7/quill.min.js';
-      script.async = true;
-      script.onload = () => {
-        // Load Quill CSS
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://cdn.quilljs.com/1.3.7/quill.snow.css';
-        document.head.appendChild(link);
-        
-        // Initialize Quill
-        setEditorLoaded(true);
-      };
-      document.body.appendChild(script);
-      
-      return () => {
-        document.body.removeChild(script);
-      };
+    const contentDiv = editorRef.current.contentDiv;
+    if (contentDiv) {
+      contentDiv.innerHTML = data.content || '';
     }
-  }, []);
+  }, [data.content]);
 
-  // Initialize Quill editor after it's loaded
-  useEffect(() => {
-    if (editorLoaded && typeof window !== 'undefined') {
-      const Quill = (window as any).Quill;
-      if (Quill && !editorRef.current) {
-        const container = document.getElementById('quill-editor');
-        if (container) {
-          const quill = new Quill(container, {
-            theme: 'snow',
-            modules: {
-              toolbar: [
-                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'color': [] }, { 'background': [] }],
-                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                ['link'],
-                ['clean']
-              ]
-            }
-          });
-          
-          // Set initial content
-          quill.root.innerHTML = data.content || '';
-          
-          // Handle content changes
-          quill.on('text-change', () => {
-            const content = quill.root.innerHTML;
-            setData({
-              ...data,
-              content
-            });
-          });
-          
-          editorRef.current = quill;
-        }
-      }
+  // Handle content changes
+  const handleContentChange = () => {
+    const contentDiv = editorRef.current.contentDiv;
+    if (contentDiv) {
+      setData({
+        ...data,
+        content: contentDiv.innerHTML
+      });
     }
-  }, [editorLoaded, data, setData]);
-  
+  };
+
+  // Format text functions
+  const formatText = (command: string, value: string = '') => {
+    document.execCommand(command, false, value);
+    handleContentChange();
+  };
+
   // Add event handlers for social interactions
   const handleLikeClick = () => {
     setLiked(!liked);
@@ -129,23 +94,79 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
         </button>
       </div>
       
-      <div className={expanded ? 'h-96' : 'h-48'}>
-        {/* Quill editor container */}
-        <div id="quill-editor" className="bg-white h-full"></div>
-        
-        {/* Fallback when editor is not loaded */}
-        {!editorLoaded && (
-          <div className="flex items-center justify-center h-full bg-gray-100">
-            <p className="text-gray-500">Loading editor...</p>
-          </div>
-        )}
+      {/* Simple toolbar */}
+      <div className="bg-gray-100 p-2 rounded-t flex flex-wrap gap-1">
+        <button 
+          onClick={() => formatText('bold')}
+          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
+          type="button"
+        >
+          Bold
+        </button>
+        <button 
+          onClick={() => formatText('italic')}
+          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
+          type="button"
+        >
+          Italic
+        </button>
+        <button 
+          onClick={() => formatText('underline')}
+          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
+          type="button"
+        >
+          Underline
+        </button>
+        <button 
+          onClick={() => formatText('insertUnorderedList')}
+          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
+          type="button"
+        >
+          Bullet List
+        </button>
+        <button 
+          onClick={() => formatText('insertOrderedList')}
+          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
+          type="button"
+        >
+          Number List
+        </button>
+        <button 
+          onClick={() => formatText('formatBlock', '<h2>')}
+          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
+          type="button"
+        >
+          Heading
+        </button>
+        <button 
+          onClick={() => formatText('formatBlock', '<p>')}
+          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
+          type="button"
+        >
+          Paragraph
+        </button>
       </div>
+      
+      {/* Content editable div */}
+      <div 
+        className={`border border-gray-300 p-3 bg-white overflow-auto ${expanded ? 'h-80' : 'h-40'}`}
+        contentEditable={true}
+        onInput={handleContentChange}
+        onBlur={handleContentChange}
+        ref={(el) => {
+          if (el) {
+            editorRef.current.contentDiv = el;
+          }
+        }}
+        suppressContentEditableWarning={true}
+      />
       
       <div className="mt-4 flex items-center space-x-2">
         {/* Refactored Like button with React event handler */}
         <button 
           className={`social-button ${liked ? 'bg-blue-100' : ''}`}
           onClick={handleLikeClick}
+          type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
@@ -157,6 +178,7 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
         <button 
           className={`social-button ${commentOpen ? 'bg-blue-100' : ''}`}
           onClick={handleCommentClick}
+          type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -168,6 +190,7 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
         <button 
           className={`social-button ${shared ? 'bg-blue-100' : ''}`}
           onClick={handleShareClick}
+          type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -189,6 +212,7 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
           <button 
             onClick={handleCommentSubmit}
             className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            type="button"
           >
             Submit
           </button>
@@ -208,6 +232,7 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
       <button 
         className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
         onClick={() => setData({ ...data, showBack: !data.showBack })}
+        type="button"
       >
         {data.showBack ? 'Show Front' : 'Show Back'}
       </button>
