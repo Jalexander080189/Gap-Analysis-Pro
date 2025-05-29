@@ -3,21 +3,23 @@
 import React, { useState, useEffect } from 'react';
 import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
 
+// Define the exact type to match clientpage.tsx
+interface MarketingData {
+  channels: Array<{
+    name: string;
+    monthlyAdspend: string;
+    monthlyCost: string;
+  }>;
+  totalMonthlySpend: number;
+  totalYearlySpend: number;
+  additionalMonthlySpend: number;
+  percentOfAnnualRevenue: number;
+  showBack: boolean;
+}
+
 interface CurrentMarketingOverviewProps {
-  data: {
-    channels: Array<{
-      id: string;
-      name: string;
-      monthlyCost: string;
-      monthlyAdspend: string;
-      totalMonthlyCost: number;
-    }>;
-    totalMonthlySpend: number;
-    totalYearlySpend: number;
-    additionalMonthlySpendToHit8Percent: number;
-    percentOfAnnualRevenueSpent: number;
-  };
-  setData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  data: MarketingData;
+  setData: React.Dispatch<React.SetStateAction<MarketingData>>;
   annualRevenue: number;
 }
 
@@ -36,18 +38,14 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
   const [newChannelMonthlyCost, setNewChannelMonthlyCost] = useState('');
   const [newChannelMonthlyAdspend, setNewChannelMonthlyAdspend] = useState('');
 
-  const handleChannelInputChange = (e: React.ChangeEvent<HTMLInputElement>, id: string, field: string) => {
+  const handleChannelInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, field: string) => {
     const { value } = e.target;
     
-    const updatedChannels = data.channels.map(channel => {
-      if (channel.id === id) {
-        return {
-          ...channel,
-          [field]: value
-        };
-      }
-      return channel;
-    });
+    const updatedChannels = [...data.channels];
+    updatedChannels[index] = {
+      ...updatedChannels[index],
+      [field]: value
+    };
     
     setData({
       ...data,
@@ -58,11 +56,9 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
   const handleAddChannel = () => {
     if (newChannelName) {
       const newChannel = {
-        id: `channel-${Date.now()}`,
         name: newChannelName,
         monthlyCost: newChannelMonthlyCost || '0',
-        monthlyAdspend: newChannelMonthlyAdspend || '0',
-        totalMonthlyCost: parseHumanFriendlyNumber(newChannelMonthlyCost) + parseHumanFriendlyNumber(newChannelMonthlyAdspend)
+        monthlyAdspend: newChannelMonthlyAdspend || '0'
       };
       
       setData({
@@ -76,8 +72,9 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
     }
   };
 
-  const handleRemoveChannel = (id: string) => {
-    const updatedChannels = data.channels.filter(channel => channel.id !== id);
+  const handleRemoveChannel = (index: number) => {
+    const updatedChannels = [...data.channels];
+    updatedChannels.splice(index, 1);
     
     setData({
       ...data,
@@ -118,17 +115,10 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
     // Calculate total monthly spend
     let totalMonthlySpend = 0;
     
-    const updatedChannels = data.channels.map(channel => {
+    data.channels.forEach(channel => {
       const monthlyCost = parseHumanFriendlyNumber(channel.monthlyCost);
       const monthlyAdspend = parseHumanFriendlyNumber(channel.monthlyAdspend);
-      const totalMonthlyCost = monthlyCost + monthlyAdspend;
-      
-      totalMonthlySpend += totalMonthlyCost;
-      
-      return {
-        ...channel,
-        totalMonthlyCost
-      };
+      totalMonthlySpend += monthlyCost + monthlyAdspend;
     });
     
     // Calculate total yearly spend
@@ -136,20 +126,24 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
     
     // Calculate additional monthly spend to hit 8% of annual revenue
     const targetMonthlySpend = (annualRevenue * 0.08) / 12;
-    const additionalMonthlySpendToHit8Percent = targetMonthlySpend - totalMonthlySpend;
+    const additionalMonthlySpend = targetMonthlySpend - totalMonthlySpend;
     
     // Calculate percentage of annual revenue spent on marketing
-    const percentOfAnnualRevenueSpent = annualRevenue > 0 ? (totalYearlySpend / annualRevenue) * 100 : 0;
+    const percentOfAnnualRevenue = annualRevenue > 0 ? (totalYearlySpend / annualRevenue) : 0;
     
     setData({
       ...data,
-      channels: updatedChannels,
       totalMonthlySpend,
       totalYearlySpend,
-      additionalMonthlySpendToHit8Percent,
-      percentOfAnnualRevenueSpent
+      additionalMonthlySpend,
+      percentOfAnnualRevenue
     });
-  }, [data.channels, annualRevenue, data, setData]);
+  }, [data.channels, annualRevenue, setData]);
+
+  // Helper function to calculate total monthly cost for a channel
+  const calculateTotalMonthlyCost = (monthlyCost: string, monthlyAdspend: string): number => {
+    return parseHumanFriendlyNumber(monthlyCost) + parseHumanFriendlyNumber(monthlyAdspend);
+  };
 
   return (
     <div className="card">
@@ -180,13 +174,13 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {data.channels.map(channel => (
-                <tr key={channel.id}>
+              {data.channels.map((channel, index) => (
+                <tr key={index}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <input
                       type="text"
                       value={channel.name}
-                      onChange={(e) => handleChannelInputChange(e, channel.id, 'name')}
+                      onChange={(e) => handleChannelInputChange(e, index, 'name')}
                       className="input-field"
                     />
                   </td>
@@ -194,7 +188,7 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
                     <input
                       type="text"
                       value={channel.monthlyCost}
-                      onChange={(e) => handleChannelInputChange(e, channel.id, 'monthlyCost')}
+                      onChange={(e) => handleChannelInputChange(e, index, 'monthlyCost')}
                       className="input-field"
                       placeholder="e.g. $1k or $1,000"
                     />
@@ -203,17 +197,17 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
                     <input
                       type="text"
                       value={channel.monthlyAdspend}
-                      onChange={(e) => handleChannelInputChange(e, channel.id, 'monthlyAdspend')}
+                      onChange={(e) => handleChannelInputChange(e, index, 'monthlyAdspend')}
                       className="input-field"
                       placeholder="e.g. $1k or $1,000"
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    ${channel.totalMonthlyCost.toLocaleString()}
+                    ${calculateTotalMonthlyCost(channel.monthlyCost, channel.monthlyAdspend).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
-                      onClick={() => handleRemoveChannel(channel.id)}
+                      onClick={() => handleRemoveChannel(index)}
                       className="text-red-600 hover:text-red-900"
                     >
                       Remove
@@ -283,13 +277,13 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
           
           <div>
             <p className="text-sm text-gray-600 mb-1">Additional Monthly Spend to Hit 8% of Annual Revenue</p>
-            <p className="font-medium">${Math.round(data.additionalMonthlySpendToHit8Percent).toLocaleString()}</p>
+            <p className="font-medium">${Math.round(data.additionalMonthlySpend).toLocaleString()}</p>
           </div>
           
           <div>
             <p className="text-sm text-gray-600 mb-1">% of Annual Revenue Spent</p>
-            <p className={`font-medium ${data.percentOfAnnualRevenueSpent >= 8 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatPercentage(data.percentOfAnnualRevenueSpent / 100)}
+            <p className={`font-medium ${data.percentOfAnnualRevenue >= 0.08 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatPercentage(data.percentOfAnnualRevenue)}
             </p>
           </div>
         </div>
@@ -358,6 +352,13 @@ const CurrentMarketingOverview: React.FC<CurrentMarketingOverviewProps> = ({
           ))}
         </div>
       )}
+      
+      <button 
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        onClick={() => setData({ ...data, showBack: !data.showBack })}
+      >
+        {data.showBack ? 'Show Front' : 'Show Back'}
+      </button>
     </div>
   );
 };
