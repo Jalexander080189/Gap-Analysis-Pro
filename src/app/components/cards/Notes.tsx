@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 
 // Define the exact type to match clientpage.tsx
 interface NotesData {
@@ -13,14 +13,8 @@ interface NotesProps {
   setData: React.Dispatch<React.SetStateAction<NotesData>>;
 }
 
-// Define proper types for the editor
-interface EditorRef {
-  contentDiv: HTMLDivElement | null;
-}
-
 const Notes: React.FC<NotesProps> = ({ data, setData }) => {
   const [expanded, setExpanded] = useState(false);
-  const editorRef = useRef<EditorRef>({ contentDiv: null });
   
   // Add state for social interactions
   const [liked, setLiked] = useState(false);
@@ -29,40 +23,21 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
   const [comments, setComments] = useState<string[]>([]);
   const [shared, setShared] = useState(false);
 
-  // Initialize the content editable div
-  useEffect(() => {
-    const contentDiv = editorRef.current.contentDiv;
-    if (contentDiv) {
-      contentDiv.innerHTML = data.content || '';
-    }
-  }, [data.content]);
-
   // Handle content changes
-  const handleContentChange = () => {
-    const contentDiv = editorRef.current.contentDiv;
-    if (contentDiv) {
-      setData({
-        ...data,
-        content: contentDiv.innerHTML
-      });
-    }
-  };
-
-  // Format text functions
-  const formatText = (command: string, value: string = '') => {
-    document.execCommand(command, false, value);
-    handleContentChange();
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setData({
+      ...data,
+      content: e.target.value
+    });
   };
 
   // Add event handlers for social interactions
   const handleLikeClick = () => {
     setLiked(!liked);
-    console.log('Like button clicked, new state:', !liked);
   };
 
   const handleCommentClick = () => {
     setCommentOpen(!commentOpen);
-    console.log('Comment button clicked, new state:', !commentOpen);
   };
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -73,13 +48,18 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
     if (commentText.trim()) {
       setComments([...comments, commentText]);
       setCommentText('');
-      console.log('Comment submitted:', commentText);
     }
   };
 
   const handleShareClick = () => {
     setShared(!shared);
-    console.log('Share button clicked, new state:', !shared);
+  };
+
+  const handleFlipCard = () => {
+    setData({
+      ...data,
+      showBack: !data.showBack
+    });
   };
 
   return (
@@ -89,80 +69,22 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
         <button
           onClick={() => setExpanded(!expanded)}
           className="text-sm text-blue-600 hover:text-blue-800"
+          type="button"
         >
           {expanded ? 'Collapse' : 'Expand'}
         </button>
       </div>
       
-      {/* Simple toolbar */}
-      <div className="bg-gray-100 p-2 rounded-t flex flex-wrap gap-1">
-        <button 
-          onClick={() => formatText('bold')}
-          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          type="button"
-        >
-          Bold
-        </button>
-        <button 
-          onClick={() => formatText('italic')}
-          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          type="button"
-        >
-          Italic
-        </button>
-        <button 
-          onClick={() => formatText('underline')}
-          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          type="button"
-        >
-          Underline
-        </button>
-        <button 
-          onClick={() => formatText('insertUnorderedList')}
-          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          type="button"
-        >
-          Bullet List
-        </button>
-        <button 
-          onClick={() => formatText('insertOrderedList')}
-          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          type="button"
-        >
-          Number List
-        </button>
-        <button 
-          onClick={() => formatText('formatBlock', '<h2>')}
-          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          type="button"
-        >
-          Heading
-        </button>
-        <button 
-          onClick={() => formatText('formatBlock', '<p>')}
-          className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          type="button"
-        >
-          Paragraph
-        </button>
-      </div>
-      
-      {/* Content editable div */}
-      <div 
-        className={`border border-gray-300 p-3 bg-white overflow-auto ${expanded ? 'h-80' : 'h-40'}`}
-        contentEditable={true}
-        onInput={handleContentChange}
-        onBlur={handleContentChange}
-        ref={(el) => {
-          if (el) {
-            editorRef.current.contentDiv = el;
-          }
-        }}
-        suppressContentEditableWarning={true}
+      {/* Simple textarea */}
+      <textarea
+        value={data.content}
+        onChange={handleContentChange}
+        className={`w-full border border-gray-300 p-3 rounded ${expanded ? 'h-80' : 'h-40'}`}
+        placeholder="Enter your notes here..."
       />
       
       <div className="mt-4 flex items-center space-x-2">
-        {/* Refactored Like button with React event handler */}
+        {/* Like button */}
         <button 
           className={`social-button ${liked ? 'bg-blue-100' : ''}`}
           onClick={handleLikeClick}
@@ -174,7 +96,7 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
           {liked ? 'Liked' : 'Like'}
         </button>
         
-        {/* Refactored Comment button with React event handler */}
+        {/* Comment button */}
         <button 
           className={`social-button ${commentOpen ? 'bg-blue-100' : ''}`}
           onClick={handleCommentClick}
@@ -186,7 +108,7 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
           Comment
         </button>
         
-        {/* Refactored Share button with React event handler */}
+        {/* Share button */}
         <button 
           className={`social-button ${shared ? 'bg-blue-100' : ''}`}
           onClick={handleShareClick}
@@ -229,9 +151,10 @@ const Notes: React.FC<NotesProps> = ({ data, setData }) => {
         </div>
       )}
       
+      {/* Flip card button */}
       <button 
         className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        onClick={() => setData({ ...data, showBack: !data.showBack })}
+        onClick={handleFlipCard}
         type="button"
       >
         {data.showBack ? 'Show Front' : 'Show Back'}
