@@ -1,4 +1,4 @@
-import React from 'react';
+mport React from 'react';
 
 export const metadata = {
   title: 'Gap Analysis Pro',
@@ -15,7 +15,7 @@ export default function RootLayout({
       <head>
         <meta
           httpEquiv="Content-Security-Policy"
-          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self';"
+          content="default-src 'self'; script-src 'self'; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self';"
         />
       </head>
       <body>{children}</body>
