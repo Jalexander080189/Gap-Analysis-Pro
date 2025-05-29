@@ -1,4 +1,4 @@
-mport React from 'react';
+import React from 'react';
 
 export const metadata = {
   title: 'Gap Analysis Pro',
