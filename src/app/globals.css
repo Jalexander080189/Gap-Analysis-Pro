@@ -131,3 +131,32 @@ body {
 .page-with-bottom-nav {
   @apply pb-16;
 }
+/* Horizontal cards layout styles */
+.horizontal-cards {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.horizontal-card {
+  flex: 1;
+  min-width: 0; /* Prevents flex items from overflowing */
+}
+
+/* Ensure cards have equal width */
+.horizontal-cards .horizontal-card {
+  width: calc(33.333% - 0.667rem);
+}
+
+/* Responsive layout for smaller screens */
+@media (max-width: 768px) {
+  .horizontal-cards {
+    flex-direction: column;
+  }
+  
+  .horizontal-cards .horizontal-card {
+    width: 100%;
+  }
+}
