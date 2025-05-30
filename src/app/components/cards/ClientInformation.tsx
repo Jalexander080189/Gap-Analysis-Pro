@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ClientDataType, ContactType } from '../cards/GPTDataBlock';
-import { FaUser, FaEnvelope, FaMobile, FaBriefcase, FaBuilding, FaGlobe, FaFacebook, FaIndustry, FaPlus, FaTrash, FaChevronLeft, FaChevronRight, FaThumbsUp, FaComment, FaShare } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaMobile, FaBriefcase, FaGlobe, FaFacebook, FaIndustry, FaPlus, FaTrash, FaChevronLeft, FaChevronRight, FaThumbsUp, FaComment, FaShare } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ClientInformationProps {

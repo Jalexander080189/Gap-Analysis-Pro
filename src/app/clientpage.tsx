@@ -11,7 +11,7 @@ import CurrentMarketingOverview from './components/cards/CurrentMarketingOvervie
 import SBAMarketingBudget from './components/cards/SBAMarketingBudget';
 import Notes from './components/cards/Notes';
 import GPTDataBlock from './components/cards/GPTDataBlock';
-import { ClientDataType, ContactType } from './components/cards/GPTDataBlock';
+import { ClientDataType } from './components/cards/GPTDataBlock';
 
 export default function ClientPage() {
   console.log('Client-side JavaScript is running!');
