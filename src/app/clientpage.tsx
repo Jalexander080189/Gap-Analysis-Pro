@@ -11,19 +11,26 @@ import CurrentMarketingOverview from './components/cards/CurrentMarketingOvervie
 import SBAMarketingBudget from './components/cards/SBAMarketingBudget';
 import Notes from './components/cards/Notes';
 import GPTDataBlock from './components/cards/GPTDataBlock';
+import { ClientDataType, ContactType } from './components/cards/GPTDataBlock';
 
 export default function ClientPage() {
   console.log('Client-side JavaScript is running!');
   
-  // Client information state
-  const [clientData, setClientData] = useState({
+  // Client information state with updated structure
+  const [clientData, setClientData] = useState<ClientDataType>({
     companyName: '',
+    companyWebsite: '',
+    companyFacebookURL: '',
+    industryType: '',
+    contacts: [],
+    businessDescription: '',
+    showBack: false,
+    // Legacy fields for backward compatibility
     contactName: '',
     contactEmail: '',
     contactPhone: '',
-    businessType: '',
-    businessDescription: '',
-    showBack: false
+    contactTitle: '',
+    businessType: ''
   });
   
   // Market overview state
@@ -136,7 +143,33 @@ export default function ClientPage() {
       const decodedData = JSON.parse(atob(companySlug));
       
       // Update all state with the decoded data
-      if (decodedData.clientData) setClientData(decodedData.clientData);
+      if (decodedData.clientData) {
+        // Handle backward compatibility for client data
+        const clientDataUpdate = { ...decodedData.clientData };
+        
+        // If old format data is received, convert it to new format
+        if (!clientDataUpdate.contacts && (clientDataUpdate.contactName || clientDataUpdate.contactEmail || clientDataUpdate.contactPhone)) {
+          clientDataUpdate.contacts = [{
+            name: clientDataUpdate.contactName || '',
+            email: clientDataUpdate.contactEmail || '',
+            mobile: clientDataUpdate.contactPhone || '',
+            title: clientDataUpdate.contactTitle || ''
+          }];
+        }
+        
+        // Map companyUrl to companyWebsite if needed
+        if (!clientDataUpdate.companyWebsite && clientDataUpdate.companyUrl) {
+          clientDataUpdate.companyWebsite = clientDataUpdate.companyUrl;
+        }
+        
+        // Map businessType to industryType if needed
+        if (!clientDataUpdate.industryType && clientDataUpdate.businessType) {
+          clientDataUpdate.industryType = clientDataUpdate.businessType;
+        }
+        
+        setClientData(clientDataUpdate);
+      }
+      
       if (decodedData.marketData) setMarketData(decodedData.marketData);
       if (decodedData.companyData) setCompanyData(decodedData.companyData);
       if (decodedData.gapsData) {
@@ -158,7 +191,7 @@ export default function ClientPage() {
       console.error('Error parsing URL data:', error);
       setUrlError('Invalid data in URL. Please check the link and try again.');
     }
-  }, [setClientData, setMarketData, setCompanyData, setGapsData, setScenariosData, setMarketingData, setSbaData, setNotesData]);
+  }, []);
   
   // Handle URL parameters for sharing
   useEffect(() => {

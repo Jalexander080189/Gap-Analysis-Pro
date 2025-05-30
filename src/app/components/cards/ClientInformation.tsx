@@ -1,323 +1,461 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { ClientDataType, ContactType } from '../cards/GPTDataBlock';
+import { FaUser, FaEnvelope, FaMobile, FaBriefcase, FaBuilding, FaGlobe, FaFacebook, FaIndustry, FaPlus, FaTrash, FaChevronLeft, FaChevronRight, FaThumbsUp, FaComment, FaShare } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Define the exact type to match clientpage.tsx
-interface ClientData {
-  companyName: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  businessType: string;
-  businessDescription: string;
-  showBack: boolean;
-}
-
-// Updated interface with exact types matching clientpage.tsx
 interface ClientInformationProps {
-  data: ClientData;
-  setData: React.Dispatch<React.SetStateAction<ClientData>>;
+  data: ClientDataType;
+  setData: React.Dispatch<React.SetStateAction<ClientDataType>>;
 }
 
 const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) => {
-  const [showBusinessOverview, setShowBusinessOverview] = useState(false);
-  
-  // Add state for social interactions
+  const [isFlipped, setIsFlipped] = useState(false);
   const [liked, setLiked] = useState(false);
-  const [commentOpen, setCommentOpen] = useState(false);
-  const [commentText, setCommentText] = useState('');
-  const [comments, setComments] = useState<string[]>([]);
-  const [shared, setShared] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setData({
-      ...data,
-      [name]: value
-    });
-  };
-
-  const handleBusinessDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setData({
-      ...data,
-      businessDescription: e.target.value
-    });
-  };
-
-  const handleSave = () => {
-    setSaved(true);
+  
+  // Initialize contacts array if it doesn't exist (for backward compatibility)
+  useEffect(() => {
+    if (!data.contacts) {
+      // Convert legacy contact data to new format if it exists
+      if (data.contactName || data.contactEmail || data.contactPhone || data.contactTitle) {
+        setData(prevData => ({
+          ...prevData,
+          contacts: [{
+            name: prevData.contactName || '',
+            email: prevData.contactEmail || '',
+            mobile: prevData.contactPhone || '',
+            title: prevData.contactTitle || ''
+          }],
+          // Keep legacy fields for backward compatibility
+          contactName: prevData.contactName,
+          contactEmail: prevData.contactEmail,
+          contactPhone: prevData.contactPhone,
+          contactTitle: prevData.contactTitle
+        }));
+      } else {
+        // Initialize with empty contacts array
+        setData(prevData => ({
+          ...prevData,
+          contacts: []
+        }));
+      }
+    }
     
-    // Generate unique URL based on company name
-    const companySlug = data.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    window.history.pushState({}, '', `/reports/${companySlug}`);
-  };
-
-  const handleEdit = () => {
-    setSaved(false);
+    // Initialize industryType if it doesn't exist
+    if (!data.industryType) {
+      setData(prevData => ({
+        ...prevData,
+        industryType: prevData.businessType || ''
+      }));
+    }
+    
+    // Initialize companyWebsite if it doesn't exist
+    if (!data.companyWebsite && data.companyUrl) {
+      setData(prevData => ({
+        ...prevData,
+        companyWebsite: prevData.companyUrl
+      }));
+    }
+  }, [data, setData]);
+  
+  const handleFlip = () => {
+    setIsFlipped(!isFlipped);
+    setData(prevData => ({
+      ...prevData,
+      showBack: !prevData.showBack
+    }));
   };
   
-  // Add event handlers for social interactions
-  const handleLikeClick = () => {
-    setLiked(!liked);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
   };
-
-  const handleCommentClick = () => {
-    setCommentOpen(!commentOpen);
+  
+  const handleContactChange = (index: number, field: keyof ContactType, value: string) => {
+    setData(prevData => {
+      const updatedContacts = [...(prevData.contacts || [])];
+      if (!updatedContacts[index]) {
+        updatedContacts[index] = { name: '', email: '', mobile: '', title: '' };
+      }
+      updatedContacts[index] = { ...updatedContacts[index], [field]: value };
+      
+      // Also update legacy fields if this is the first contact (for backward compatibility)
+      const legacyUpdates = index === 0 ? {
+        contactName: field === 'name' ? value : prevData.contactName,
+        contactEmail: field === 'email' ? value : prevData.contactEmail,
+        contactPhone: field === 'mobile' ? value : prevData.contactPhone,
+        contactTitle: field === 'title' ? value : prevData.contactTitle
+      } : {};
+      
+      return {
+        ...prevData,
+        contacts: updatedContacts,
+        ...legacyUpdates
+      };
+    });
   };
-
-  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setCommentText(e.target.value);
-  };
-
-  const handleCommentSubmit = () => {
-    if (commentText.trim()) {
-      setComments([...comments, commentText]);
-      setCommentText('');
+  
+  const addContact = () => {
+    if ((data.contacts || []).length < 5) {
+      setData(prevData => ({
+        ...prevData,
+        contacts: [...(prevData.contacts || []), { name: '', email: '', mobile: '', title: '' }]
+      }));
     }
   };
-
-  const handleShareClick = () => {
-    setShared(!shared);
-  };
-
-  const handleFlipCard = () => {
-    setData({
-      ...data,
-      showBack: !data.showBack
+  
+  const removeContact = (index: number) => {
+    setData(prevData => {
+      const updatedContacts = [...(prevData.contacts || [])];
+      updatedContacts.splice(index, 1);
+      
+      // If removing the first contact, update legacy fields to empty or next contact
+      const legacyUpdates = index === 0 ? {
+        contactName: updatedContacts[0]?.name || '',
+        contactEmail: updatedContacts[0]?.email || '',
+        contactPhone: updatedContacts[0]?.mobile || '',
+        contactTitle: updatedContacts[0]?.title || ''
+      } : {};
+      
+      return {
+        ...prevData,
+        contacts: updatedContacts,
+        ...legacyUpdates
+      };
     });
   };
-
+  
   return (
-    <div className="card">
-      {saved ? (
-        <div>
-          <div className="profile-header mb-6">
-            <div className="flex items-center mb-4">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-2xl font-bold mr-4">
-                {data.companyName.charAt(0)}
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">{data.companyName}</h2>
-              </div>
-              <button
-                onClick={handleEdit}
-                className="ml-auto px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                type="button"
-              >
-                Edit
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="font-medium text-gray-700 mb-1">Contact Information</h3>
-                <p>{data.contactName}</p>
-                <p className="text-sm text-gray-500">{data.contactEmail}</p>
-                <p className="text-sm text-gray-500">{data.contactPhone}</p>
-              </div>
-              
-              <div>
-                <h3 className="font-medium text-gray-700 mb-1">Business Type</h3>
-                <p>{data.businessType}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <div className="flex items-center mb-2">
-              <h3 className="font-medium text-gray-700">Business Description</h3>
-              <button
-                onClick={() => setShowBusinessOverview(!showBusinessOverview)}
-                className="ml-2 text-sm text-blue-600 hover:text-blue-800"
-                type="button"
-              >
-                {showBusinessOverview ? 'Hide' : 'Show'}
-              </button>
-            </div>
-            
-            {showBusinessOverview && (
-              <div className="bg-gray-50 p-4 rounded-lg whitespace-pre-wrap">
-                {data.businessDescription}
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div>
-          <h2 className="section-title">Client Information</h2>
-          
-          <div className="mb-6">
-            <h3 className="card-title">Company Information</h3>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Company Name
-              </label>
-              <input
-                type="text"
-                name="companyName"
-                value={data.companyName}
-                onChange={handleInputChange}
-                className="input-field"
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Type
-              </label>
-              <input
-                type="text"
-                name="businessType"
-                value={data.businessType}
-                onChange={handleInputChange}
-                className="input-field"
-              />
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            <h3 className="card-title">Contact Information</h3>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Contact Name
-              </label>
-              <input
-                type="text"
-                name="contactName"
-                value={data.contactName}
-                onChange={handleInputChange}
-                className="input-field"
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Contact Email
-              </label>
-              <input
-                type="email"
-                name="contactEmail"
-                value={data.contactEmail}
-                onChange={handleInputChange}
-                className="input-field"
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Contact Phone
-              </label>
-              <input
-                type="tel"
-                name="contactPhone"
-                value={data.contactPhone}
-                onChange={handleInputChange}
-                className="input-field"
-              />
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            <h3 className="card-title">Business Description</h3>
-            
-            <textarea
-              value={data.businessDescription}
-              onChange={handleBusinessDescriptionChange}
-              className="w-full border border-gray-300 p-3 rounded h-40"
-              placeholder="Enter business description here..."
-            />
-          </div>
-          
-          <button
-            onClick={handleSave}
-            disabled={!data.companyName || !data.contactName}
-            className={`button-primary ${(!data.companyName || !data.contactName) ? 'opacity-50 cursor-not-allowed' : ''}`}
-            type="button"
-          >
-            Save Client Information
-          </button>
-        </div>
-      )}
+    <div className="profile-header relative">
+      {/* LinkedIn-style banner */}
+      <div className="profile-banner"></div>
       
-      <div className="mt-4 flex items-center space-x-2">
-        {/* Refactored Like button with React event handler */}
+      <div className="relative px-6 py-4">
+        {/* Card flip button */}
         <button 
-          className={`social-button ${liked ? 'bg-blue-100' : ''}`}
-          onClick={handleLikeClick}
           type="button"
+          className="toggle-view-button absolute top-4 right-4 z-10"
+          onClick={handleFlip}
+          aria-label="Toggle card view"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-          </svg>
-          {liked ? 'Liked' : 'Like'}
+          {isFlipped ? <FaChevronLeft /> : <FaChevronRight />}
         </button>
         
-        {/* Refactored Comment button with React event handler */}
-        <button 
-          className={`social-button ${commentOpen ? 'bg-blue-100' : ''}`}
-          onClick={handleCommentClick}
-          type="button"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-          </svg>
-          Comment
-        </button>
-        
-        {/* Refactored Share button with React event handler */}
-        <button 
-          className={`social-button ${shared ? 'bg-blue-100' : ''}`}
-          onClick={handleShareClick}
-          type="button"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
-          {shared ? 'Shared' : 'Share'}
-        </button>
+        <div className="card-container">
+          <AnimatePresence initial={false} mode="wait">
+            <motion.div
+              key={isFlipped ? 'back' : 'front'}
+              initial={{ opacity: 0, rotateY: isFlipped ? -90 : 90 }}
+              animate={{ opacity: 1, rotateY: 0 }}
+              exit={{ opacity: 0, rotateY: isFlipped ? 90 : -90 }}
+              transition={{ duration: 0.4 }}
+              className="w-full"
+            >
+              {!isFlipped ? (
+                // Front of card - Display view
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold">{data.companyName || 'Company Name'}</h2>
+                  
+                  {data.industryType && (
+                    <div className="flex items-center text-gray-600">
+                      <FaIndustry className="mr-2" />
+                      <span>{data.industryType}</span>
+                    </div>
+                  )}
+                  
+                  {data.companyWebsite && (
+                    <div className="flex items-center text-gray-600">
+                      <FaGlobe className="mr-2" />
+                      <a href={data.companyWebsite.startsWith('http') ? data.companyWebsite : `https://${data.companyWebsite}`} 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         className="text-blue-600 hover:underline">
+                        {data.companyWebsite}
+                      </a>
+                    </div>
+                  )}
+                  
+                  {data.companyFacebookURL && (
+                    <div className="flex items-center text-gray-600">
+                      <FaFacebook className="mr-2" />
+                      <a href={data.companyFacebookURL.startsWith('http') ? data.companyFacebookURL : `https://${data.companyFacebookURL}`} 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         className="text-blue-600 hover:underline">
+                        {data.companyFacebookURL}
+                      </a>
+                    </div>
+                  )}
+                  
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-2">Contacts</h3>
+                    
+                    {(data.contacts || []).length > 0 ? (
+                      <div className="space-y-4">
+                        {(data.contacts || []).map((contact, index) => (
+                          <motion.div 
+                            key={index}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="bg-gray-50 p-3 rounded-lg"
+                          >
+                            {contact.name && (
+                              <div className="flex items-center text-gray-600">
+                                <FaUser className="mr-2" />
+                                <span>{contact.name}</span>
+                              </div>
+                            )}
+                            
+                            {contact.title && (
+                              <div className="flex items-center text-gray-600">
+                                <FaBriefcase className="mr-2" />
+                                <span>{contact.title}</span>
+                              </div>
+                            )}
+                            
+                            {contact.email && (
+                              <div className="flex items-center text-gray-600">
+                                <FaEnvelope className="mr-2" />
+                                <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                                  {contact.email}
+                                </a>
+                              </div>
+                            )}
+                            
+                            {contact.mobile && (
+                              <div className="flex items-center text-gray-600">
+                                <FaMobile className="mr-2" />
+                                <a href={`tel:${contact.mobile}`} className="text-blue-600 hover:underline">
+                                  {contact.mobile}
+                                </a>
+                              </div>
+                            )}
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 italic">No contacts added</p>
+                    )}
+                  </div>
+                  
+                  {data.businessDescription && (
+                    <div className="mt-4">
+                      <h3 className="text-lg font-semibold mb-2">Business Overview</h3>
+                      <p className="text-gray-700">{data.businessDescription}</p>
+                    </div>
+                  )}
+                  
+                  {/* Social interaction buttons */}
+                  <div className="flex space-x-2 mt-6 pt-4 border-t border-gray-200">
+                    <button 
+                      type="button"
+                      className={`social-button ${liked ? 'bg-blue-100 text-blue-700' : ''}`}
+                      onClick={() => setLiked(!liked)}
+                    >
+                      <FaThumbsUp className="mr-1" />
+                      <span>{liked ? 'Liked' : 'Like'}</span>
+                    </button>
+                    
+                    <button type="button" className="social-button">
+                      <FaComment className="mr-1" />
+                      <span>Comment</span>
+                    </button>
+                    
+                    <button type="button" className="social-button">
+                      <FaShare className="mr-1" />
+                      <span>Share</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // Back of card - Edit view
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
+                      Company Name
+                    </label>
+                    <input
+                      type="text"
+                      id="companyName"
+                      name="companyName"
+                      value={data.companyName || ''}
+                      onChange={handleInputChange}
+                      className="input-field"
+                      placeholder="Enter company name"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="industryType" className="block text-sm font-medium text-gray-700 mb-1">
+                      Industry Type
+                    </label>
+                    <input
+                      type="text"
+                      id="industryType"
+                      name="industryType"
+                      value={data.industryType || ''}
+                      onChange={handleInputChange}
+                      className="input-field"
+                      placeholder="Enter industry type"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="companyWebsite" className="block text-sm font-medium text-gray-700 mb-1">
+                      Company Website
+                    </label>
+                    <input
+                      type="text"
+                      id="companyWebsite"
+                      name="companyWebsite"
+                      value={data.companyWebsite || ''}
+                      onChange={handleInputChange}
+                      className="input-field"
+                      placeholder="Enter company website"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="companyFacebookURL" className="block text-sm font-medium text-gray-700 mb-1">
+                      Company Facebook URL
+                    </label>
+                    <input
+                      type="text"
+                      id="companyFacebookURL"
+                      name="companyFacebookURL"
+                      value={data.companyFacebookURL || ''}
+                      onChange={handleInputChange}
+                      className="input-field"
+                      placeholder="Enter company Facebook URL"
+                    />
+                  </div>
+                  
+                  <div className="mt-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Contacts ({(data.contacts || []).length}/5)
+                      </label>
+                      {(data.contacts || []).length < 5 && (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          type="button"
+                          onClick={addContact}
+                          className="px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm flex items-center"
+                        >
+                          <FaPlus className="mr-1" /> Add Contact
+                        </motion.button>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <AnimatePresence>
+                        {(data.contacts || []).map((contact, index) => (
+                          <motion.div 
+                            key={index}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="bg-gray-50 p-4 rounded-lg relative"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => removeContact(index)}
+                              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                              aria-label="Remove contact"
+                            >
+                              <FaTrash />
+                            </button>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label htmlFor={`contact-name-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+                                  Name
+                                </label>
+                                <input
+                                  type="text"
+                                  id={`contact-name-${index}`}
+                                  value={contact.name || ''}
+                                  onChange={(e) => handleContactChange(index, 'name', e.target.value)}
+                                  className="input-field"
+                                  placeholder="Enter name"
+                                />
+                              </div>
+                              
+                              <div>
+                                <label htmlFor={`contact-title-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+                                  Title
+                                </label>
+                                <input
+                                  type="text"
+                                  id={`contact-title-${index}`}
+                                  value={contact.title || ''}
+                                  onChange={(e) => handleContactChange(index, 'title', e.target.value)}
+                                  className="input-field"
+                                  placeholder="Enter title"
+                                />
+                              </div>
+                              
+                              <div>
+                                <label htmlFor={`contact-email-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+                                  Email
+                                </label>
+                                <input
+                                  type="email"
+                                  id={`contact-email-${index}`}
+                                  value={contact.email || ''}
+                                  onChange={(e) => handleContactChange(index, 'email', e.target.value)}
+                                  className="input-field"
+                                  placeholder="Enter email"
+                                />
+                              </div>
+                              
+                              <div>
+                                <label htmlFor={`contact-mobile-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+                                  Mobile
+                                </label>
+                                <input
+                                  type="tel"
+                                  id={`contact-mobile-${index}`}
+                                  value={contact.mobile || ''}
+                                  onChange={(e) => handleContactChange(index, 'mobile', e.target.value)}
+                                  className="input-field"
+                                  placeholder="Enter mobile number"
+                                />
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="businessDescription" className="block text-sm font-medium text-gray-700 mb-1">
+                      Business Overview
+                    </label>
+                    <textarea
+                      id="businessDescription"
+                      name="businessDescription"
+                      value={data.businessDescription || ''}
+                      onChange={handleInputChange}
+                      rows={4}
+                      className="input-field"
+                      placeholder="Enter business overview"
+                    />
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
-      
-      {/* Comment form - conditionally rendered */}
-      {commentOpen && (
-        <div className="mt-2 p-3 border border-gray-200 rounded-lg">
-          <textarea 
-            value={commentText}
-            onChange={handleCommentChange}
-            className="w-full p-2 border border-gray-300 rounded mb-2"
-            placeholder="Write a comment..."
-            rows={2}
-          />
-          <button 
-            onClick={handleCommentSubmit}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-            type="button"
-          >
-            Submit
-          </button>
-        </div>
-      )}
-      
-      {/* Comments list */}
-      {comments.length > 0 && (
-        <div className="mt-2 p-3 border border-gray-200 rounded-lg">
-          <h4 className="font-medium mb-2">Comments</h4>
-          {comments.map((comment, index) => (
-            <div key={index} className="p-2 bg-gray-50 rounded mb-1">{comment}</div>
-          ))}
-        </div>
-      )}
-      
-      {/* Flip card button */}
-      <button 
-        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        onClick={handleFlipCard}
-        type="button"
-      >
-        {data.showBack ? 'Show Front' : 'Show Back'}
-      </button>
     </div>
   );
 };

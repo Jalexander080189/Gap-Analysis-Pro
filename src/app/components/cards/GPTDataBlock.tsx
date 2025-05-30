@@ -2,15 +2,30 @@
 
 import React from 'react';
 
-// Centralized type definitions for shared interfaces
+// Updated ClientDataType with new fields and contacts array
 export interface ClientDataType {
   companyName: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  businessType: string;
+  companyWebsite: string; // renamed from companyUrl
+  companyFacebookURL: string;
+  industryType: string; // new field
+  contacts: ContactType[]; // new array for multiple contacts
   businessDescription: string;
   showBack: boolean;
+  
+  // Legacy fields for backward compatibility
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  contactTitle?: string;
+  businessType?: string;
+}
+
+// New interface for contact information
+export interface ContactType {
+  name: string;
+  email: string;
+  mobile: string;
+  title: string;
 }
 
 export interface MarketDataType {
