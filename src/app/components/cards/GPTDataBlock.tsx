@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-interface ClientDataType {
+// Centralized type definitions for shared interfaces
+export interface ClientDataType {
   companyName: string;
   contactName: string;
   contactEmail: string;
@@ -12,7 +13,7 @@ interface ClientDataType {
   showBack: boolean;
 }
 
-interface MarketDataType {
+export interface MarketDataType {
   audienceSize: string;
   buyerPercentage: string;
   avgYearlyCustomerValue: string;
@@ -21,7 +22,7 @@ interface MarketDataType {
   showBack: boolean;
 }
 
-interface CompanyDataType {
+export interface CompanyDataType {
   annualRevenue: string;
   percentNewCustomers: string;
   percentCurrentCustomers: string;
@@ -31,7 +32,7 @@ interface CompanyDataType {
   showBack: boolean;
 }
 
-interface GapsDataType {
+export interface GapsDataType {
   mode: 'leadgen' | 'retail';
   leadgen: {
     annualWebsiteVisitors: string;
@@ -50,7 +51,7 @@ interface GapsDataType {
   showBack: boolean;
 }
 
-interface ScenariosDataType {
+export interface ScenariosDataType {
   visibilityReachSlider: number;
   leadGenSlider: number;
   closeRateSlider: number;
@@ -61,7 +62,7 @@ interface ScenariosDataType {
   showBack: boolean;
 }
 
-interface MarketingDataType {
+export interface MarketingDataType {
   channels: Array<{name: string; monthlyAdspend: string; monthlyCost: string}>;
   totalMonthlySpend: number;
   totalYearlySpend: number;

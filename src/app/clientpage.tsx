@@ -124,6 +124,9 @@ export default function ClientPage() {
     showBack: false
   });
   
+  // Error state for URL parameter parsing
+  const [urlError, setUrlError] = useState<string | null>(null);
+  
   const searchParams = useSearchParams();
   
   // Function to update state from URL parameters
@@ -148,8 +151,12 @@ export default function ClientPage() {
       if (decodedData.marketingData) setMarketingData(decodedData.marketingData);
       if (decodedData.sbaData) setSbaData(decodedData.sbaData);
       if (decodedData.notesData) setNotesData(decodedData.notesData);
+      
+      // Clear any previous errors
+      setUrlError(null);
     } catch (error) {
       console.error('Error parsing URL data:', error);
+      setUrlError('Invalid data in URL. Please check the link and try again.');
     }
   }, [setClientData, setMarketData, setCompanyData, setGapsData, setScenariosData, setMarketingData, setSbaData, setNotesData]);
   
@@ -186,6 +193,21 @@ export default function ClientPage() {
 
   return (
     <main className="container mx-auto px-4 py-8">
+      {/* Display URL parsing error if any */}
+      {urlError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative">
+          <strong className="font-bold">Error!</strong>
+          <span className="block sm:inline"> {urlError}</span>
+          <button 
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            onClick={() => setUrlError(null)}
+            type="button"
+          >
+            <span className="text-xl">&times;</span>
+          </button>
+        </div>
+      )}
+      
       {/* Card 1 at the very top, no cards to right or left */}
       <div className="w-full mb-8">
         <ClientInformation 
@@ -195,32 +217,32 @@ export default function ClientPage() {
       </div>
       
       {/* Cards 2, 3, 4 in a single horizontal row */}
-<div className="horizontal-cards mb-8">
-  <div className="horizontal-card">
-    <MarketOverview 
-      data={marketData} 
-      setData={setMarketData} 
-    />
-  </div>
-  
-  <div className="horizontal-card">
-    <CompanyOverview 
-      data={companyData} 
-      setData={setCompanyData} 
-      avgYearlyCustomerValue={parseFloat(marketData.avgYearlyCustomerValue.replace(/,/g, '')) || 0}
-      totalMarketRevShare={marketData.totalMarketRevShare}
-    />
-  </div>
-  
-  <div className="horizontal-card">
-    <GapsAndOpps 
-      data={gapsData} 
-      setData={setGapsData} 
-      calculatedBuyers={marketData.calculatedBuyers}
-    />
-  </div>
-</div>
-
+      <div className="horizontal-cards mb-8">
+        <div className="horizontal-card">
+          <MarketOverview 
+            data={marketData} 
+            setData={setMarketData} 
+          />
+        </div>
+        
+        <div className="horizontal-card">
+          <CompanyOverview 
+            data={companyData} 
+            setData={setCompanyData} 
+            avgYearlyCustomerValue={parseFloat(marketData.avgYearlyCustomerValue.replace(/,/g, '')) || 0}
+            totalMarketRevShare={marketData.totalMarketRevShare}
+          />
+        </div>
+        
+        <div className="horizontal-card">
+          <GapsAndOpps 
+            data={gapsData} 
+            setData={setGapsData} 
+            calculatedBuyers={marketData.calculatedBuyers}
+          />
+        </div>
+      </div>
+      
       {/* Cards 5-9 stacked vertically like a newsfeed */}
       <div className="grid grid-cols-1 gap-6">
         <Scenarios 
