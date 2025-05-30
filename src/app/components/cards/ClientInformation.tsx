@@ -51,10 +51,11 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     }
     
     // Initialize companyWebsite if it doesn't exist
-    if (!data.companyWebsite && data.companyUrl) {
+    // Note: We're checking for businessType instead of companyUrl since companyUrl is no longer in the interface
+    if (!data.companyWebsite && data.businessType) {
       setData(prevData => ({
         ...prevData,
-        companyWebsite: prevData.companyUrl
+        companyWebsite: ''  // Initialize with empty string instead of accessing non-existent property
       }));
     }
   }, [data, setData]);
