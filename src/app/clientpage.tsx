@@ -195,26 +195,32 @@ export default function ClientPage() {
       </div>
       
       {/* Cards 2, 3, 4 in a single horizontal row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <MarketOverview 
-          data={marketData} 
-          setData={setMarketData} 
-        />
-        
-        <CompanyOverview 
-          data={companyData} 
-          setData={setCompanyData} 
-          avgYearlyCustomerValue={parseFloat(marketData.avgYearlyCustomerValue.replace(/,/g, '')) || 0}
-          totalMarketRevShare={marketData.totalMarketRevShare}
-        />
-        
-        <GapsAndOpps 
-          data={gapsData} 
-          setData={setGapsData} 
-          calculatedBuyers={marketData.calculatedBuyers}
-        />
-      </div>
-      
+<div className="horizontal-cards mb-8">
+  <div className="horizontal-card">
+    <MarketOverview 
+      data={marketData} 
+      setData={setMarketData} 
+    />
+  </div>
+  
+  <div className="horizontal-card">
+    <CompanyOverview 
+      data={companyData} 
+      setData={setCompanyData} 
+      avgYearlyCustomerValue={parseFloat(marketData.avgYearlyCustomerValue.replace(/,/g, '')) || 0}
+      totalMarketRevShare={marketData.totalMarketRevShare}
+    />
+  </div>
+  
+  <div className="horizontal-card">
+    <GapsAndOpps 
+      data={gapsData} 
+      setData={setGapsData} 
+      calculatedBuyers={marketData.calculatedBuyers}
+    />
+  </div>
+</div>
+
       {/* Cards 5-9 stacked vertically like a newsfeed */}
       <div className="grid grid-cols-1 gap-6">
         <Scenarios 
