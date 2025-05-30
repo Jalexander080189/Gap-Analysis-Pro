@@ -12,8 +12,27 @@ import Notes from './components/cards/Notes';
 import GPTDataBlock from './components/cards/GPTDataBlock';
 import { useSearchParams } from 'next/navigation';
 
+// Define the client data interface to match what ClientInformation expects
+interface ClientDataType {
+  primaryOwner: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  secondaryOwner: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  companyName: string;
+  companyUrl: string;
+  companyFacebookUrl: string;
+  businessOverview: string;
+  saved: boolean;
+}
+
 export default function Home() {
-  const [clientData, setClientData] = useState({
+  const [clientData, setClientData] = useState<ClientDataType>({
     primaryOwner: { name: '', email: '', phone: '' },
     secondaryOwner: { name: '', email: '', phone: '' },
     companyName: '',
@@ -141,8 +160,13 @@ export default function Home() {
 
   return (
     <main className="flex flex-col gap-6">
-      {/* Card 1: Client Information */}
-      <ClientInformation data={clientData} setData={setClientData} />
+      {/* Card 1: Client Information with LinkedIn-style profile */}
+      <div className="w-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+        <div className="h-24 bg-blue-600"></div>
+        <div className="p-6">
+          <ClientInformation data={clientData} setData={setClientData} />
+        </div>
+      </div>
       
       {/* Cards 2, 3, 4: Horizontal Layout */}
       <div className="flex flex-col md:flex-row gap-6 w-full">
