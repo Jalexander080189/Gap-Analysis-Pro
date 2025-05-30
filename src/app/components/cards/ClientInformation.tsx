@@ -1,9 +1,38 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ClientDataType, ContactType } from '../cards/GPTDataBlock';
-import { FaUser, FaEnvelope, FaMobile, FaBriefcase, FaGlobe, FaFacebook, FaIndustry, FaPlus, FaTrash, FaChevronLeft, FaChevronRight, FaThumbsUp, FaComment, FaShare } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+
+// Import ReactQuill dynamically to avoid SSR issues
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
+
+// Define proper TypeScript interfaces
+export interface ContactType {
+  name: string;
+  email: string;
+  mobile: string;
+  title: string;
+}
+
+export interface ClientDataType {
+  companyName: string;
+  companyWebsite: string;
+  companyFacebookURL: string;
+  industryType: string;
+  contacts: ContactType[];
+  businessDescription: string;
+  showBack: boolean;
+  profileImage?: string; // New field for profile image
+  coverImage?: string; // New field for cover image
+  
+  // Legacy fields for backward compatibility
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  contactTitle?: string;
+  businessType?: string;
+}
 
 interface ClientInformationProps {
   data: ClientDataType;
@@ -11,9 +40,15 @@ interface ClientInformationProps {
 }
 
 const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) => {
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [liked, setLiked] = useState(false);
-  
+  const [showBusinessOverview, setShowBusinessOverview] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const profileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const [activeContactIndex, setActiveContactIndex] = useState<number | null>(null);
+
+  // Default Drive Social Media logo for cover if none provided
+  const defaultCoverImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='200' viewBox='0 0 800 200'%3E%3Cdefs%3E%3ClinearGradient id='grad1' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' style='stop-color:%23405DE6;stop-opacity:1' /%3E%3Cstop offset='50%25' style='stop-color:%235851DB;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23833AB4;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='200' fill='url(%23grad1)' /%3E%3Cg transform='translate(400,100) scale(1.5)'%3E%3Cpath d='M-30,-30 L30,-30 L30,30 L-30,30 Z' fill='none' stroke='white' stroke-width='4' /%3E%3Cpath d='M-15,-15 L15,-15 L15,15 L-15,15 Z' fill='none' stroke='white' stroke-width='4' /%3E%3Ccircle cx='20' cy='-20' r='7' fill='white' /%3E%3Cpath d='M-25,0 L25,0 M0,-25 L0,25' stroke='white' stroke-width='2' stroke-dasharray='5,5' /%3E%3Ctext x='0' y='0' font-family='Arial' font-size='12' fill='white' text-anchor='middle' dominant-baseline='middle'%3EDSM%3C/text%3E%3C/g%3E%3Ctext x='650' y='180' font-family='Arial' font-size='24' fill='white' text-anchor='middle'%3EDrive Social Media%3C/text%3E%3C/svg%3E";
+
   // Initialize contacts array if it doesn't exist (for backward compatibility)
   useEffect(() => {
     if (!data.contacts) {
@@ -43,7 +78,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     }
     
     // Initialize industryType if it doesn't exist
-    if (!data.industryType) {
+    if (!data.industryType && data.businessType) {
       setData(prevData => ({
         ...prevData,
         industryType: prevData.businessType || ''
@@ -51,31 +86,30 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     }
     
     // Initialize companyWebsite if it doesn't exist
-    // Note: We're checking for businessType instead of companyUrl since companyUrl is no longer in the interface
     if (!data.companyWebsite && data.businessType) {
       setData(prevData => ({
         ...prevData,
-        companyWebsite: ''  // Initialize with empty string instead of accessing non-existent property
+        companyWebsite: ''
       }));
     }
   }, [data, setData]);
-  
-  const handleFlip = () => {
-    setIsFlipped(!isFlipped);
-    setData(prevData => ({
-      ...prevData,
-      showBack: !prevData.showBack
-    }));
-  };
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
     setData(prevData => ({
       ...prevData,
       [name]: value
     }));
   };
-  
+
+  const handleBusinessOverviewChange = (content: string) => {
+    setData(prevData => ({
+      ...prevData,
+      businessDescription: content
+    }));
+  };
+
   const handleContactChange = (index: number, field: keyof ContactType, value: string) => {
     setData(prevData => {
       const updatedContacts = [...(prevData.contacts || [])];
@@ -99,13 +133,15 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
       };
     });
   };
-  
+
   const addContact = () => {
     if ((data.contacts || []).length < 5) {
       setData(prevData => ({
         ...prevData,
         contacts: [...(prevData.contacts || []), { name: '', email: '', mobile: '', title: '' }]
       }));
+      // Set the new contact as active
+      setActiveContactIndex((data.contacts || []).length);
     }
   };
   
@@ -128,334 +164,548 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
         ...legacyUpdates
       };
     });
+    
+    // Reset active contact if the active one was removed
+    if (activeContactIndex === index) {
+      setActiveContactIndex(null);
+    } else if (activeContactIndex !== null && activeContactIndex > index) {
+      // Adjust active index if a contact before it was removed
+      setActiveContactIndex(activeContactIndex - 1);
+    }
   };
-  
+
+  // Handle profile image upload
+  const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setData(prevData => ({
+          ...prevData,
+          profileImage: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle cover image upload
+  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setData(prevData => ({
+          ...prevData,
+          coverImage: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle drag events for profile image
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  // Handle drop event for profile image
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setData(prevData => ({
+          ...prevData,
+          profileImage: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const toggleEdit = () => {
+    setData(prevData => ({
+      ...prevData,
+      showBack: !prevData.showBack
+    }));
+  };
+
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'color': [] }, { 'background': [] }],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      ['link'],
+      ['clean']
+    ],
+  };
+
   return (
-    <div className="profile-header relative">
-      {/* LinkedIn-style banner */}
-      <div className="profile-banner"></div>
-      
-      <div className="relative px-6 py-4">
-        {/* Card flip button */}
-        <button 
-          type="button"
-          className="toggle-view-button absolute top-4 right-4 z-10"
-          onClick={handleFlip}
-          aria-label="Toggle card view"
-        >
-          {isFlipped ? <FaChevronLeft /> : <FaChevronRight />}
-        </button>
-        
-        <div className="card-container">
-          <AnimatePresence initial={false} mode="wait">
-            <motion.div
-              key={isFlipped ? 'back' : 'front'}
-              initial={{ opacity: 0, rotateY: isFlipped ? -90 : 90 }}
-              animate={{ opacity: 1, rotateY: 0 }}
-              exit={{ opacity: 0, rotateY: isFlipped ? 90 : -90 }}
-              transition={{ duration: 0.4 }}
-              className="w-full"
+    <div className="card">
+      {!data.showBack ? (
+        <div>
+          {/* LinkedIn-style profile header with cover photo and profile image */}
+          <div className="profile-header mb-6 relative">
+            {/* Cover photo area with Drive Social Media branding */}
+            <div className="relative h-48 bg-gradient-to-r from-blue-600 to-purple-600 overflow-hidden">
+              {/* Cover image or default Drive Social Media branded cover */}
+              <div className="absolute inset-0 bg-cover bg-center" 
+                   style={{ backgroundImage: `url(${data.coverImage || defaultCoverImage})` }}>
+                {/* Edit cover button */}
+                <button 
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  className="absolute top-4 right-4 bg-white bg-opacity-80 p-2 rounded-full hover:bg-opacity-100 transition-all"
+                  aria-label="Edit cover photo"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                  </svg>
+                </button>
+                <input 
+                  ref={coverInputRef}
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleCoverImageUpload} 
+                  className="hidden" 
+                  aria-label="Upload cover photo"
+                />
+              </div>
+            </div>
+
+            {/* Profile image with upload functionality */}
+            <div 
+              className={`absolute left-8 -bottom-16 w-32 h-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden ${dragActive ? 'ring-4 ring-blue-500' : ''}`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={() => profileInputRef.current?.click()}
+              style={{ cursor: 'pointer' }}
             >
-              {!isFlipped ? (
-                // Front of card - Display view
-                <div className="space-y-4">
+              {data.profileImage ? (
+                <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: `url(${data.profileImage})` }} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-gray-400">
+                  {data.companyName ? data.companyName.charAt(0) : '?'}
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white opacity-0 hover:opacity-100" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <input 
+                ref={profileInputRef}
+                type="file" 
+                accept="image/*" 
+                onChange={handleProfileImageUpload} 
+                className="hidden" 
+                aria-label="Upload profile photo"
+              />
+            </div>
+
+            {/* Company information section */}
+            <div className="pt-20 px-8 pb-6">
+              <div className="flex items-start justify-between">
+                <div>
                   <h2 className="text-2xl font-bold">{data.companyName || 'Company Name'}</h2>
-                  
                   {data.industryType && (
-                    <div className="flex items-center text-gray-600">
-                      <FaIndustry className="mr-2" />
+                    <div className="flex items-center text-sm text-gray-500 mt-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
                       <span>{data.industryType}</span>
                     </div>
                   )}
-                  
-                  {data.companyWebsite && (
-                    <div className="flex items-center text-gray-600">
-                      <FaGlobe className="mr-2" />
+                  <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
+                    {/* Drive Social Media logo/icon */}
+                    <div className="w-5 h-5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-sm flex items-center justify-center text-white text-xs font-bold">
+                      D
+                    </div>
+                    <span>Drive Social Media Client</span>
+                  </div>
+                  <div className="flex space-x-3 text-sm text-gray-500 mt-2">
+                    {data.companyWebsite && (
                       <a href={data.companyWebsite.startsWith('http') ? data.companyWebsite : `https://${data.companyWebsite}`} 
                          target="_blank" 
-                         rel="noopener noreferrer"
-                         className="text-blue-600 hover:underline">
-                        {data.companyWebsite}
+                         rel="noopener noreferrer" 
+                         className="hover:text-blue-500 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                        </svg>
+                        Website
                       </a>
-                    </div>
-                  )}
-                  
-                  {data.companyFacebookURL && (
-                    <div className="flex items-center text-gray-600">
-                      <FaFacebook className="mr-2" />
+                    )}
+                    {data.companyFacebookURL && (
                       <a href={data.companyFacebookURL.startsWith('http') ? data.companyFacebookURL : `https://${data.companyFacebookURL}`} 
                          target="_blank" 
-                         rel="noopener noreferrer"
-                         className="text-blue-600 hover:underline">
-                        {data.companyFacebookURL}
+                         rel="noopener noreferrer" 
+                         className="hover:text-blue-500 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                        </svg>
+                        Facebook
                       </a>
-                    </div>
-                  )}
-                  
-                  <div className="mt-6">
-                    <h3 className="text-lg font-semibold mb-2">Contacts</h3>
-                    
-                    {(data.contacts || []).length > 0 ? (
-                      <div className="space-y-4">
-                        {(data.contacts || []).map((contact, index) => (
-                          <motion.div 
-                            key={index}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="bg-gray-50 p-3 rounded-lg"
-                          >
-                            {contact.name && (
-                              <div className="flex items-center text-gray-600">
-                                <FaUser className="mr-2" />
-                                <span>{contact.name}</span>
-                              </div>
-                            )}
-                            
-                            {contact.title && (
-                              <div className="flex items-center text-gray-600">
-                                <FaBriefcase className="mr-2" />
-                                <span>{contact.title}</span>
-                              </div>
-                            )}
-                            
-                            {contact.email && (
-                              <div className="flex items-center text-gray-600">
-                                <FaEnvelope className="mr-2" />
-                                <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
-                                  {contact.email}
-                                </a>
-                              </div>
-                            )}
-                            
-                            {contact.mobile && (
-                              <div className="flex items-center text-gray-600">
-                                <FaMobile className="mr-2" />
-                                <a href={`tel:${contact.mobile}`} className="text-blue-600 hover:underline">
-                                  {contact.mobile}
-                                </a>
-                              </div>
-                            )}
-                          </motion.div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 italic">No contacts added</p>
                     )}
                   </div>
-                  
-                  {data.businessDescription && (
-                    <div className="mt-4">
-                      <h3 className="text-lg font-semibold mb-2">Business Overview</h3>
-                      <p className="text-gray-700">{data.businessDescription}</p>
-                    </div>
-                  )}
-                  
-                  {/* Social interaction buttons */}
-                  <div className="flex space-x-2 mt-6 pt-4 border-t border-gray-200">
-                    <button 
-                      type="button"
-                      className={`social-button ${liked ? 'bg-blue-100 text-blue-700' : ''}`}
-                      onClick={() => setLiked(!liked)}
-                    >
-                      <FaThumbsUp className="mr-1" />
-                      <span>{liked ? 'Liked' : 'Like'}</span>
-                    </button>
-                    
-                    <button type="button" className="social-button">
-                      <FaComment className="mr-1" />
-                      <span>Comment</span>
-                    </button>
-                    
-                    <button type="button" className="social-button">
-                      <FaShare className="mr-1" />
-                      <span>Share</span>
-                    </button>
-                  </div>
                 </div>
-              ) : (
-                // Back of card - Edit view
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
-                      Company Name
-                    </label>
-                    <input
-                      type="text"
-                      id="companyName"
-                      name="companyName"
-                      value={data.companyName || ''}
-                      onChange={handleInputChange}
-                      className="input-field"
-                      placeholder="Enter company name"
-                    />
+                <button
+                  type="button"
+                  onClick={toggleEdit}
+                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Contacts Section */}
+          <div className="mb-6">
+            <h3 className="font-medium text-gray-700 mb-3">Contacts</h3>
+            
+            {data.contacts && data.contacts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {data.contacts.map((contact, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                    {contact.name && <p className="font-medium">{contact.name}</p>}
+                    {contact.title && <p className="text-sm text-gray-600">{contact.title}</p>}
+                    {contact.email && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                          {contact.email}
+                        </a>
+                      </p>
+                    )}
+                    {contact.mobile && (
+                      <p className="text-sm text-gray-600">
+                        <a href={`tel:${contact.mobile}`} className="text-blue-600 hover:underline">
+                          {contact.mobile}
+                        </a>
+                      </p>
+                    )}
                   </div>
-                  
-                  <div>
-                    <label htmlFor="industryType" className="block text-sm font-medium text-gray-700 mb-1">
-                      Industry Type
-                    </label>
-                    <input
-                      type="text"
-                      id="industryType"
-                      name="industryType"
-                      value={data.industryType || ''}
-                      onChange={handleInputChange}
-                      className="input-field"
-                      placeholder="Enter industry type"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="companyWebsite" className="block text-sm font-medium text-gray-700 mb-1">
-                      Company Website
-                    </label>
-                    <input
-                      type="text"
-                      id="companyWebsite"
-                      name="companyWebsite"
-                      value={data.companyWebsite || ''}
-                      onChange={handleInputChange}
-                      className="input-field"
-                      placeholder="Enter company website"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="companyFacebookURL" className="block text-sm font-medium text-gray-700 mb-1">
-                      Company Facebook URL
-                    </label>
-                    <input
-                      type="text"
-                      id="companyFacebookURL"
-                      name="companyFacebookURL"
-                      value={data.companyFacebookURL || ''}
-                      onChange={handleInputChange}
-                      className="input-field"
-                      placeholder="Enter company Facebook URL"
-                    />
-                  </div>
-                  
-                  <div className="mt-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Contacts ({(data.contacts || []).length}/5)
-                      </label>
-                      {(data.contacts || []).length < 5 && (
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          type="button"
-                          onClick={addContact}
-                          className="px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm flex items-center"
-                        >
-                          <FaPlus className="mr-1" /> Add Contact
-                        </motion.button>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <AnimatePresence>
-                        {(data.contacts || []).map((contact, index) => (
-                          <motion.div 
-                            key={index}
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="bg-gray-50 p-4 rounded-lg relative"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => removeContact(index)}
-                              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
-                              aria-label="Remove contact"
-                            >
-                              <FaTrash />
-                            </button>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label htmlFor={`contact-name-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                                  Name
-                                </label>
-                                <input
-                                  type="text"
-                                  id={`contact-name-${index}`}
-                                  value={contact.name || ''}
-                                  onChange={(e) => handleContactChange(index, 'name', e.target.value)}
-                                  className="input-field"
-                                  placeholder="Enter name"
-                                />
-                              </div>
-                              
-                              <div>
-                                <label htmlFor={`contact-title-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                                  Title
-                                </label>
-                                <input
-                                  type="text"
-                                  id={`contact-title-${index}`}
-                                  value={contact.title || ''}
-                                  onChange={(e) => handleContactChange(index, 'title', e.target.value)}
-                                  className="input-field"
-                                  placeholder="Enter title"
-                                />
-                              </div>
-                              
-                              <div>
-                                <label htmlFor={`contact-email-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                                  Email
-                                </label>
-                                <input
-                                  type="email"
-                                  id={`contact-email-${index}`}
-                                  value={contact.email || ''}
-                                  onChange={(e) => handleContactChange(index, 'email', e.target.value)}
-                                  className="input-field"
-                                  placeholder="Enter email"
-                                />
-                              </div>
-                              
-                              <div>
-                                <label htmlFor={`contact-mobile-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                                  Mobile
-                                </label>
-                                <input
-                                  type="tel"
-                                  id={`contact-mobile-${index}`}
-                                  value={contact.mobile || ''}
-                                  onChange={(e) => handleContactChange(index, 'mobile', e.target.value)}
-                                  className="input-field"
-                                  placeholder="Enter mobile number"
-                                />
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="businessDescription" className="block text-sm font-medium text-gray-700 mb-1">
-                      Business Overview
-                    </label>
-                    <textarea
-                      id="businessDescription"
-                      name="businessDescription"
-                      value={data.businessDescription || ''}
-                      onChange={handleInputChange}
-                      rows={4}
-                      className="input-field"
-                      placeholder="Enter business overview"
-                    />
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 italic">No contacts added</p>
+            )}
+          </div>
+          
+          {/* Business Overview Section */}
+          <div>
+            <div className="flex items-center mb-2">
+              <h3 className="font-medium text-gray-700">Business Overview</h3>
+              <button
+                type="button"
+                onClick={() => setShowBusinessOverview(!showBusinessOverview)}
+                className="ml-2 text-sm text-blue-600 hover:text-blue-800"
+              >
+                {showBusinessOverview ? 'Hide' : 'Show'}
+              </button>
+            </div>
+            
+            {showBusinessOverview && (
+              <div className="bg-gray-50 p-4 rounded-lg" dangerouslySetInnerHTML={{ __html: data.businessDescription || '' }} />
+            )}
+          </div>
         </div>
+      ) : (
+        <div>
+          <h2 className="section-title">Client Information</h2>
+          
+          {/* Company Information */}
+          <div className="mb-6">
+            <h3 className="card-title">Company Information</h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Company Name
+              </label>
+              <input
+                type="text"
+                name="companyName"
+                value={data.companyName || ''}
+                onChange={handleInputChange}
+                className="input-field"
+                placeholder="Enter company name"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Industry Type
+              </label>
+              <input
+                type="text"
+                name="industryType"
+                value={data.industryType || ''}
+                onChange={handleInputChange}
+                className="input-field"
+                placeholder="Enter industry type"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Company Website
+              </label>
+              <input
+                type="url"
+                name="companyWebsite"
+                value={data.companyWebsite || ''}
+                onChange={handleInputChange}
+                className="input-field"
+                placeholder="https://example.com"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Company Facebook URL
+              </label>
+              <input
+                type="url"
+                name="companyFacebookURL"
+                value={data.companyFacebookURL || ''}
+                onChange={handleInputChange}
+                className="input-field"
+                placeholder="https://facebook.com/example"
+              />
+            </div>
+
+            {/* Profile Image Upload */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Profile Image
+              </label>
+              <div 
+                className={`w-32 h-32 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 ${dragActive ? 'border-blue-500 bg-blue-50' : ''}`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => profileInputRef.current?.click()}
+                style={{ cursor: 'pointer' }}
+              >
+                {data.profileImage ? (
+                  <div className="w-full h-full bg-cover bg-center rounded-full" style={{ backgroundImage: `url(${data.profileImage})` }} />
+                ) : (
+                  <div className="text-center p-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <p className="mt-1 text-xs text-gray-500">Upload image</p>
+                  </div>
+                )}
+                <input 
+                  ref={profileInputRef}
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleProfileImageUpload} 
+                  className="hidden" 
+                  aria-label="Upload profile photo"
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Click or drag and drop to upload a profile image</p>
+            </div>
+
+            {/* Cover Image Upload */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cover Image (Optional)
+              </label>
+              <div 
+                className="w-full h-24 border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 hover:bg-gray-100"
+                onClick={() => coverInputRef.current?.click()}
+                style={{ cursor: 'pointer' }}
+              >
+                {data.coverImage ? (
+                  <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: `url(${data.coverImage})` }} />
+                ) : (
+                  <div className="text-center p-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p className="mt-1 text-xs text-gray-500">Upload cover image</p>
+                  </div>
+                )}
+                <input 
+                  ref={coverInputRef}
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleCoverImageUpload} 
+                  className="hidden" 
+                  aria-label="Upload cover photo"
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">If no cover image is provided, a Drive Social Media branded cover will be used</p>
+            </div>
+          </div>
+          
+          {/* Contacts Section */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="card-title">Contacts ({(data.contacts || []).length}/5)</h3>
+              {(data.contacts || []).length < 5 && (
+                <button
+                  type="button"
+                  onClick={addContact}
+                  className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm flex items-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                  Add Contact
+                </button>
+              )}
+            </div>
+            
+            {data.contacts && data.contacts.length > 0 ? (
+              <div className="space-y-4">
+                {data.contacts.map((contact, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg relative">
+                    <button
+                      type="button"
+                      onClick={() => removeContact(index)}
+                      className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                      aria-label="Remove contact"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          value={contact.name}
+                          onChange={(e) => handleContactChange(index, 'name', e.target.value)}
+                          className="input-field"
+                          placeholder="Contact name"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          value={contact.title}
+                          onChange={(e) => handleContactChange(index, 'title', e.target.value)}
+                          className="input-field"
+                          placeholder="Job title"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          value={contact.email}
+                          onChange={(e) => handleContactChange(index, 'email', e.target.value)}
+                          className="input-field"
+                          placeholder="Email address"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Mobile
+                        </label>
+                        <input
+                          type="tel"
+                          value={contact.mobile}
+                          onChange={(e) => handleContactChange(index, 'mobile', e.target.value)}
+                          className="input-field"
+                          placeholder="Phone number"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <p className="text-gray-500 mb-2">No contacts added yet</p>
+                <button
+                  type="button"
+                  onClick={addContact}
+                  className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm inline-flex items-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                  Add First Contact
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {/* Business Overview */}
+          <div className="mb-6">
+            <h3 className="card-title">Business Overview</h3>
+            
+            {typeof window !== 'undefined' && (
+              <ReactQuill
+                value={data.businessDescription || ''}
+                onChange={handleBusinessOverviewChange}
+                modules={modules}
+                className="bg-white"
+              />
+            )}
+          </div>
+          
+          <button
+            type="button"
+            onClick={toggleEdit}
+            className="button-primary"
+          >
+            Save Client Information
+          </button>
+        </div>
+      )}
+      
+      {/* Social interaction buttons */}
+      <div className="mt-4 flex items-center space-x-2">
+        <button type="button" className="social-button">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+          </svg>
+          Like
+        </button>
+        <button type="button" className="social-button">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          Comment
+        </button>
+        <button type="button" className="social-button">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          Share
+        </button>
       </div>
     </div>
   );
