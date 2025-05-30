@@ -142,12 +142,7 @@ export default function Home() {
   return (
     <main className="flex flex-col gap-6">
       {/* Card 1: Client Information */}
-      <div className="w-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-        <div className="h-24 bg-blue-600"></div>
-        <div className="p-6">
-          <ClientInformation data={clientData} setData={setClientData} />
-        </div>
-      </div>
+      <ClientInformation data={clientData} setData={setClientData} />
       
       {/* Cards 2, 3, 4: Horizontal Layout */}
       <div className="flex flex-col md:flex-row gap-6 w-full">
