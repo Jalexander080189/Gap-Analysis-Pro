@@ -45,9 +45,6 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
   const profileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  // Default Drive Social Media logo for cover if none provided
-  const defaultCoverImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='200' viewBox='0 0 800 200'%3E%3Cdefs%3E%3ClinearGradient id='grad1' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' style='stop-color:%23000000;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23333333;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='200' fill='url(%23grad1 )' /%3E%3Cg transform='translate(200,100)'%3E%3Cpath d='M-30,-30 L30,-30 L30,30 L-30,30 Z' fill='none' stroke='white' stroke-width='2' /%3E%3Ccircle cx='60' cy='-60' r='15' stroke='white' stroke-width='2' fill='none' /%3E%3Cpath d='M60,-70 L60,-50 M50,-60 L70,-60' stroke='white' stroke-width='2' /%3E%3C/g%3E%3Cg transform='translate(600,100)'%3E%3Cpath d='M-50,0 L50,0 M0,-50 L0,50' stroke='white' stroke-width='1' stroke-dasharray='5,5' /%3E%3C/g%3E%3Cpath d='M650,50 L750,50 L700,150 Z' fill='%23FF5555' fill-opacity='0.7' /%3E%3Cpath d='M50,50 L150,50 L100,150 Z' fill='%2355AAFF' fill-opacity='0.7' /%3E%3C/svg%3E";
-
   // Initialize contacts array if it doesn't exist (for backward compatibility)
   useEffect(() => {
     if (!data.contacts) {
@@ -523,7 +520,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                     <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '12px', height: '12px', color: '#9ca3af' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                   )}
+                  )}
                   <input 
                     ref={profileInputRef}
                     type="file" 
@@ -563,7 +560,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                     <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '12px', height: '12px', color: '#9ca3af' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                   )}
+                  )}
                   <input 
                     ref={coverInputRef}
                     type="file" 
@@ -601,7 +598,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                   </svg>
                   Add
                 </button>
-               )}
+              )}
             </div>
             
             {data.contacts && data.contacts.length > 0 ? (
@@ -639,7 +636,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                         <input
                           type="text"
                           value={contact.name}
-                          onChange={(e ) => handleContactChange(index, 'name', e.target.value)}
+                          onChange={(e) => handleContactChange(index, 'name', e.target.value)}
                           style={{
                             width: '100%',
                             padding: '2px 4px',
@@ -731,7 +728,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                   Add Contact
                 </button>
               </div>
-             )}
+            )}
           </div>
           
           {/* Business Overview - ultra-compact */}
