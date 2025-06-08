@@ -1,11 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-
-// Import ReactQuill dynamically to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
-import 'react-quill/dist/quill.snow.css';
 
 // Define proper TypeScript interfaces
 export interface ContactType {
@@ -99,10 +94,10 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     }));
   };
 
-  const handleBusinessOverviewChange = (content: string) => {
+  const handleBusinessOverviewChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setData(prevData => ({
       ...prevData,
-      businessDescription: content
+      businessDescription: e.target.value
     }));
   };
 
@@ -227,15 +222,6 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     }));
   };
 
-  const modules = {
-    toolbar: [
-      ['bold', 'italic'],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-      ['link'],
-      ['clean']
-    ],
-  };
-
   return (
     <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
       {!data.showBack ? (
@@ -358,7 +344,9 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                 backgroundColor: '#f9fafb', 
                 padding: '4px', 
                 borderRadius: '4px' 
-              }} dangerouslySetInnerHTML={{ __html: data.businessDescription || '' }} />
+              }}>
+                {data.businessDescription || 'No business description available.'}
+              </div>
             )}
           </div>
           
@@ -731,22 +719,24 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
             )}
           </div>
           
-          {/* Business Overview - ultra-compact */}
+          {/* Business Overview - ultra-compact with simple textarea instead of ReactQuill */}
           <div style={{ marginBottom: '8px' }}>
             <h3 style={{ fontSize: '11px', fontWeight: 'bold', margin: '0 0 4px 0' }}>Business Overview</h3>
             
-            {typeof window !== 'undefined' && (
-              <ReactQuill
-                value={data.businessDescription || ''}
-                onChange={handleBusinessOverviewChange}
-                modules={modules}
-                style={{
-                  height: '60px',
-                  fontSize: '10px'
-                }}
-                placeholder="Describe your business..."
-              />
-            )}
+            <textarea
+              value={data.businessDescription || ''}
+              onChange={handleBusinessOverviewChange}
+              style={{
+                width: '100%',
+                height: '60px',
+                padding: '4px',
+                fontSize: '10px',
+                border: '1px solid #d1d5db',
+                borderRadius: '4px',
+                resize: 'vertical'
+              }}
+              placeholder="Describe your business..."
+            />
           </div>
         </div>
       )}
