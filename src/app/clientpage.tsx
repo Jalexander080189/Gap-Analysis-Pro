@@ -316,7 +316,7 @@ export default function ClientPage() {
         }
       }));
     }
-  }, [marketData.calculatedBuyers, companyData.calculatedNewCustomers, gapsData.mode, gapsData.leadgen, gapsData.retail]);
+  }, [marketData.calculatedBuyers, gapsData.mode, gapsData.leadgen, gapsData.retail]);
 
   // Calculate scenarios data
   const calculateScenariosData = useCallback(() => {
