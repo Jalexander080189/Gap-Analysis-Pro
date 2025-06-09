@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ClientInformation from './components/cards/ClientInformation';
@@ -21,6 +19,10 @@ export default function ClientPage() {
     companyName: '',
     companyWebsite: '',
     companyFacebookURL: '',
+    facebookAdLibraryURL: '',
+    instagramURL: '',
+    phoenixURL: '',
+    yearsInBusiness: '',
     industryType: '',
     contacts: [],
     businessDescription: '',
@@ -98,243 +100,315 @@ export default function ClientPage() {
     closeRateSlider: 20,
     additionalLeads: 0,
     additionalRevenue: 0,
-    additionalNewAccounts: 0,
-    totalCalculatedAnnualRevenue: 0,
     showBack: false
   });
   
   // Current marketing overview state
-  const [marketingData, setMarketingData] = useState({
-    channels: [
-      { name: '', monthlyAdspend: '0', monthlyCost: '0' }
-    ],
-    totalMonthlySpend: 0,
-    totalYearlySpend: 0,
-    additionalMonthlySpend: 0,
-    percentOfAnnualRevenue: 0,
+  const [currentMarketingData, setCurrentMarketingData] = useState({
+    currentMarketingBudget: '0',
+    currentMarketingChannels: [] as string[],
+    currentMarketingEffectiveness: '0',
     showBack: false
   });
   
   // SBA marketing budget state
   const [sbaData, setSbaData] = useState({
-    recommendedMonthlyBudget: '0',
-    recommendedYearlyBudget: '0',
-    recommendedChannels: [
-      { name: '', monthlyBudget: '0', description: '' }
-    ],
+    sbaRecommendedBudget: '0',
+    sbaChannelRecommendations: [] as string[],
+    sbaExpectedROI: '0',
     showBack: false
   });
   
   // Notes state
   const [notesData, setNotesData] = useState({
-    content: '',
+    notes: '',
     showBack: false
   });
   
-  // Error state for URL parameter parsing
-  const [urlError, setUrlError] = useState<string | null>(null);
-  
+  // GPT data block state
+  const [gptData, setGptData] = useState({
+    gptAnalysis: '',
+    gptRecommendations: '',
+    showBack: false
+  });
+
   const searchParams = useSearchParams();
-  
-  // Function to update state from URL parameters
-  const updateStateFromParams = useCallback((companySlug: string) => {
-    try {
-      // Decode and parse the data
-      const decodedData = JSON.parse(atob(companySlug));
-      
-      // Update all state with the decoded data
-      if (decodedData.clientData) {
-        // Handle backward compatibility for client data
-        const clientDataUpdate = { ...decodedData.clientData };
-        
-        // If old format data is received, convert it to new format
-        if (!clientDataUpdate.contacts && (clientDataUpdate.contactName || clientDataUpdate.contactEmail || clientDataUpdate.contactPhone)) {
-          clientDataUpdate.contacts = [{
-            name: clientDataUpdate.contactName || '',
-            email: clientDataUpdate.contactEmail || '',
-            mobile: clientDataUpdate.contactPhone || '',
-            title: clientDataUpdate.contactTitle || ''
-          }];
-        }
-        
-        // Map companyUrl to companyWebsite if needed
-        if (!clientDataUpdate.companyWebsite && clientDataUpdate.companyUrl) {
-          clientDataUpdate.companyWebsite = clientDataUpdate.companyUrl;
-        }
-        
-        // Map businessType to industryType if needed
-        if (!clientDataUpdate.industryType && clientDataUpdate.businessType) {
-          clientDataUpdate.industryType = clientDataUpdate.businessType;
-        }
-        
-        setClientData(clientDataUpdate);
-      }
-      
-      if (decodedData.marketData) setMarketData(decodedData.marketData);
-      if (decodedData.companyData) setCompanyData(decodedData.companyData);
-      if (decodedData.gapsData) {
-        // Ensure mode is either 'leadgen' or 'retail'
-        const mode = decodedData.gapsData.mode === 'retail' ? 'retail' : 'leadgen';
-        setGapsData({
-          ...decodedData.gapsData,
-          mode
-        });
-      }
-      if (decodedData.scenariosData) setScenariosData(decodedData.scenariosData);
-      if (decodedData.marketingData) setMarketingData(decodedData.marketingData);
-      if (decodedData.sbaData) setSbaData(decodedData.sbaData);
-      if (decodedData.notesData) setNotesData(decodedData.notesData);
-      
-      // Clear any previous errors
-      setUrlError(null);
-    } catch (error) {
-      console.error('Error parsing URL data:', error);
-      setUrlError('Invalid data in URL. Please check the link and try again.');
-    }
-  }, []);
-  
-  // Handle URL parameters for sharing
+
+  // Load data from URL parameters on component mount
   useEffect(() => {
-    console.log('useEffect running, searchParams: ', searchParams);
-    
-    const companySlug = searchParams.get('company');
-    
-    if (companySlug) {
-      updateStateFromParams(companySlug);
-    } else {
-      console.log('No company slug in URL');
-    }
-  }, [searchParams, updateStateFromParams]);
-  
-  // Function to generate a shareable URL
-  const generateShareableUrl = () => {
-    const data = {
-      clientData,
-      marketData,
-      companyData,
-      gapsData,
-      scenariosData,
-      marketingData,
-      sbaData,
-      notesData
+    const loadDataFromParams = () => {
+      // Client data
+      const companyName = searchParams.get('companyName');
+      const companyWebsite = searchParams.get('companyWebsite');
+      const companyFacebookURL = searchParams.get('companyFacebookURL');
+      const facebookAdLibraryURL = searchParams.get('facebookAdLibraryURL');
+      const instagramURL = searchParams.get('instagramURL');
+      const phoenixURL = searchParams.get('phoenixURL');
+      const yearsInBusiness = searchParams.get('yearsInBusiness');
+      const industryType = searchParams.get('industryType');
+      const businessDescription = searchParams.get('businessDescription');
+      
+      // Legacy contact fields
+      const contactName = searchParams.get('contactName');
+      const contactEmail = searchParams.get('contactEmail');
+      const contactPhone = searchParams.get('contactPhone');
+      const contactTitle = searchParams.get('contactTitle');
+      
+      // Market data
+      const audienceSize = searchParams.get('audienceSize');
+      const buyerPercentage = searchParams.get('buyerPercentage');
+      const avgYearlyCustomerValue = searchParams.get('avgYearlyCustomerValue');
+      
+      // Company data
+      const annualRevenue = searchParams.get('annualRevenue');
+      const percentNewCustomers = searchParams.get('percentNewCustomers');
+      const percentCurrentCustomers = searchParams.get('percentCurrentCustomers');
+      
+      // Gaps data
+      const gapsMode = searchParams.get('gapsMode') as 'leadgen' | 'retail' | null;
+      const annualWebsiteVisitors = searchParams.get('annualWebsiteVisitors');
+      const annualLeadsGenerated = searchParams.get('annualLeadsGenerated');
+      const annualNewAccountsClosed = searchParams.get('annualNewAccountsClosed');
+      const annualStoreVisitors = searchParams.get('annualStoreVisitors');
+      
+      // Update client data if any parameters exist
+      if (companyName || companyWebsite || companyFacebookURL || facebookAdLibraryURL || instagramURL || phoenixURL || yearsInBusiness || industryType || businessDescription || contactName || contactEmail || contactPhone || contactTitle) {
+        setClientData(prev => ({
+          ...prev,
+          companyName: companyName || prev.companyName,
+          companyWebsite: companyWebsite || prev.companyWebsite,
+          companyFacebookURL: companyFacebookURL || prev.companyFacebookURL,
+          facebookAdLibraryURL: facebookAdLibraryURL || prev.facebookAdLibraryURL,
+          instagramURL: instagramURL || prev.instagramURL,
+          phoenixURL: phoenixURL || prev.phoenixURL,
+          yearsInBusiness: yearsInBusiness || prev.yearsInBusiness,
+          industryType: industryType || prev.industryType,
+          businessDescription: businessDescription || prev.businessDescription,
+          contactName: contactName || prev.contactName,
+          contactEmail: contactEmail || prev.contactEmail,
+          contactPhone: contactPhone || prev.contactPhone,
+          contactTitle: contactTitle || prev.contactTitle,
+          // Initialize contacts array from legacy fields if they exist
+          contacts: (contactName || contactEmail || contactPhone || contactTitle) ? [{
+            name: contactName || '',
+            email: contactEmail || '',
+            mobile: contactPhone || '',
+            title: contactTitle || ''
+          }] : prev.contacts
+        }));
+      }
+      
+      // Update market data if any parameters exist
+      if (audienceSize || buyerPercentage || avgYearlyCustomerValue) {
+        setMarketData(prev => ({
+          ...prev,
+          audienceSize: audienceSize || prev.audienceSize,
+          buyerPercentage: buyerPercentage || prev.buyerPercentage,
+          avgYearlyCustomerValue: avgYearlyCustomerValue || prev.avgYearlyCustomerValue
+        }));
+      }
+      
+      // Update company data if any parameters exist
+      if (annualRevenue || percentNewCustomers || percentCurrentCustomers) {
+        setCompanyData(prev => ({
+          ...prev,
+          annualRevenue: annualRevenue || prev.annualRevenue,
+          percentNewCustomers: percentNewCustomers || prev.percentNewCustomers,
+          percentCurrentCustomers: percentCurrentCustomers || prev.percentCurrentCustomers
+        }));
+      }
+      
+      // Update gaps data if any parameters exist
+      if (gapsMode || annualWebsiteVisitors || annualLeadsGenerated || annualNewAccountsClosed || annualStoreVisitors) {
+        setGapsData(prev => ({
+          ...prev,
+          mode: gapsMode || prev.mode,
+          leadgen: {
+            ...prev.leadgen,
+            annualWebsiteVisitors: annualWebsiteVisitors || prev.leadgen.annualWebsiteVisitors,
+            annualLeadsGenerated: annualLeadsGenerated || prev.leadgen.annualLeadsGenerated,
+            annualNewAccountsClosed: annualNewAccountsClosed || prev.leadgen.annualNewAccountsClosed
+          },
+          retail: {
+            ...prev.retail,
+            annualStoreVisitors: annualStoreVisitors || prev.retail.annualStoreVisitors,
+            annualNewAccountsClosed: annualNewAccountsClosed || prev.retail.annualNewAccountsClosed
+          }
+        }));
+      }
     };
+
+    loadDataFromParams();
+  }, [searchParams]);
+
+  // Calculate market data
+  const calculateMarketData = useCallback(() => {
+    const audience = parseInt(marketData.audienceSize) || 0;
+    const buyerPercent = parseFloat(marketData.buyerPercentage) || 0;
+    const avgValue = parseFloat(marketData.avgYearlyCustomerValue) || 0;
     
-    const encodedData = btoa(JSON.stringify(data));
-    const baseUrl = window.location.origin + window.location.pathname;
-    return `${baseUrl}?company=${encodedData}`;
-  };
+    const calculatedBuyers = Math.round(audience * (buyerPercent / 100));
+    const totalMarketRevShare = calculatedBuyers * avgValue;
+    
+    setMarketData(prev => ({
+      ...prev,
+      calculatedBuyers,
+      totalMarketRevShare
+    }));
+  }, [marketData.audienceSize, marketData.buyerPercentage, marketData.avgYearlyCustomerValue]);
+
+  // Calculate company data
+  const calculateCompanyData = useCallback(() => {
+    const revenue = parseFloat(companyData.annualRevenue) || 0;
+    const avgValue = parseFloat(marketData.avgYearlyCustomerValue) || 0;
+    const newPercent = parseFloat(companyData.percentNewCustomers) || 0;
+    
+    const calculatedTotalCustomers = avgValue > 0 ? Math.round(revenue / avgValue) : 0;
+    const calculatedNewCustomers = Math.round(calculatedTotalCustomers * (newPercent / 100));
+    const percentOfMarketRevShare = marketData.totalMarketRevShare > 0 ? 
+      ((revenue / marketData.totalMarketRevShare) * 100) : 0;
+    
+    setCompanyData(prev => ({
+      ...prev,
+      calculatedTotalCustomers,
+      calculatedNewCustomers,
+      percentOfMarketRevShare
+    }));
+  }, [companyData.annualRevenue, companyData.percentNewCustomers, marketData.avgYearlyCustomerValue, marketData.totalMarketRevShare]);
+
+  // Calculate gaps data
+  const calculateGapsData = useCallback(() => {
+    const totalBuyers = marketData.calculatedBuyers || 0;
+    const newCustomers = companyData.calculatedNewCustomers || 0;
+    
+    if (gapsData.mode === 'leadgen') {
+      const websiteVisitors = parseInt(gapsData.leadgen.annualWebsiteVisitors) || 0;
+      const leadsGenerated = parseInt(gapsData.leadgen.annualLeadsGenerated) || 0;
+      const accountsClosed = parseInt(gapsData.leadgen.annualNewAccountsClosed) || 0;
+      
+      const visibilityReachGap = totalBuyers > 0 ? Math.max(0, ((totalBuyers - websiteVisitors) / totalBuyers) * 100) : 0;
+      const leadGenGap = websiteVisitors > 0 ? Math.max(0, ((websiteVisitors - leadsGenerated) / websiteVisitors) * 100) : 0;
+      const closeRateGap = leadsGenerated > 0 ? Math.max(0, ((leadsGenerated - accountsClosed) / leadsGenerated) * 100) : 0;
+      
+      setGapsData(prev => ({
+        ...prev,
+        leadgen: {
+          ...prev.leadgen,
+          visibilityReachGap,
+          leadGenGap,
+          closeRateGap
+        }
+      }));
+    } else {
+      const storeVisitors = parseInt(gapsData.retail.annualStoreVisitors) || 0;
+      const accountsClosed = parseInt(gapsData.retail.annualNewAccountsClosed) || 0;
+      
+      const visibilityReachGap = totalBuyers > 0 ? Math.max(0, ((totalBuyers - storeVisitors) / totalBuyers) * 100) : 0;
+      const closeRateGap = storeVisitors > 0 ? Math.max(0, ((storeVisitors - accountsClosed) / storeVisitors) * 100) : 0;
+      
+      setGapsData(prev => ({
+        ...prev,
+        retail: {
+          ...prev.retail,
+          visibilityReachGap,
+          closeRateGap
+        }
+      }));
+    }
+  }, [marketData.calculatedBuyers, companyData.calculatedNewCustomers, gapsData.mode, gapsData.leadgen, gapsData.retail]);
+
+  // Calculate scenarios data
+  const calculateScenariosData = useCallback(() => {
+    const currentLeads = gapsData.mode === 'leadgen' ? 
+      parseInt(gapsData.leadgen.annualLeadsGenerated) || 0 : 
+      parseInt(gapsData.retail.annualStoreVisitors) || 0;
+    
+    const avgValue = parseFloat(marketData.avgYearlyCustomerValue) || 0;
+    
+    // Calculate additional leads based on slider improvements
+    const visibilityImprovement = scenariosData.visibilityReachSlider / 100;
+    const leadGenImprovement = scenariosData.leadGenSlider / 100;
+    const closeRateImprovement = scenariosData.closeRateSlider / 100;
+    
+    const additionalLeads = Math.round(currentLeads * (visibilityImprovement + leadGenImprovement + closeRateImprovement));
+    const additionalRevenue = additionalLeads * avgValue;
+    
+    setScenariosData(prev => ({
+      ...prev,
+      additionalLeads,
+      additionalRevenue
+    }));
+  }, [gapsData.mode, gapsData.leadgen.annualLeadsGenerated, gapsData.retail.annualStoreVisitors, marketData.avgYearlyCustomerValue, scenariosData.visibilityReachSlider, scenariosData.leadGenSlider, scenariosData.closeRateSlider]);
+
+  // Effect hooks for calculations
+  useEffect(() => {
+    calculateMarketData();
+  }, [calculateMarketData]);
+
+  useEffect(() => {
+    calculateCompanyData();
+  }, [calculateCompanyData]);
+
+  useEffect(() => {
+    calculateGapsData();
+  }, [calculateGapsData]);
+
+  useEffect(() => {
+    calculateScenariosData();
+  }, [calculateScenariosData]);
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      {/* Display URL parsing error if any */}
-      {urlError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative">
-          <strong className="font-bold">Error!</strong>
-          <span className="block sm:inline"> {urlError}</span>
-          <button 
-            className="absolute top-0 bottom-0 right-0 px-4 py-3"
-            onClick={() => setUrlError(null)}
-            type="button"
-          >
-            <span className="text-xl">&times;</span>
-          </button>
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <div className="w-full mb-8">
+          <ClientInformation 
+            data={clientData} 
+            setData={setClientData} 
+          />
         </div>
-      )}
-      
-      {/* Card 1 at the very top, no cards to right or left */}
-      <div className="w-full mb-8">
-        <ClientInformation 
-          data={clientData} 
-          setData={setClientData} 
-        />
-      </div>
-      
-      {/* Cards 2, 3, 4 in a single horizontal row using CSS Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '1rem',
-        width: '100%',
-        marginBottom: '2rem'
-      }}>
-        <div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <MarketOverview 
             data={marketData} 
             setData={setMarketData} 
           />
-        </div>
-        
-        <div>
           <CompanyOverview 
             data={companyData} 
             setData={setCompanyData} 
-            avgYearlyCustomerValue={parseFloat(marketData.avgYearlyCustomerValue.replace(/,/g, '')) || 0}
-            totalMarketRevShare={marketData.totalMarketRevShare}
           />
-        </div>
-        
-        <div>
           <GapsAndOpps 
             data={gapsData} 
             setData={setGapsData} 
-            calculatedBuyers={marketData.calculatedBuyers}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <Scenarios 
+            data={scenariosData} 
+            setData={setScenariosData} 
+          />
+          <CurrentMarketingOverview 
+            data={currentMarketingData} 
+            setData={setCurrentMarketingData} 
+          />
+          <SBAMarketingBudget 
+            data={sbaData} 
+            setData={setSbaData} 
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <Notes 
+            data={notesData} 
+            setData={setNotesData} 
+          />
+          <GPTDataBlock 
+            data={gptData} 
+            setData={setGptData} 
           />
         </div>
       </div>
-      
-      {/* Cards 5-9 stacked vertically like a newsfeed */}
-      <div className="grid grid-cols-1 gap-6">
-        <Scenarios 
-          data={scenariosData} 
-          setData={setScenariosData} 
-          annualRevenue={parseFloat(companyData.annualRevenue.replace(/,/g, '')) || 0}
-          calculatedBuyers={marketData.calculatedBuyers}
-          visibilityReachGap={gapsData.mode === 'leadgen' ? gapsData.leadgen.visibilityReachGap : gapsData.retail.visibilityReachGap}
-          leadGenGap={gapsData.mode === 'leadgen' ? gapsData.leadgen.leadGenGap : 0}
-          closeRateGap={gapsData.mode === 'leadgen' ? gapsData.leadgen.closeRateGap : gapsData.retail.closeRateGap}
-        />
-        
-        <CurrentMarketingOverview 
-          data={marketingData} 
-          setData={setMarketingData} 
-          annualRevenue={parseFloat(companyData.annualRevenue.replace(/,/g, '')) || 0}
-        />
-        
-        <SBAMarketingBudget 
-          data={sbaData} 
-          setData={setSbaData} 
-          annualRevenue={parseFloat(companyData.annualRevenue.replace(/,/g, '')) || 0}
-        />
-        
-        <Notes 
-          data={notesData} 
-          setData={setNotesData} 
-        />
-      </div>
-      
-      {/* Hidden data block for GPT analysis */}
-      <GPTDataBlock 
-        clientData={clientData}
-        marketData={marketData}
-        companyData={companyData}
-        gapsData={gapsData}
-        scenariosData={scenariosData}
-        marketingData={marketingData}
-      />
-      
-      <div className="mt-8 text-center">
-        <button 
-          onClick={() => {
-            const shareableUrl = generateShareableUrl();
-            navigator.clipboard.writeText(shareableUrl);
-            alert('Shareable URL copied to clipboard!');
-          }}
-          className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          type="button"
-        >
-          Generate Shareable URL
-        </button>
-      </div>
-    </main>
+    </div>
   );
 }
+
