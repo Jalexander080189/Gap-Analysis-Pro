@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
 
 // Define proper TypeScript interfaces
 export interface ContactType {
@@ -179,7 +178,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
         setShowCropper(true);
         
         // Load image to get dimensions
-        const img = new Image();
+        const img = new window.Image();
         img.onload = () => {
           const containerWidth = 600;
           const containerHeight = 400;
@@ -221,7 +220,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
         setShowCropper(true);
         
         // Load image to get dimensions
-        const img = new Image();
+        const img = new window.Image();
         img.onload = () => {
           const containerWidth = 600;
           const containerHeight = 400;
@@ -440,6 +439,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                   height: imageSize.height
                 }}
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   ref={imageRef}
                   src={cropperImage}
