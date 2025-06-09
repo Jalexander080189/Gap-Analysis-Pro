@@ -1,13 +1,31 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { ScenariosData } from '../../types/ScenariosData';
 import { parseHumanFriendlyNumber, formatPercentage } from '../../utils/numberFormatting';
+
+interface GapsDataType {
+  mode: 'leadgen' | 'retail';
+  leadgen: {
+    annualWebsiteVisitors: string;
+    annualLeadsGenerated: string;
+    annualNewAccountsClosed: string;
+    visibilityReachGap: number;
+    leadGenGap: number;
+    closeRateGap: number;
+  };
+  retail: {
+    annualStoreVisitors: string;
+    annualNewAccountsClosed: string;
+    visibilityReachGap: number;
+    closeRateGap: number;
+  };
+}
 
 interface ScenariosProps {
   data: ScenariosData;
   setData: React.Dispatch<React.SetStateAction<ScenariosData>>;
-  gapsData: any;
+  gapsData: GapsDataType;
   avgYearlyCustomerValue: number;
   annualRevenue: number;
 }
@@ -37,6 +55,7 @@ const Scenarios: React.FC<ScenariosProps> = ({
       }));
     }
   }, [
+    setData,
     gapsData.mode, 
     gapsData.leadgen.visibilityReachGap, 
     gapsData.leadgen.leadGenGap, 
@@ -53,15 +72,12 @@ const Scenarios: React.FC<ScenariosProps> = ({
     // Get base values from gaps data
     let baseVisitors = 0;
     let baseLeads = 0;
-    let baseClosed = 0;
     
     if (gapsData.mode === 'leadgen') {
       baseVisitors = parseHumanFriendlyNumber(gapsData.leadgen.annualWebsiteVisitors);
       baseLeads = parseHumanFriendlyNumber(gapsData.leadgen.annualLeadsGenerated);
-      baseClosed = parseHumanFriendlyNumber(gapsData.leadgen.annualNewAccountsClosed);
     } else {
       baseVisitors = parseHumanFriendlyNumber(gapsData.retail.annualStoreVisitors);
-      baseClosed = parseHumanFriendlyNumber(gapsData.retail.annualNewAccountsClosed);
     }
     
     // Calculate additional leads based on visibility gap improvement
@@ -94,6 +110,7 @@ const Scenarios: React.FC<ScenariosProps> = ({
       totalCalculatedAnnualRevenue: totalRevenue
     }));
   }, [
+    setData,
     data.visibilityGapPercent,
     data.leadGenGapPercent,
     data.closeRateGapPercent,
@@ -112,7 +129,7 @@ const Scenarios: React.FC<ScenariosProps> = ({
 
   return (
     <div className="card">
-      <h2 className="section-title">Scenario "What-Ifs"</h2>
+      <h2 className="section-title">Scenario &quot;What-Ifs&quot;</h2>
       
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -1,6 +1,7 @@
 'use client';
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ScenariosData } from './types/ScenariosData';
+import { useSearchParams } from 'next/navigation';
 import ClientInformation from './components/cards/ClientInformation';
 import MarketOverview from './components/cards/MarketOverview';
 import CompanyOverview from './components/cards/CompanyOverview';
@@ -12,7 +13,7 @@ import Notes from './components/cards/Notes';
 import GPTDataBlock from './components/cards/GPTDataBlock';
 import { ClientDataType } from './components/cards/GPTDataBlock';
 
-function ClientPageContent() {
+export default function ClientPage() {
   console.log('Client-side JavaScript is running!');
   
   // Client information state with updated structure
@@ -144,13 +145,114 @@ function ClientPageContent() {
   
   // Notes state
   const [notesData, setNotesData] = useState('');
+  
+  // GPT data block state - using clientData as it expects ClientDataType
+  const [gptData, setGptData] = useState(clientData);
+
+  const searchParams = useSearchParams();
+
+  // Calculate market data
+  const calculateMarketData = useCallback(() => {
+    const audience = parseInt(marketData.audienceSize) || 0;
+    const buyerPercent = parseFloat(marketData.buyerPercentage) || 0;
+    const avgValue = parseFloat(marketData.avgYearlyCustomerValue) || 0;
+    
+    const calculatedBuyers = Math.round(audience * (buyerPercent / 100));
+    const totalMarketRevShare = calculatedBuyers * avgValue;
+    
+    setMarketData(prev => ({
+      ...prev,
+      calculatedBuyers,
+      totalMarketRevShare
+    }));
+  }, [marketData.audienceSize, marketData.buyerPercentage, marketData.avgYearlyCustomerValue]);
+
+  // Calculate company data
+  const calculateCompanyData = useCallback(() => {
+    const revenue = parseFloat(companyData.annualRevenue) || 0;
+    const avgValue = parseFloat(marketData.avgYearlyCustomerValue) || 0;
+    const newPercent = parseFloat(companyData.percentNewCustomers) || 0;
+    
+    const calculatedTotalCustomers = avgValue > 0 ? Math.round(revenue / avgValue) : 0;
+    const calculatedNewCustomers = Math.round(calculatedTotalCustomers * (newPercent / 100));
+    const percentOfMarketRevShare = marketData.totalMarketRevShare > 0 ? 
+      ((revenue / marketData.totalMarketRevShare) * 100) : 0;
+    
+    setCompanyData(prev => ({
+      ...prev,
+      calculatedTotalCustomers,
+      calculatedNewCustomers,
+      percentOfMarketRevShare
+    }));
+  }, [companyData.annualRevenue, companyData.percentNewCustomers, marketData.avgYearlyCustomerValue, marketData.totalMarketRevShare]);
+
+  // Calculate gaps data
+  const calculateGapsData = useCallback(() => {
+    const totalBuyers = marketData.calculatedBuyers || 0;
+    
+    if (gapsData.mode === 'leadgen') {
+      const websiteVisitors = parseInt(gapsData.leadgen.annualWebsiteVisitors) || 0;
+      const leadsGenerated = parseInt(gapsData.leadgen.annualLeadsGenerated) || 0;
+      const accountsClosed = parseInt(gapsData.leadgen.annualNewAccountsClosed) || 0;
+      
+      const visibilityReachGap = totalBuyers > 0 ? Math.max(0, ((totalBuyers - websiteVisitors) / totalBuyers) * 100) : 0;
+      const leadGenGap = websiteVisitors > 0 ? Math.max(0, ((websiteVisitors - leadsGenerated) / websiteVisitors) * 100) : 0;
+      const closeRateGap = leadsGenerated > 0 ? Math.max(0, ((leadsGenerated - accountsClosed) / leadsGenerated) * 100) : 0;
+      
+      setGapsData(prev => ({
+        ...prev,
+        leadgen: {
+          ...prev.leadgen,
+          visibilityReachGap,
+          leadGenGap,
+          closeRateGap
+        }
+      }));
+    } else {
+      const storeVisitors = parseInt(gapsData.retail.annualStoreVisitors) || 0;
+      const accountsClosed = parseInt(gapsData.retail.annualNewAccountsClosed) || 0;
+      
+      const visibilityReachGap = totalBuyers > 0 ? Math.max(0, ((totalBuyers - storeVisitors) / totalBuyers) * 100) : 0;
+      const closeRateGap = storeVisitors > 0 ? Math.max(0, ((storeVisitors - accountsClosed) / storeVisitors) * 100) : 0;
+      
+      setGapsData(prev => ({
+        ...prev,
+        retail: {
+          ...prev.retail,
+          visibilityReachGap,
+          closeRateGap
+        }
+      }));
+    }
+  }, [marketData.calculatedBuyers, gapsData.mode, gapsData.leadgen, gapsData.retail]);
+
+  // Calculate scenarios data
+  const calculateScenariosData = useCallback(() => {
+    const currentLeads = gapsData.mode === 'leadgen' ? 
+      parseInt(gapsData.leadgen.annualLeadsGenerated) || 0 : 
+      parseInt(gapsData.retail.annualStoreVisitors) || 0;
+    
+    const avgValue = parseFloat(marketData.avgYearlyCustomerValue) || 0;
+    
+    // Calculate additional leads based on slider improvements
+    const visibilityImprovement = scenariosData.visibilityGapPercent / 100;
+    const leadGenImprovement = scenariosData.leadGenGapPercent / 100;
+    const closeRateImprovement = scenariosData.closeRateGapPercent / 100;
+    
+    const additionalLeads = Math.round(currentLeads * (visibilityImprovement + leadGenImprovement + closeRateImprovement));
+    const additionalRevenue = additionalLeads * avgValue;
+    
+    setScenariosData((prev: ScenariosData) => ({
+      ...prev,
+      additionalLeads,
+      additionalRevenue
+    }));
+  }, [gapsData.mode, gapsData.leadgen.annualLeadsGenerated, gapsData.retail.annualStoreVisitors, marketData.avgYearlyCustomerValue, scenariosData.visibilityGapPercent, scenariosData.leadGenGapPercent, scenariosData.closeRateGapPercent]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Gap Analysis Pro</h1>
-        
-        <div className="mb-8">
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <div className="w-full mb-8">
           <ClientInformation 
             data={clientData} 
             setData={setClientData} 
@@ -212,13 +314,5 @@ function ClientPageContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function ClientPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-xl">Loading Gap Analysis Pro...</div></div>}>
-      <ClientPageContent />
-    </Suspense>
   );
 }
