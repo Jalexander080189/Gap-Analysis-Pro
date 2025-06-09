@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import Cropper from 'react-easy-crop';
-import type { Area, Point } from 'react-easy-crop';
 
 // Define proper TypeScript interfaces
 export interface ContactType {
@@ -42,13 +40,17 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
   const profileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   
-  // Cropper state
+  // Custom cropper state
   const [showCropper, setShowCropper] = useState(false);
   const [cropperImage, setCropperImage] = useState<string | null>(null);
-  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isCoverImage, setIsCoverImage] = useState(false);
+  const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
+  const [cropSize, setCropSize] = useState({ width: 200, height: 200 });
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   // Initialize contacts array if it doesn't exist (for backward compatibility)
   useEffect(() => {
@@ -175,9 +177,33 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
         setIsCoverImage(false);
         setCropperImage(result);
         setShowCropper(true);
-        // Reset cropper state
-        setCrop({ x: 0, y: 0 });
-        setZoom(1);
+        
+        // Load image to get dimensions
+        const img = new Image();
+        img.onload = () => {
+          const containerWidth = 600;
+          const containerHeight = 400;
+          const aspectRatio = img.width / img.height;
+          
+          let displayWidth = containerWidth;
+          let displayHeight = containerWidth / aspectRatio;
+          
+          if (displayHeight > containerHeight) {
+            displayHeight = containerHeight;
+            displayWidth = containerHeight * aspectRatio;
+          }
+          
+          setImageSize({ width: displayWidth, height: displayHeight });
+          
+          // Set initial crop size (square for profile)
+          const cropSizeValue = Math.min(displayWidth, displayHeight) * 0.6;
+          setCropSize({ width: cropSizeValue, height: cropSizeValue });
+          setCropPosition({ 
+            x: (displayWidth - cropSizeValue) / 2, 
+            y: (displayHeight - cropSizeValue) / 2 
+          });
+        };
+        img.src = result;
       };
       reader.readAsDataURL(file);
     }
@@ -193,9 +219,34 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
         setIsCoverImage(true);
         setCropperImage(result);
         setShowCropper(true);
-        // Reset cropper state
-        setCrop({ x: 0, y: 0 });
-        setZoom(1);
+        
+        // Load image to get dimensions
+        const img = new Image();
+        img.onload = () => {
+          const containerWidth = 600;
+          const containerHeight = 400;
+          const aspectRatio = img.width / img.height;
+          
+          let displayWidth = containerWidth;
+          let displayHeight = containerWidth / aspectRatio;
+          
+          if (displayHeight > containerHeight) {
+            displayHeight = containerHeight;
+            displayWidth = containerHeight * aspectRatio;
+          }
+          
+          setImageSize({ width: displayWidth, height: displayHeight });
+          
+          // Set initial crop size (4:1 aspect ratio for cover)
+          const cropHeight = displayHeight * 0.6;
+          const cropWidth = cropHeight * 4;
+          setCropSize({ width: Math.min(cropWidth, displayWidth), height: cropHeight });
+          setCropPosition({ 
+            x: (displayWidth - Math.min(cropWidth, displayWidth)) / 2, 
+            y: (displayHeight - cropHeight) / 2 
+          });
+        };
+        img.src = result;
       };
       reader.readAsDataURL(file);
     }
@@ -226,9 +277,6 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
         setIsCoverImage(false);
         setCropperImage(result);
         setShowCropper(true);
-        // Reset cropper state
-        setCrop({ x: 0, y: 0 });
-        setZoom(1);
       };
       reader.readAsDataURL(file);
     }
@@ -241,80 +289,87 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     }));
   };
 
-  // Cropper functions
-  const onCropComplete = (_: Point, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels);
+  // Custom cropper functions
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - cropPosition.x,
+      y: e.clientY - cropPosition.y
+    });
   };
 
-  const createCroppedImage = async () => {
-    if (!cropperImage || !croppedAreaPixels) return;
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    const newX = Math.max(0, Math.min(imageSize.width - cropSize.width, e.clientX - dragStart.x));
+    const newY = Math.max(0, Math.min(imageSize.height - cropSize.height, e.clientY - dragStart.y));
+    
+    setCropPosition({ x: newX, y: newY });
+  };
 
-    try {
-      const canvas = document.createElement('canvas');
-      const image = new Image();
-      image.src = cropperImage;
-      
-      await new Promise((resolve) => {
-        image.onload = resolve;
-      });
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
-      // Calculate the size of the cropped image
-      const scaleX = image.naturalWidth / image.width;
-      const scaleY = image.naturalHeight / image.height;
-      
-      canvas.width = croppedAreaPixels.width;
-      canvas.height = croppedAreaPixels.height;
-      
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      
-      ctx.drawImage(
-        image,
-        croppedAreaPixels.x * scaleX,
-        croppedAreaPixels.y * scaleY,
-        croppedAreaPixels.width * scaleX,
-        croppedAreaPixels.height * scaleY,
-        0,
-        0,
-        croppedAreaPixels.width,
-        croppedAreaPixels.height
-      );
-      
-      const croppedImageUrl = canvas.toDataURL('image/jpeg');
-      
-      if (isCoverImage) {
-        setData(prevData => ({
-          ...prevData,
-          coverImage: croppedImageUrl
-        }));
-      } else {
-        setData(prevData => ({
-          ...prevData,
-          profileImage: croppedImageUrl
-        }));
-      }
-      
-      setShowCropper(false);
-      setCropperImage(null);
-      setCroppedAreaPixels(null);
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
-    } catch (e) {
-      console.error('Error creating cropped image:', e);
+  const createCroppedImage = () => {
+    if (!cropperImage || !imageRef.current) return;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = imageRef.current;
+    
+    // Calculate scale factors
+    const scaleX = img.naturalWidth / imageSize.width;
+    const scaleY = img.naturalHeight / imageSize.height;
+    
+    // Set canvas size to crop size
+    canvas.width = cropSize.width * scaleX;
+    canvas.height = cropSize.height * scaleY;
+    
+    // Draw the cropped portion
+    ctx.drawImage(
+      img,
+      cropPosition.x * scaleX,
+      cropPosition.y * scaleY,
+      cropSize.width * scaleX,
+      cropSize.height * scaleY,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+    
+    const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9);
+    
+    if (isCoverImage) {
+      setData(prevData => ({
+        ...prevData,
+        coverImage: croppedImageUrl
+      }));
+    } else {
+      setData(prevData => ({
+        ...prevData,
+        profileImage: croppedImageUrl
+      }));
     }
+    
+    cancelCropping();
   };
 
   const cancelCropping = () => {
     setShowCropper(false);
     setCropperImage(null);
-    setCroppedAreaPixels(null);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
+    setCropPosition({ x: 0, y: 0 });
+    setCropSize({ width: 200, height: 200 });
+    setImageSize({ width: 0, height: 0 });
+    setIsDragging(false);
   };
 
   return (
     <div className="linkedin-card">
-      {/* Image Cropper Modal */}
+      {/* Custom Image Cropper Modal */}
       {showCropper && cropperImage && (
         <div 
           style={{
@@ -336,7 +391,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
               backgroundColor: 'white',
               borderRadius: '8px',
               width: '90%',
-              maxWidth: '800px',
+              maxWidth: '700px',
               maxHeight: '90vh',
               overflow: 'hidden',
               display: 'flex',
@@ -358,44 +413,91 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
               >
                 Crop {isCoverImage ? 'Cover' : 'Profile'} Image
               </h3>
+              <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6b7280' }}>
+                Drag the selection area to position your crop
+              </p>
             </div>
             
             <div 
               style={{
                 position: 'relative',
-                height: '400px',
+                height: '450px',
                 backgroundColor: '#f3f4f6',
-                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 overflow: 'hidden'
               }}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
             >
-              <Cropper
-                image={cropperImage}
-                crop={crop}
-                zoom={zoom}
-                aspect={isCoverImage ? 4 : 1}
-                onCropChange={setCrop}
-                onCropComplete={onCropComplete}
-                onZoomChange={setZoom}
-                objectFit="horizontal-cover"
+              {/* Image */}
+              <div
                 style={{
-                  containerStyle: {
+                  position: 'relative',
+                  width: imageSize.width,
+                  height: imageSize.height
+                }}
+              >
+                <img
+                  ref={imageRef}
+                  src={cropperImage}
+                  alt="Crop preview"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    userSelect: 'none',
+                    pointerEvents: 'none'
+                  }}
+                />
+                
+                {/* Crop overlay */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: cropPosition.x,
+                    top: cropPosition.y,
+                    width: cropSize.width,
+                    height: cropSize.height,
+                    border: '2px solid #0a66c2',
+                    borderRadius: isCoverImage ? '4px' : '50%',
+                    cursor: 'move',
+                    backgroundColor: 'rgba(10, 102, 194, 0.1)',
+                    boxSizing: 'border-box'
+                  }}
+                  onMouseDown={handleMouseDown}
+                />
+                
+                {/* Dark overlay for non-cropped areas */}
+                <div
+                  style={{
                     position: 'absolute',
                     top: 0,
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    backgroundColor: '#f3f4f6'
-                  },
-                  mediaStyle: {
-                    display: 'block'
-                  },
-                  cropAreaStyle: {
-                    border: '2px solid #0a66c2',
-                    borderRadius: isCoverImage ? '4px' : '50%'
-                  }
-                }}
-              />
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    pointerEvents: 'none'
+                  }}
+                />
+                
+                {/* Clear area for crop selection */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: cropPosition.x,
+                    top: cropPosition.y,
+                    width: cropSize.width,
+                    height: cropSize.height,
+                    backgroundColor: 'transparent',
+                    borderRadius: isCoverImage ? '4px' : '50%',
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+                    pointerEvents: 'none'
+                  }}
+                />
+              </div>
             </div>
             
             <div 
@@ -407,31 +509,8 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                 alignItems: 'center'
               }}
             >
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-              >
-                <label 
-                  style={{
-                    marginRight: '8px',
-                    fontSize: '14px'
-                  }}
-                >
-                  Zoom:
-                </label>
-                <input
-                  type="range"
-                  value={zoom}
-                  min={1}
-                  max={3}
-                  step={0.1}
-                  onChange={(e) => setZoom(Number(e.target.value))}
-                  style={{
-                    width: '100px'
-                  }}
-                />
+              <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                {isCoverImage ? 'Cover photo (4:1 ratio)' : 'Profile picture (square)'}
               </div>
               
               <div 
@@ -464,7 +543,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                     cursor: 'pointer'
                   }}
                 >
-                  Apply
+                  Apply Crop
                 </button>
               </div>
             </div>
