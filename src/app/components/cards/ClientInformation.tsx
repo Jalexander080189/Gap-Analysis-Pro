@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import Cropper from 'react-easy-crop';
+import Cropper, { Area, Point } from 'react-easy-crop';
 
 // Import TinyMCE dynamically to avoid SSR issues
 const Editor = dynamic(
@@ -58,9 +58,9 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
   // Cropper state
   const [showCropper, setShowCropper] = useState(false);
   const [cropperImage, setCropperImage] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isCoverImage, setIsCoverImage] = useState(false);
 
   // Default cover gradient if no image is provided
@@ -246,7 +246,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
   };
 
   // Cropper functions
-  const onCropComplete = (_: any, croppedAreaPixels: CropArea) => {
+  const onCropComplete = (_: Point, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
 
