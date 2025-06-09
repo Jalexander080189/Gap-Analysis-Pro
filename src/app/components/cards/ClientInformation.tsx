@@ -171,9 +171,13 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
+        const result = reader.result as string;
         setIsCoverImage(false);
-        setCropperImage(reader.result as string);
+        setCropperImage(result);
         setShowCropper(true);
+        // Reset cropper state
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
       };
       reader.readAsDataURL(file);
     }
@@ -185,9 +189,13 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
+        const result = reader.result as string;
         setIsCoverImage(true);
-        setCropperImage(reader.result as string);
+        setCropperImage(result);
         setShowCropper(true);
+        // Reset cropper state
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
       };
       reader.readAsDataURL(file);
     }
@@ -214,9 +222,13 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
       const file = e.dataTransfer.files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
+        const result = reader.result as string;
         setIsCoverImage(false);
-        setCropperImage(reader.result as string);
+        setCropperImage(result);
         setShowCropper(true);
+        // Reset cropper state
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
       };
       reader.readAsDataURL(file);
     }
@@ -304,15 +316,59 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     <div className="linkedin-card">
       {/* Image Cropper Modal */}
       {showCropper && cropperImage && (
-        <div className="cropper-modal">
-          <div className="cropper-container">
-            <div className="cropper-header">
-              <h3 className="cropper-title">
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              width: '90%',
+              maxWidth: '800px',
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <div 
+              style={{
+                padding: '16px',
+                borderBottom: '1px solid #e5e7eb'
+              }}
+            >
+              <h3 
+                style={{
+                  margin: 0,
+                  fontSize: '18px',
+                  fontWeight: 'bold'
+                }}
+              >
                 Crop {isCoverImage ? 'Cover' : 'Profile'} Image
               </h3>
             </div>
             
-            <div className="cropper-content">
+            <div 
+              style={{
+                position: 'relative',
+                height: '400px',
+                backgroundColor: '#f3f4f6',
+                flex: 1,
+                overflow: 'hidden'
+              }}
+            >
               <Cropper
                 image={cropperImage}
                 crop={crop}
@@ -322,12 +378,49 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                 onCropComplete={onCropComplete}
                 onZoomChange={setZoom}
                 objectFit="horizontal-cover"
+                style={{
+                  containerStyle: {
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: '#f3f4f6'
+                  },
+                  mediaStyle: {
+                    display: 'block'
+                  },
+                  cropAreaStyle: {
+                    border: '2px solid #0a66c2',
+                    borderRadius: isCoverImage ? '4px' : '50%'
+                  }
+                }}
               />
             </div>
             
-            <div className="cropper-footer">
-              <div className="cropper-zoom">
-                <label className="cropper-zoom-label">Zoom:</label>
+            <div 
+              style={{
+                padding: '16px',
+                borderTop: '1px solid #e5e7eb',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <label 
+                  style={{
+                    marginRight: '8px',
+                    fontSize: '14px'
+                  }}
+                >
+                  Zoom:
+                </label>
                 <input
                   type="range"
                   value={zoom}
@@ -335,20 +428,41 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                   max={3}
                   step={0.1}
                   onChange={(e) => setZoom(Number(e.target.value))}
-                  className="cropper-zoom-slider"
+                  style={{
+                    width: '100px'
+                  }}
                 />
               </div>
               
-              <div className="cropper-actions">
+              <div 
+                style={{
+                  display: 'flex',
+                  gap: '8px'
+                }}
+              >
                 <button
                   onClick={cancelCropping}
-                  className="cropper-cancel-btn"
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#4b5563',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={createCroppedImage}
-                  className="cropper-apply-btn"
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#0a66c2',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
                 >
                   Apply
                 </button>
