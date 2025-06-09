@@ -55,25 +55,25 @@ body {
   margin: 0;
 }
 
-/* AGGRESSIVE MAIN CONTAINER STYLING - FORCE WIDTH REDUCTION */
+/* OPTIMAL WIDTH WITH SIDE MARGINS */
 html body > div,
 body > div,
 div[data-reactroot] > div,
 #__next > div,
 main > div {
-  max-width: 700px !important;
-  width: 700px !important;
+  max-width: 1200px !important;
+  width: 1200px !important;
   margin: 0 auto !important;
-  padding: 2rem 4rem !important;
+  padding: 2rem 3rem !important;
   box-sizing: border-box !important;
 }
 
 /* Additional fallback for any container */
 body > div:first-child {
-  max-width: 700px !important;
-  width: 700px !important;
+  max-width: 1200px !important;
+  width: 1200px !important;
   margin: 0 auto !important;
-  padding: 2rem 4rem !important;
+  padding: 2rem 3rem !important;
 }
 
 /* Card styling - social media post look */
@@ -841,7 +841,7 @@ h3 {
 }
 
 @media (max-width: 768px) {
-  /* Reduce side padding on mobile and force smaller width */
+  /* Reduce side padding on mobile and allow responsive width */
   html body > div,
   body > div,
   div[data-reactroot] > div,
