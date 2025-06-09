@@ -97,11 +97,13 @@ export default function ClientPage() {
   
   // Scenarios state
   const [scenariosData, setScenariosData] = useState({
-    visibilityReachSlider: 5,
-    leadGenSlider: 20,
-    closeRateSlider: 20,
-    additionalLeads: 0,
-    additionalRevenue: 0,
+    visibilityGapPercent: 0,
+    leadGenGapPercent: 0,
+    closeRateGapPercent: 0,
+    additionalAnnualLeads: 0,
+    additionalAnnualNewAccountsClosed: 0,
+    additionalAnnualRevenueCreated: 0,
+    totalCalculatedAnnualRevenue: 0,
     showBack: false
   });
   
@@ -327,9 +329,9 @@ export default function ClientPage() {
     const avgValue = parseFloat(marketData.avgYearlyCustomerValue) || 0;
     
     // Calculate additional leads based on slider improvements
-    const visibilityImprovement = scenariosData.visibilityReachSlider / 100;
-    const leadGenImprovement = scenariosData.leadGenSlider / 100;
-    const closeRateImprovement = scenariosData.closeRateSlider / 100;
+    const visibilityImprovement = scenariosData.visibilityGapPercent / 100;
+    const leadGenImprovement = scenariosData.leadGenGapPercent / 100;
+    const closeRateImprovement = scenariosData.closeRateGapPercent / 100;
     
     const additionalLeads = Math.round(currentLeads * (visibilityImprovement + leadGenImprovement + closeRateImprovement));
     const additionalRevenue = additionalLeads * avgValue;
@@ -339,7 +341,7 @@ export default function ClientPage() {
       additionalLeads,
       additionalRevenue
     }));
-  }, [gapsData.mode, gapsData.leadgen.annualLeadsGenerated, gapsData.retail.annualStoreVisitors, marketData.avgYearlyCustomerValue, scenariosData.visibilityReachSlider, scenariosData.leadGenSlider, scenariosData.closeRateSlider]);
+  }, [gapsData.mode, gapsData.leadgen.annualLeadsGenerated, gapsData.retail.annualStoreVisitors, marketData.avgYearlyCustomerValue, scenariosData.visibilityGapPercent, scenariosData.leadGenGapPercent, scenariosData.closeRateGapPercent]);
 
   // Effect hooks for calculations
   useEffect(() => {
@@ -390,7 +392,10 @@ export default function ClientPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <Scenarios 
             data={scenariosData} 
-            setData={setScenariosData} 
+            setData={setScenariosData}
+            gapsData={gapsData}
+            avgYearlyCustomerValue={parseFloat(String(marketData.avgYearlyCustomerValue || 0)) || 0}
+            annualRevenue={parseFloat(String(companyData.annualRevenue || 0)) || 0}
           />
           <CurrentMarketingOverview 
             data={currentMarketingData} 
