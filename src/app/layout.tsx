@@ -55,11 +55,25 @@ body {
   margin: 0;
 }
 
-/* Main container with reduced width and side margins */
-body > div {
-  max-width: 800px !important;
+/* AGGRESSIVE MAIN CONTAINER STYLING - FORCE WIDTH REDUCTION */
+html body > div,
+body > div,
+div[data-reactroot] > div,
+#__next > div,
+main > div {
+  max-width: 700px !important;
+  width: 700px !important;
   margin: 0 auto !important;
-  padding: 2rem 3rem !important;
+  padding: 2rem 4rem !important;
+  box-sizing: border-box !important;
+}
+
+/* Additional fallback for any container */
+body > div:first-child {
+  max-width: 700px !important;
+  width: 700px !important;
+  margin: 0 auto !important;
+  padding: 2rem 4rem !important;
 }
 
 /* Card styling - social media post look */
@@ -827,8 +841,20 @@ h3 {
 }
 
 @media (max-width: 768px) {
-  /* Reduce side padding on mobile */
-  body > div {
+  /* Reduce side padding on mobile and force smaller width */
+  html body > div,
+  body > div,
+  div[data-reactroot] > div,
+  #__next > div,
+  main > div {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 1rem 1.5rem !important;
+  }
+  
+  body > div:first-child {
+    max-width: 100% !important;
+    width: 100% !important;
     padding: 1rem 1.5rem !important;
   }
   
