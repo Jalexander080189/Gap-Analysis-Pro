@@ -381,7 +381,9 @@ export default function ClientPage() {
           />
           <GapsAndOpps 
             data={gapsData} 
-            setData={setGapsData} 
+            setData={setGapsData}
+            annualRevenue={parseFloat(String(companyData.annualRevenue || 0)) || 0}
+            calculatedBuyers={marketData.calculatedBuyers || 0}
           />
         </div>
         
