@@ -1,26 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import DriveLogoToggle from '../DriveLogoToggle';
 
-interface GapsAndOppsProps {
-  data: {
-    mode: string;
-    leadgen: {
-      annualWebsiteVisitors: string;
-      annualLeadsGenerated: string;
-      annualNewAccountsClosed: string;
-      visibilityReachGap: number;
-      leadGenGap: number;
-      closeRateGap: number;
-    };
-    retail: {
-      annualStoreVisitors: string;
-      annualNewAccountsClosed: string;
-      visibilityReachGap: number;
-      closeRateGap: number;
-    };
-    showBack: boolean;
+interface GapsAndOppsData {
+  mode: string;
+  leadgen: {
+    annualWebsiteVisitors: string;
+    annualLeadsGenerated: string;
+    annualNewAccountsClosed: string;
+    visibilityReachGap: number;
+    leadGenGap: number;
+    closeRateGap: number;
   };
-  setData: React.Dispatch<React.SetStateAction<any>>;
+  retail: {
+    annualStoreVisitors: string;
+    annualNewAccountsClosed: string;
+    visibilityReachGap: number;
+    closeRateGap: number;
+  };
+  showBack: boolean;
+}
+
+interface GapsAndOppsProps {
+  data: GapsAndOppsData;
+  setData: React.Dispatch<React.SetStateAction<GapsAndOppsData>>;
   annualRevenue: number;
   calculatedBuyers: number;
 }
@@ -28,7 +30,6 @@ interface GapsAndOppsProps {
 const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ 
   data, 
   setData, 
-  annualRevenue,
   calculatedBuyers
 }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,7 +218,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
                     {(data.leadgen.visibilityReachGap * 100).toFixed(1)}%
                   </div>
                   <p className="text-sm text-red-700 mt-1">
-                    {(data.leadgen.visibilityReachGap * 100).toFixed(1)}% of all buyers in market didn't even look at your company as an option!
+                    {(data.leadgen.visibilityReachGap * 100).toFixed(1)}% of all buyers in market didn&apos;t even look at your company as an option!
                   </p>
                 </div>
                 
@@ -227,7 +228,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
                     {(data.leadgen.leadGenGap * 100).toFixed(1)}%
                   </div>
                   <p className="text-sm text-red-700 mt-1">
-                    {(data.leadgen.leadGenGap * 100).toFixed(1)}% of all buyers that researched you didn't even leave a name or contact info?!? If you can't identify them how can you sell them?
+                    {(data.leadgen.leadGenGap * 100).toFixed(1)}% of all buyers that researched you didn&apos;t even leave a name or contact info?!? If you can&apos;t identify them how can you sell them?
                   </p>
                 </div>
                 
@@ -281,7 +282,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({
                     {(data.retail.visibilityReachGap * 100).toFixed(1)}%
                   </div>
                   <p className="text-sm text-red-700 mt-1">
-                    {(data.retail.visibilityReachGap * 100).toFixed(1)}% of all buyers in market didn't even look at your company as an option!
+                    {(data.retail.visibilityReachGap * 100).toFixed(1)}% of all buyers in market didn&apos;t even look at your company as an option!
                   </p>
                 </div>
                 
