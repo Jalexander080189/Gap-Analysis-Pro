@@ -80,9 +80,11 @@ body > div > div:hover {
   transform: translateY(-2px);
 }
 
-/* LinkedIn-style profile card (Card 1) */
+/* LinkedIn-style profile card (Card 1) - REMOVE ALL SPACING */
 body > div > div:first-child {
-  padding: 0;
+  padding: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 1.5rem !important;
 }
 
 /* Profile header/banner */
@@ -99,47 +101,21 @@ body > div > div:first-child > div {
   padding: 1.5rem;
 }
 
-/* Profile sections */
-body > div > div:first-child h2 {
-  font-size: 1.25rem;
-  color: var(--primary-color);
-  border-bottom: none;
-  margin-top: 1.5rem;
-}
-
-/* Force horizontal layout for cards 2, 3, 4 */
+/* Cards 2, 3, 4 horizontal layout */
 body > div > div:nth-child(2),
 body > div > div:nth-child(3),
 body > div > div:nth-child(4) {
-  display: inline-block !important;
   width: 32% !important;
-  vertical-align: top !important;
+  display: inline-block !important;
   margin-right: 2% !important;
+  vertical-align: top !important;
 }
 
 body > div > div:nth-child(4) {
   margin-right: 0 !important;
 }
 
-/* Clear the float after the horizontal cards */
-body > div > div:nth-child(4)::after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-/* Card headers */
-h1, h2, h3, .section-title {
-  color: var(--text-primary);
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-top: 0;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.75rem;
-}
-
-/* Form elements */
+/* Form styling */
 input[type="text"], 
 input[type="email"], 
 input[type="tel"], 
@@ -199,58 +175,68 @@ button:active {
   transform: translateY(1px);
 }
 
-/* Social buttons */
-.social-button, button.like, button.comment, button.share {
-  display: inline-flex;
-  align-items: center;
-  background-color: transparent;
-  color: var(--secondary-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: 0.25rem 0.75rem;
-  font-size: 0.875rem;
-  margin-right: 0.5rem;
-  transition: all 0.3s ease;
+/* Secondary buttons */
+.btn-secondary {
+  background-color: var(--secondary-color);
 }
 
-.social-button:hover, button.like:hover, button.comment:hover, button.share:hover {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: var(--primary-color);
+.btn-secondary:hover {
+  background-color: #475569;
 }
 
-/* Show Back button styling */
-button.show-back {
-  background-color: var(--primary-color);
-  color: white;
-  margin-top: 0.5rem;
-}
-
-/* Save button styling */
-button[type="submit"], button.save {
+/* Success buttons */
+.btn-success {
   background-color: var(--success-color);
-  color: white;
-  padding: 0.5rem 1.5rem;
+}
+
+.btn-success:hover {
+  background-color: #059669;
+}
+
+/* Danger buttons */
+.btn-danger {
+  background-color: var(--danger-color);
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+}
+
+/* Warning buttons */
+.btn-warning {
+  background-color: var(--warning-color);
+}
+
+.btn-warning:hover {
+  background-color: #d97706;
+}
+
+/* Card headers */
+h1, h2, h3 {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.5rem;
   font-weight: 600;
 }
 
-button[type="submit"]:hover, button.save:hover {
-  background-color: #0d9488;
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  body > div > div:nth-child(2),
-  body > div > div:nth-child(3),
-  body > div > div:nth-child(4) {
-    width: 100% !important;
-    display: block !important;
-    margin-right: 0 !important;
-  }
-}
-
-/* LinkedIn Profile Card Styles */
+/* LinkedIn Profile Card Styles - REMOVE TOP SPACING */
 .linkedin-card {
-  margin-bottom: 24px;
+  margin-bottom: 24px !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
   background-color: white;
   border-radius: 8px;
   overflow: hidden;
@@ -288,16 +274,14 @@ button[type="submit"]:hover, button.save:hover {
   border-bottom: 1px solid #e5e7eb;
 }
 
-.cropper-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: bold;
-}
-
 .cropper-content {
   position: relative;
   height: 400px;
   background-color: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
   flex: 1;
 }
 
@@ -345,7 +329,7 @@ button[type="submit"]:hover, button.save:hover {
   cursor: pointer;
 }
 
-/* Profile View */
+/* Profile View - REMOVE TOP SPACING */
 .profile-cover {
   position: relative;
   width: 100%;
@@ -354,6 +338,8 @@ button[type="submit"]:hover, button.save:hover {
   background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   background-size: cover;
   background-position: center;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
 }
 
 .edit-cover-btn {
@@ -403,47 +389,47 @@ button[type="submit"]:hover, button.save:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 24px;
   font-weight: bold;
   color: #6b7280;
-  background-color: #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.hidden-input {
+  display: none;
 }
 
 .profile-info {
-  padding-top: 40px;
-  padding-left: 24px;
-  padding-right: 24px;
-  padding-bottom: 16px;
-  background-color: white;
+  padding: 48px 24px 24px;
 }
 
 .profile-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 
 .profile-name {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: bold;
-  margin: 0;
-  color: #111827;
+  color: #1f2937;
+  margin: 0 0 4px 0;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
 .profile-industry {
-  font-size: 14px;
-  margin: 4px 0 0;
-  color: #4b5563;
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0 0 8px 0;
 }
 
 .profile-location {
   font-size: 14px;
-  margin: 4px 0 0;
   color: #6b7280;
+  margin: 0 0 4px 0;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -451,27 +437,32 @@ button[type="submit"]:hover, button.save:hover {
 
 .profile-contacts {
   font-size: 14px;
-  margin: 8px 0 0;
   color: #0a66c2;
-  font-weight: 600;
+  margin: 0;
 }
 
 .edit-profile-btn {
-  padding: 6px 16px;
-  background-color: #0a66c2;
-  color: white;
-  border: none;
-  border-radius: 16px;
+  padding: 8px 16px;
+  background-color: transparent;
+  color: #0a66c2;
+  border: 1px solid #0a66c2;
+  border-radius: 20px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-profile-btn:hover {
+  background-color: #0a66c2;
+  color: white;
+  transform: none;
 }
 
 .profile-links {
   display: flex;
-  gap: 12px;
-  margin-top: 12px;
-  font-size: 14px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .profile-link {
@@ -480,19 +471,21 @@ button[type="submit"]:hover, button.save:hover {
   gap: 4px;
   color: #0a66c2;
   text-decoration: none;
-  font-weight: 500;
+  font-size: 14px;
+}
+
+.profile-link:hover {
+  text-decoration: underline;
 }
 
 .section-divider {
-  height: 8px;
-  background-color: #f3f4f6;
-  border-top: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 16px 0;
 }
 
 .business-overview {
-  padding: 16px 24px;
-  background-color: white;
+  margin-bottom: 16px;
 }
 
 .business-overview-header {
@@ -505,65 +498,66 @@ button[type="submit"]:hover, button.save:hover {
 .business-overview-title {
   font-size: 16px;
   font-weight: 600;
+  color: #1f2937;
   margin: 0;
-  color: #111827;
 }
 
 .toggle-overview-btn {
-  font-size: 14px;
+  padding: 4px 8px;
+  background-color: transparent;
   color: #0a66c2;
-  background: none;
   border: none;
+  font-size: 14px;
   cursor: pointer;
-  font-weight: 600;
+}
+
+.toggle-overview-btn:hover {
+  background-color: #f3f4f6;
+  transform: none;
 }
 
 .business-overview-content {
   font-size: 14px;
+  color: #374151;
   line-height: 1.5;
-  color: #4b5563;
-  background-color: #f9fafb;
-  padding: 12px;
-  border-radius: 4px;
-  margin-top: 8px;
-  border: 1px solid #e5e7eb;
+  padding: 12px 0;
 }
 
 .button-divider {
   height: 1px;
   background-color: #e5e7eb;
+  margin: 16px 0;
 }
 
 .social-buttons {
-  padding: 12px 24px;
   display: flex;
-  justify-content: space-between;
-  background-color: white;
+  justify-content: space-around;
+  padding: 8px 0;
 }
 
 .social-button {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  background: none;
-  border: none;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: transparent;
   color: #6b7280;
-  cursor: pointer;
-  padding: 6px 12px;
+  border: none;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .social-button:hover {
   background-color: #f3f4f6;
+  color: #374151;
+  transform: none;
 }
 
-/* Edit Mode */
+/* Edit Mode Styles */
 .edit-mode {
   padding: 24px;
-  background-color: white;
 }
 
 .edit-header {
@@ -571,48 +565,50 @@ button[type="submit"]:hover, button.save:hover {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .edit-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
+  color: #1f2937;
   margin: 0;
-  color: #111827;
 }
 
 .save-profile-btn {
-  padding: 8px 20px;
+  padding: 8px 16px;
   background-color: #0a66c2;
   color: white;
   border: none;
-  border-radius: 20px;
+  border-radius: 4px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.image-upload-section {
-  margin-bottom: 24px;
+.save-profile-btn:hover {
+  background-color: #084c94;
+  transform: none;
 }
 
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  margin: 0 0 12px 0;
-  color: #111827;
+  color: #1f2937;
+  margin: 0 0 16px 0;
+}
+
+.image-upload-section {
+  margin-bottom: 32px;
 }
 
 .image-upload-container {
   display: flex;
   gap: 24px;
-  align-items: flex-start;
 }
 
-.profile-upload {
-  flex: 0 0 auto;
-}
-
-.cover-upload {
+.profile-upload, .cover-upload {
   flex: 1;
 }
 
@@ -620,39 +616,32 @@ button[type="submit"]:hover, button.save:hover {
   display: block;
   font-size: 14px;
   font-weight: 500;
+  color: #374151;
   margin-bottom: 8px;
-  color: #4b5563;
 }
 
-.profile-upload-area {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 1px dashed #d1d5db;
+.profile-upload-area, .cover-upload-area {
+  width: 100%;
+  height: 120px;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f9fafb;
   cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
   overflow: hidden;
+}
+
+.profile-upload-area:hover, .cover-upload-area:hover {
+  border-color: #0a66c2;
+  background-color: #f8fafc;
 }
 
 .profile-upload-area.drag-active {
+  border-color: #0a66c2;
   background-color: #eff6ff;
-}
-
-.cover-upload-area {
-  width: 100%;
-  height: 0;
-  padding-bottom: 25%;
-  border: 1px dashed #d1d5db;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f9fafb;
-  cursor: pointer;
-  overflow: hidden;
-  position: relative;
 }
 
 .upload-preview {
@@ -663,9 +652,7 @@ button[type="submit"]:hover, button.save:hover {
 }
 
 .cover-preview {
-  position: absolute;
-  top: 0;
-  left: 0;
+  background-size: cover;
 }
 
 .upload-icon {
@@ -674,17 +661,12 @@ button[type="submit"]:hover, button.save:hover {
   color: #9ca3af;
 }
 
-.hidden-input {
-  display: none;
-}
-
 .company-info-section {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -697,137 +679,167 @@ button[type="submit"]:hover, button.save:hover {
   display: block;
   font-size: 14px;
   font-weight: 500;
-  margin-bottom: 6px;
-  color: #4b5563;
+  color: #374151;
+  margin-bottom: 4px;
 }
 
 .form-input {
   width: 100%;
-  padding: 10px;
-  font-size: 14px;
+  padding: 8px 12px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 0;
+}
+
+.form-input:focus {
   outline: none;
+  border-color: #0a66c2;
+  box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.2);
 }
 
 .contacts-section {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .contacts-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
-.add-contact-btn {
-  padding: 6px 16px;
-  font-size: 14px;
+.add-contact-btn, .add-first-contact-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
   background-color: #0a66c2;
   color: white;
   border: none;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  border-radius: 4px;
+  font-size: 14px;
   cursor: pointer;
+}
+
+.add-contact-btn:hover, .add-first-contact-btn:hover {
+  background-color: #084c94;
+  transform: none;
 }
 
 .contacts-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .contact-item {
-  background-color: #f9fafb;
-  padding: 16px;
-  border-radius: 8px;
   position: relative;
+  padding: 16px;
   border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #f9fafb;
 }
 
 .remove-contact-btn {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  color: #ef4444;
-  background: none;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  background-color: #ef4444;
+  color: white;
   border: none;
-  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  font-size: 12px;
+}
+
+.remove-contact-btn:hover {
+  background-color: #dc2626;
+  transform: none;
 }
 
 .contact-form {
-  margin-top: 8px;
+  margin-right: 32px;
 }
 
 .no-contacts {
-  background-color: #f9fafb;
-  padding: 24px;
-  border-radius: 8px;
   text-align: center;
-  border: 1px solid #e5e7eb;
+  padding: 32px;
+  color: #6b7280;
 }
 
 .no-contacts-text {
+  margin-bottom: 16px;
   font-size: 14px;
-  color: #6b7280;
-  margin: 0 0 12px 0;
-}
-
-.add-first-contact-btn {
-  padding: 8px 20px;
-  font-size: 14px;
-  background-color: #0a66c2;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
 }
 
 .business-overview-section {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .textarea-container {
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  overflow: hidden;
+  margin-top: 8px;
 }
 
 .business-overview-textarea {
   width: 100%;
+  min-height: 120px;
   padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
   font-size: 14px;
-  border: none;
-  outline: none;
-  resize: vertical;
   font-family: inherit;
+  resize: vertical;
+  margin-bottom: 0;
+}
+
+.business-overview-textarea:focus {
+  outline: none;
+  border-color: #0a66c2;
+  box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.2);
 }
 
 .save-container {
   text-align: center;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .save-profile-btn-large {
-  padding: 10px 32px;
+  padding: 12px 32px;
   background-color: #0a66c2;
   color: white;
   border: none;
-  border-radius: 24px;
+  border-radius: 4px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.save-profile-btn-large:hover {
+  background-color: #084c94;
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  body > div > div:nth-child(2),
+  body > div > div:nth-child(3),
+  body > div > div:nth-child(4) {
+    width: 100% !important;
+    display: block !important;
+    margin-right: 0 !important;
+  }
 }`}
         </style>
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+      </body>
     </html>
   )
 }
