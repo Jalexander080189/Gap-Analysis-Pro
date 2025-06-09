@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 
 // Define proper TypeScript interfaces
 export interface ContactType {
@@ -49,7 +50,6 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
   // Initialize contacts array if it doesn't exist (for backward compatibility)
