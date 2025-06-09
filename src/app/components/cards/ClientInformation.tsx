@@ -42,13 +42,6 @@ interface ClientInformationProps {
   setData: React.Dispatch<React.SetStateAction<ClientDataType>>;
 }
 
-interface CropArea {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) => {
   const [showBusinessOverview, setShowBusinessOverview] = useState(false);
   const [dragActive, setDragActive] = useState(false);
