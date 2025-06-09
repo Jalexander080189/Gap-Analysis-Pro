@@ -367,7 +367,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
   };
 
   return (
-    <div className="linkedin-card">
+    <div className="linkedin-card" style={{ marginTop: 0, paddingTop: 0 }}>
       {/* Custom Image Cropper Modal */}
       {showCropper && cropperImage && (
         <div 
@@ -552,12 +552,14 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
       )}
       
       {!data.showBack ? (
-        <div>
+        <div style={{ marginTop: 0, paddingTop: 0 }}>
           {/* LinkedIn-style cover photo - full width with 4:1 aspect ratio */}
           <div 
             className="profile-cover"
             style={{ 
-              backgroundImage: data.coverImage ? `url(${data.coverImage})` : undefined
+              backgroundImage: data.coverImage ? `url(${data.coverImage})` : undefined,
+              marginTop: 0,
+              paddingTop: 0
             }}
           >
             {/* Edit cover button */}
@@ -705,10 +707,9 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
             </div>
             
             {showBusinessOverview && (
-              <div 
-                className="business-overview-content"
-                dangerouslySetInnerHTML={{ __html: data.businessDescription || 'No business overview provided.' }}
-              />
+              <div className="business-overview-content">
+                {data.businessDescription || 'No business overview provided.'}
+              </div>
             )}
           </div>
           
