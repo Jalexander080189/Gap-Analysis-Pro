@@ -109,32 +109,38 @@ export default function ClientPage() {
   
   // Current marketing overview state
   const [currentMarketingData, setCurrentMarketingData] = useState({
-    currentMarketingBudget: '0',
-    currentMarketingChannels: [] as string[],
-    currentMarketingEffectiveness: '0',
+    channels: [
+      { name: 'Google Ads', monthlyCost: '0', monthlyAdSpend: '0' },
+      { name: 'Facebook Ads', monthlyCost: '0', monthlyAdSpend: '0' },
+      { name: 'SEO', monthlyCost: '0', monthlyAdSpend: '0' }
+    ],
+    totalMonthlySpend: 0,
+    totalYearlySpend: 0,
+    additionalMonthlySpend: 0,
+    percentOfAnnualRevenue: 0,
     showBack: false
   });
   
   // SBA marketing budget state
   const [sbaData, setSbaData] = useState({
-    sbaRecommendedBudget: '0',
-    sbaChannelRecommendations: [] as string[],
-    sbaExpectedROI: '0',
+    annualRevenue: '0',
+    years: [
+      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
+      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
+      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
+      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
+      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } }
+    ],
+    worstCaseRevenue: 0,
+    worstCaseSpend: 0,
     showBack: false
   });
   
   // Notes state
-  const [notesData, setNotesData] = useState({
-    notes: '',
-    showBack: false
-  });
+  const [notesData, setNotesData] = useState('');
   
-  // GPT data block state
-  const [gptData, setGptData] = useState({
-    gptAnalysis: '',
-    gptRecommendations: '',
-    showBack: false
-  });
+  // GPT data block state - using clientData as it expects ClientDataType
+  const [gptData, setGptData] = useState(clientData);
 
   const searchParams = useSearchParams();
 
@@ -399,7 +405,8 @@ export default function ClientPage() {
           />
           <CurrentMarketingOverview 
             data={currentMarketingData} 
-            setData={setCurrentMarketingData} 
+            setData={setCurrentMarketingData}
+            annualRevenue={parseFloat(String(companyData.annualRevenue || 0)) || 0}
           />
           <SBAMarketingBudget 
             data={sbaData} 
