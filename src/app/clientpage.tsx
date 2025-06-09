@@ -281,7 +281,6 @@ export default function ClientPage() {
   // Calculate gaps data
   const calculateGapsData = useCallback(() => {
     const totalBuyers = marketData.calculatedBuyers || 0;
-    const newCustomers = companyData.calculatedNewCustomers || 0;
     
     if (gapsData.mode === 'leadgen') {
       const websiteVisitors = parseInt(gapsData.leadgen.annualWebsiteVisitors) || 0;
