@@ -55,11 +55,11 @@ body {
   margin: 0;
 }
 
-/* Main container with fixed width and center alignment */
+/* Main container with reduced width and side margins */
 body > div {
-  max-width: 1000px !important;
+  max-width: 800px !important;
   margin: 0 auto !important;
-  padding: 2rem !important;
+  padding: 2rem 3rem !important;
 }
 
 /* Card styling - social media post look */
@@ -827,6 +827,11 @@ h3 {
 }
 
 @media (max-width: 768px) {
+  /* Reduce side padding on mobile */
+  body > div {
+    padding: 1rem 1.5rem !important;
+  }
+  
   body > div > div:nth-child(2),
   body > div > div:nth-child(3),
   body > div > div:nth-child(4) {
