@@ -375,7 +375,9 @@ export default function ClientPage() {
           />
           <CompanyOverview 
             data={companyData} 
-            setData={setCompanyData} 
+            setData={setCompanyData}
+            avgYearlyCustomerValue={marketData.avgYearlyCustomerValue || 0}
+            totalMarketRevShare={marketData.totalMarketRevShare || 0}
           />
           <GapsAndOpps 
             data={gapsData} 
