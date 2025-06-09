@@ -376,8 +376,8 @@ export default function ClientPage() {
           <CompanyOverview 
             data={companyData} 
             setData={setCompanyData}
-            avgYearlyCustomerValue={marketData.avgYearlyCustomerValue || 0}
-            totalMarketRevShare={marketData.totalMarketRevShare || 0}
+            avgYearlyCustomerValue={parseFloat(String(marketData.avgYearlyCustomerValue || 0)) || 0}
+            totalMarketRevShare={parseFloat(String(marketData.totalMarketRevShare || 0)) || 0}
           />
           <GapsAndOpps 
             data={gapsData} 
