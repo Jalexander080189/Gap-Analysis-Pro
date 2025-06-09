@@ -1,6 +1,14 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import Cropper from 'react-easy-crop';
+
+// Import TinyMCE dynamically to avoid SSR issues
+const Editor = dynamic(
+  () => import('@tinymce/tinymce-react').then(mod => mod.Editor),
+  { ssr: false }
+);
 
 // Define proper TypeScript interfaces
 export interface ContactType {
@@ -34,11 +42,26 @@ interface ClientInformationProps {
   setData: React.Dispatch<React.SetStateAction<ClientDataType>>;
 }
 
+interface CropArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) => {
   const [showBusinessOverview, setShowBusinessOverview] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const profileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  
+  // Cropper state
+  const [showCropper, setShowCropper] = useState(false);
+  const [cropperImage, setCropperImage] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(null);
+  const [isCoverImage, setIsCoverImage] = useState(false);
 
   // Default cover gradient if no image is provided
   const defaultCoverGradient = 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)';
@@ -97,10 +120,10 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     }));
   };
 
-  const handleBusinessOverviewChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleBusinessOverviewChange = (content: string) => {
     setData(prevData => ({
       ...prevData,
-      businessDescription: e.target.value
+      businessDescription: content
     }));
   };
 
@@ -164,10 +187,9 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setData(prevData => ({
-          ...prevData,
-          profileImage: reader.result as string
-        }));
+        setIsCoverImage(false);
+        setCropperImage(reader.result as string);
+        setShowCropper(true);
       };
       reader.readAsDataURL(file);
     }
@@ -179,10 +201,9 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setData(prevData => ({
-          ...prevData,
-          coverImage: reader.result as string
-        }));
+        setIsCoverImage(true);
+        setCropperImage(reader.result as string);
+        setShowCropper(true);
       };
       reader.readAsDataURL(file);
     }
@@ -209,10 +230,9 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
       const file = e.dataTransfer.files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
-        setData(prevData => ({
-          ...prevData,
-          profileImage: reader.result as string
-        }));
+        setIsCoverImage(false);
+        setCropperImage(reader.result as string);
+        setShowCropper(true);
       };
       reader.readAsDataURL(file);
     }
@@ -225,6 +245,77 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
     }));
   };
 
+  // Cropper functions
+  const onCropComplete = (_: any, croppedAreaPixels: CropArea) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const createCroppedImage = async () => {
+    if (!cropperImage || !croppedAreaPixels) return;
+
+    try {
+      const canvas = document.createElement('canvas');
+      const image = new Image();
+      image.src = cropperImage;
+      
+      await new Promise((resolve) => {
+        image.onload = resolve;
+      });
+
+      // Calculate the size of the cropped image
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
+      
+      canvas.width = croppedAreaPixels.width;
+      canvas.height = croppedAreaPixels.height;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      ctx.drawImage(
+        image,
+        croppedAreaPixels.x * scaleX,
+        croppedAreaPixels.y * scaleY,
+        croppedAreaPixels.width * scaleX,
+        croppedAreaPixels.height * scaleY,
+        0,
+        0,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height
+      );
+      
+      const croppedImageUrl = canvas.toDataURL('image/jpeg');
+      
+      if (isCoverImage) {
+        setData(prevData => ({
+          ...prevData,
+          coverImage: croppedImageUrl
+        }));
+      } else {
+        setData(prevData => ({
+          ...prevData,
+          profileImage: croppedImageUrl
+        }));
+      }
+      
+      setShowCropper(false);
+      setCropperImage(null);
+      setCroppedAreaPixels(null);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+    } catch (e) {
+      console.error('Error creating cropped image:', e);
+    }
+  };
+
+  const cancelCropping = () => {
+    setShowCropper(false);
+    setCropperImage(null);
+    setCroppedAreaPixels(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+  };
+
   return (
     <div style={{ 
       marginBottom: '24px',
@@ -233,6 +324,107 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
       overflow: 'hidden',
       boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)'
     }}>
+      {/* Image Cropper Modal */}
+      {showCropper && cropperImage && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            width: '90%',
+            maxWidth: '800px',
+            maxHeight: '90vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
+                Crop {isCoverImage ? 'Cover' : 'Profile'} Image
+              </h3>
+            </div>
+            
+            <div style={{ 
+              position: 'relative', 
+              height: '400px', 
+              backgroundColor: '#f3f4f6',
+              flex: 1
+            }}>
+              <Cropper
+                image={cropperImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={isCoverImage ? 4 : 1}
+                onCropChange={setCrop}
+                onCropComplete={onCropComplete}
+                onZoomChange={setZoom}
+                objectFit="horizontal-cover"
+              />
+            </div>
+            
+            <div style={{ 
+              padding: '16px', 
+              borderTop: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ marginRight: '8px', fontSize: '14px' }}>Zoom:</label>
+                <input
+                  type="range"
+                  value={zoom}
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                />
+              </div>
+              
+              <div>
+                <button
+                  onClick={cancelCropping}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#4b5563',
+                    border: 'none',
+                    borderRadius: '4px',
+                    marginRight: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={createCroppedImage}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#0a66c2',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {!data.showBack ? (
         <div>
           {/* LinkedIn-style cover photo - full width with 4:1 aspect ratio */}
@@ -529,7 +721,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                 marginTop: '8px',
                 border: '1px solid #e5e7eb'
               }}>
-                {data.businessDescription || 'No business description available.'}
+                <div dangerouslySetInnerHTML={{ __html: data.businessDescription || 'No business description available.' }} />
               </div>
             )}
           </div>
@@ -1016,25 +1208,31 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
             )}
           </div>
           
-          {/* Business Overview - with simple textarea */}
+          {/* Business Overview - with TinyMCE rich text editor */}
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 12px 0', color: '#111827' }}>Business Overview</h3>
             
-            <textarea
-              value={data.businessDescription || ''}
-              onChange={handleBusinessOverviewChange}
-              style={{
-                width: '100%',
-                height: '120px',
-                padding: '12px',
-                fontSize: '14px',
-                border: '1px solid #d1d5db',
-                borderRadius: '4px',
-                resize: 'vertical',
-                outline: 'none'
-              }}
-              placeholder="Describe your business..."
-            />
+            <div style={{ border: '1px solid #d1d5db', borderRadius: '4px', overflow: 'hidden' }}>
+              <Editor
+                apiKey="no-api-key"
+                initialValue={data.businessDescription || ''}
+                init={{
+                  height: 200,
+                  menubar: false,
+                  plugins: [
+                    'advlist autolink lists link image charmap print preview anchor',
+                    'searchreplace visualblocks code fullscreen',
+                    'insertdatetime media table paste code help wordcount'
+                  ],
+                  toolbar:
+                    'undo redo | formatselect | bold italic backcolor | \
+                    alignleft aligncenter alignright alignjustify | \
+                    bullist numlist outdent indent | removeformat | help',
+                  content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px }'
+                }}
+                onEditorChange={handleBusinessOverviewChange}
+              />
+            </div>
           </div>
           
           {/* Save button at bottom */}
