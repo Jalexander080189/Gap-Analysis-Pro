@@ -485,8 +485,8 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                     rel="noopener noreferrer"
                     className="profile-link"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#1877f2">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                     </svg>
                     Facebook
                   </a>
@@ -495,15 +495,13 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
             )}
           </div>
           
-          {/* Clear separation between sections */}
+          {/* Section divider */}
           <div className="section-divider"></div>
           
           {/* Business Overview section */}
           <div className="business-overview">
             <div className="business-overview-header">
-              <h3 className="business-overview-title">
-                Business Overview
-              </h3>
+              <h3 className="business-overview-title">Business Overview</h3>
               <button
                 type="button"
                 onClick={() => setShowBusinessOverview(!showBusinessOverview)}
@@ -514,42 +512,44 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
             </div>
             
             {showBusinessOverview && (
-              <div className="business-overview-content">
-                <div dangerouslySetInnerHTML={{ __html: data.businessDescription || 'No business description available.' }} />
-              </div>
+              <div 
+                className="business-overview-content"
+                dangerouslySetInnerHTML={{ __html: data.businessDescription || 'No business overview provided.' }}
+              />
             )}
           </div>
           
-          {/* Clear separation before social buttons */}
+          {/* Button divider */}
           <div className="button-divider"></div>
           
           {/* Social interaction buttons */}
           <div className="social-buttons">
             <button className="social-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
               </svg>
               Like
             </button>
+            
             <button className="social-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
               Comment
             </button>
+            
             <button className="social-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="18" cy="5" r="3"></circle>
-                <circle cx="6" cy="12" r="3"></circle>
-                <circle cx="18" cy="19" r="3"></circle>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                <polyline points="16,6 12,2 8,6"></polyline>
+                <line x1="12" y1="2" x2="12" y2="15"></line>
               </svg>
               Share
             </button>
           </div>
         </div>
       ) : (
+        /* Edit Mode */
         <div className="edit-mode">
           <div className="edit-header">
             <h2 className="edit-title">Edit Profile</h2>
@@ -562,15 +562,13 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
             </button>
           </div>
           
-          {/* Profile and Cover Image Upload */}
+          {/* Image Upload Section */}
           <div className="image-upload-section">
             <h3 className="section-title">Profile Images</h3>
-            
             <div className="image-upload-container">
+              {/* Profile Image Upload */}
               <div className="profile-upload">
-                <label className="upload-label">
-                  Profile Picture
-                </label>
+                <label className="upload-label">Profile Picture</label>
                 <div 
                   className={`profile-upload-area ${dragActive ? 'drag-active' : ''}`}
                   onDragEnter={handleDrag}
@@ -599,10 +597,9 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                 </div>
               </div>
               
+              {/* Cover Image Upload */}
               <div className="cover-upload">
-                <label className="upload-label">
-                  Cover Image
-                </label>
+                <label className="upload-label">Cover Photo</label>
                 <div 
                   className="cover-upload-area"
                   onClick={() => coverInputRef.current?.click()}
@@ -614,7 +611,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                     />
                   ) : (
                     <svg xmlns="http://www.w3.org/2000/svg" className="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                   )}
                   <input 
@@ -635,60 +632,52 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
             
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">
-                  Company Name
-                </label>
+                <label className="form-label">Company Name</label>
                 <input
                   type="text"
                   name="companyName"
                   value={data.companyName || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="Company name"
+                  placeholder="Enter company name"
                 />
               </div>
               
               <div className="form-group">
-                <label className="form-label">
-                  Industry
-                </label>
+                <label className="form-label">Industry Type</label>
                 <input
                   type="text"
                   name="industryType"
                   value={data.industryType || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="Industry"
+                  placeholder="Enter industry type"
                 />
               </div>
             </div>
             
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">
-                  Website
-                </label>
+                <label className="form-label">Website</label>
                 <input
                   type="url"
                   name="companyWebsite"
                   value={data.companyWebsite || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="Website URL"
+                  placeholder="https://example.com"
                 />
               </div>
               
               <div className="form-group">
-                <label className="form-label">
-                  Facebook
-                </label>
+                <label className="form-label">Facebook URL</label>
                 <input
                   type="url"
                   name="companyFacebookURL"
                   value={data.companyFacebookURL || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="Facebook URL"
+                  placeholder="https://facebook.com/company"
                 />
               </div>
             </div>
@@ -697,18 +686,15 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
           {/* Contacts Section */}
           <div className="contacts-section">
             <div className="contacts-header">
-              <h3 className="section-title">
-                Contacts ({(data.contacts || []).length}/5)
-              </h3>
+              <h3 className="section-title">Contacts</h3>
               {(data.contacts || []).length < 5 && (
                 <button
                   type="button"
                   onClick={addContact}
                   className="add-contact-btn"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   Add Contact
                 </button>
@@ -725,67 +711,57 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                       className="remove-contact-btn"
                       aria-label="Remove contact"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 6h18"></path>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        <line x1="10" y1="11" x2="10" y2="17"></line>
-                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
                       </svg>
                     </button>
                     
                     <div className="contact-form">
                       <div className="form-row">
                         <div className="form-group">
-                          <label className="form-label">
-                            Name
-                          </label>
+                          <label className="form-label">Name</label>
                           <input
                             type="text"
                             value={contact.name}
                             onChange={(e) => handleContactChange(index, 'name', e.target.value)}
                             className="form-input"
-                            placeholder="Name"
+                            placeholder="Contact name"
                           />
                         </div>
                         
                         <div className="form-group">
-                          <label className="form-label">
-                            Title
-                          </label>
+                          <label className="form-label">Title</label>
                           <input
                             type="text"
                             value={contact.title}
                             onChange={(e) => handleContactChange(index, 'title', e.target.value)}
                             className="form-input"
-                            placeholder="Title"
+                            placeholder="Job title"
                           />
                         </div>
                       </div>
                       
                       <div className="form-row">
                         <div className="form-group">
-                          <label className="form-label">
-                            Email
-                          </label>
+                          <label className="form-label">Email</label>
                           <input
                             type="email"
                             value={contact.email}
                             onChange={(e) => handleContactChange(index, 'email', e.target.value)}
                             className="form-input"
-                            placeholder="Email"
+                            placeholder="email@example.com"
                           />
                         </div>
                         
                         <div className="form-group">
-                          <label className="form-label">
-                            Phone
-                          </label>
+                          <label className="form-label">Mobile</label>
                           <input
                             type="tel"
                             value={contact.mobile}
                             onChange={(e) => handleContactChange(index, 'mobile', e.target.value)}
                             className="form-input"
-                            placeholder="Phone"
+                            placeholder="(555) 123-4567"
                           />
                         </div>
                       </div>
@@ -801,9 +777,8 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                   onClick={addContact}
                   className="add-first-contact-btn"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   Add First Contact
                 </button>
@@ -811,29 +786,28 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
             )}
           </div>
           
-          {/* Business Overview - with simple textarea instead of rich text editor */}
+          {/* Business Overview Section */}
           <div className="business-overview-section">
             <h3 className="section-title">Business Overview</h3>
-            
             <div className="textarea-container">
               <textarea
                 value={data.businessDescription || ''}
                 onChange={handleBusinessOverviewChange}
                 className="business-overview-textarea"
-                placeholder="Enter business overview here..."
+                placeholder="Enter business overview..."
                 rows={6}
               />
             </div>
           </div>
           
-          {/* Save button at bottom */}
+          {/* Save Button */}
           <div className="save-container">
             <button
               type="button"
               onClick={toggleEdit}
               className="save-profile-btn-large"
             >
-              Save Profile
+              Save Client Data
             </button>
           </div>
         </div>
@@ -843,3 +817,4 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
 };
 
 export default ClientInformation;
+
