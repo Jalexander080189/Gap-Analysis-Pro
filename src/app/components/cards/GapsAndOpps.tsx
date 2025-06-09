@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import DriveLogoToggle from '../DriveLogoToggle';
 
 interface GapsAndOppsData {
-  mode: string;
+  mode: 'leadgen' | 'retail';
   leadgen: {
     annualWebsiteVisitors: string;
     annualLeadsGenerated: string;
