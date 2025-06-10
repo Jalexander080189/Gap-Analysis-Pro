@@ -1,6 +1,7 @@
 'use client';
-import React, { useState } from 'react';
-import { ScenariosData } from './types/ScenariosData';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ClientInformation from './components/cards/ClientInformation';
 import MarketOverview from './components/cards/MarketOverview';
 import CompanyOverview from './components/cards/CompanyOverview';
@@ -20,10 +21,6 @@ export default function ClientPage() {
     companyName: '',
     companyWebsite: '',
     companyFacebookURL: '',
-    facebookAdLibraryURL: '',
-    instagramURL: '',
-    phoenixURL: '',
-    yearsInBusiness: '',
     industryType: '',
     contacts: [],
     businessDescription: '',
@@ -94,31 +91,22 @@ export default function ClientPage() {
     showBack: false
   });
   
-  // Scenarios state with proper typing
-  const [scenariosData, setScenariosData] = useState<ScenariosData>({
-    visibilityGapPercent: 0,
-    leadGenGapPercent: 0,
-    closeRateGapPercent: 0,
-    additionalAnnualLeads: 0,
-    additionalAnnualNewAccountsClosed: 0,
-    additionalAnnualRevenueCreated: 0,
-    totalCalculatedAnnualRevenue: 0,
-    showBack: false,
-    // Add the missing properties with default values
-    visibilityReachSlider: 0,
-    leadGenSlider: 0,
-    closeRateSlider: 0,
+  // Scenarios state
+  const [scenariosData, setScenariosData] = useState({
+    visibilityReachSlider: 5,
+    leadGenSlider: 20,
+    closeRateSlider: 20,
     additionalLeads: 0,
     additionalRevenue: 0,
-    additionalClosed: 0
+    additionalNewAccounts: 0,
+    totalCalculatedAnnualRevenue: 0,
+    showBack: false
   });
   
   // Current marketing overview state
-  const [currentMarketingData, setCurrentMarketingData] = useState({
+  const [marketingData, setMarketingData] = useState({
     channels: [
-      { name: 'Google Ads', monthlyCost: '0', monthlyAdSpend: '0' },
-      { name: 'Facebook Ads', monthlyCost: '0', monthlyAdSpend: '0' },
-      { name: 'SEO', monthlyCost: '0', monthlyAdSpend: '0' }
+      { name: '', monthlyAdspend: '0', monthlyCost: '0' }
     ],
     totalMonthlySpend: 0,
     totalYearlySpend: 0,
@@ -129,86 +117,224 @@ export default function ClientPage() {
   
   // SBA marketing budget state
   const [sbaData, setSbaData] = useState({
-    annualRevenue: '0',
-    years: [
-      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
-      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
-      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
-      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } },
-      { startRevenue: 0, spendIncrease: 0, yearlyBudget: 0, monthlyBudget: 0, minimumROI: 0, endRevenue: 0, percentIncrease: 0, customers: { annual: 0, monthly: 0, weekly: 0, daily: 0 } }
+    recommendedMonthlyBudget: '0',
+    recommendedYearlyBudget: '0',
+    recommendedChannels: [
+      { name: '', monthlyBudget: '0', description: '' }
     ],
-    worstCaseRevenue: 0,
-    worstCaseSpend: 0,
     showBack: false
   });
   
   // Notes state
-  const [notesData, setNotesData] = useState('');
+  const [notesData, setNotesData] = useState({
+    content: '',
+    showBack: false
+  });
+  
+  // Error state for URL parameter parsing
+  const [urlError, setUrlError] = useState<string | null>(null);
+  
+  const searchParams = useSearchParams();
+  
+  // Function to update state from URL parameters
+  const updateStateFromParams = useCallback((companySlug: string) => {
+    try {
+      // Decode and parse the data
+      const decodedData = JSON.parse(atob(companySlug));
+      
+      // Update all state with the decoded data
+      if (decodedData.clientData) {
+        // Handle backward compatibility for client data
+        const clientDataUpdate = { ...decodedData.clientData };
+        
+        // If old format data is received, convert it to new format
+        if (!clientDataUpdate.contacts && (clientDataUpdate.contactName || clientDataUpdate.contactEmail || clientDataUpdate.contactPhone)) {
+          clientDataUpdate.contacts = [{
+            name: clientDataUpdate.contactName || '',
+            email: clientDataUpdate.contactEmail || '',
+            mobile: clientDataUpdate.contactPhone || '',
+            title: clientDataUpdate.contactTitle || ''
+          }];
+        }
+        
+        // Map companyUrl to companyWebsite if needed
+        if (!clientDataUpdate.companyWebsite && clientDataUpdate.companyUrl) {
+          clientDataUpdate.companyWebsite = clientDataUpdate.companyUrl;
+        }
+        
+        // Map businessType to industryType if needed
+        if (!clientDataUpdate.industryType && clientDataUpdate.businessType) {
+          clientDataUpdate.industryType = clientDataUpdate.businessType;
+        }
+        
+        setClientData(clientDataUpdate);
+      }
+      
+      if (decodedData.marketData) setMarketData(decodedData.marketData);
+      if (decodedData.companyData) setCompanyData(decodedData.companyData);
+      if (decodedData.gapsData) {
+        // Ensure mode is either 'leadgen' or 'retail'
+        const mode = decodedData.gapsData.mode === 'retail' ? 'retail' : 'leadgen';
+        setGapsData({
+          ...decodedData.gapsData,
+          mode
+        });
+      }
+      if (decodedData.scenariosData) setScenariosData(decodedData.scenariosData);
+      if (decodedData.marketingData) setMarketingData(decodedData.marketingData);
+      if (decodedData.sbaData) setSbaData(decodedData.sbaData);
+      if (decodedData.notesData) setNotesData(decodedData.notesData);
+      
+      // Clear any previous errors
+      setUrlError(null);
+    } catch (error) {
+      console.error('Error parsing URL data:', error);
+      setUrlError('Invalid data in URL. Please check the link and try again.');
+    }
+  }, []);
+  
+  // Handle URL parameters for sharing
+  useEffect(() => {
+    console.log('useEffect running, searchParams: ', searchParams);
+    
+    const companySlug = searchParams.get('company');
+    
+    if (companySlug) {
+      updateStateFromParams(companySlug);
+    } else {
+      console.log('No company slug in URL');
+    }
+  }, [searchParams, updateStateFromParams]);
+  
+  // Function to generate a shareable URL
+  const generateShareableUrl = () => {
+    const data = {
+      clientData,
+      marketData,
+      companyData,
+      gapsData,
+      scenariosData,
+      marketingData,
+      sbaData,
+      notesData
+    };
+    
+    const encodedData = btoa(JSON.stringify(data));
+    const baseUrl = window.location.origin + window.location.pathname;
+    return `${baseUrl}?company=${encodedData}`;
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="w-full mb-8">
-          <ClientInformation 
-            data={clientData} 
-            setData={setClientData} 
-          />
+    <main className="container mx-auto px-4 py-8">
+      {/* Display URL parsing error if any */}
+      {urlError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative">
+          <strong className="font-bold">Error!</strong>
+          <span className="block sm:inline"> {urlError}</span>
+          <button 
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            onClick={() => setUrlError(null)}
+            type="button"
+          >
+            <span className="text-xl">&times;</span>
+          </button>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+      )}
+      
+      {/* Card 1 at the very top, no cards to right or left */}
+      <div className="w-full mb-8">
+        <ClientInformation 
+          data={clientData} 
+          setData={setClientData} 
+        />
+      </div>
+      
+      {/* Cards 2, 3, 4 in a single horizontal row using CSS Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '1rem',
+        width: '100%',
+        marginBottom: '2rem'
+      }}>
+        <div>
           <MarketOverview 
             data={marketData} 
             setData={setMarketData} 
           />
+        </div>
+        
+        <div>
           <CompanyOverview 
             data={companyData} 
-            setData={setCompanyData}
-            avgYearlyCustomerValue={parseFloat(String(marketData.avgYearlyCustomerValue || 0)) || 0}
-            totalMarketRevShare={parseFloat(String(marketData.totalMarketRevShare || 0)) || 0}
+            setData={setCompanyData} 
+            avgYearlyCustomerValue={parseFloat(marketData.avgYearlyCustomerValue.replace(/,/g, '')) || 0}
+            totalMarketRevShare={marketData.totalMarketRevShare}
           />
+        </div>
+        
+        <div>
           <GapsAndOpps 
             data={gapsData} 
             setData={setGapsData} 
-            annualRevenue={parseFloat(companyData.annualRevenue) || 0}
             calculatedBuyers={marketData.calculatedBuyers}
           />
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          <Scenarios 
-            data={scenariosData} 
-            setData={setScenariosData} 
-            gapsData={gapsData}
-            avgYearlyCustomerValue={parseFloat(String(marketData.avgYearlyCustomerValue || 0)) || 0}
-            annualRevenue={parseFloat(companyData.annualRevenue) || 0}
-          />
-          <CurrentMarketingOverview 
-            data={currentMarketingData} 
-            setData={setCurrentMarketingData} 
-            annualRevenue={parseFloat(companyData.annualRevenue) || 0}
-          />
-          <SBAMarketingBudget 
-            data={sbaData} 
-            setData={setSbaData} 
-          />
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Notes 
-            data={notesData} 
-            setData={setNotesData} 
-          />
-          <GPTDataBlock 
-            setClientData={setClientData}
-            setMarketData={setMarketData}
-            setCompanyData={setCompanyData}
-            setGapsData={setGapsData}
-            setMarketingData={setCurrentMarketingData}
-            setSbaData={setSbaData}
-            setNotesData={setNotesData}
-          />
-        </div>
       </div>
-    </div>
+      
+      {/* Cards 5-9 stacked vertically like a newsfeed */}
+      <div className="grid grid-cols-1 gap-6">
+        <Scenarios 
+          data={scenariosData} 
+          setData={setScenariosData} 
+          annualRevenue={parseFloat(companyData.annualRevenue.replace(/,/g, '')) || 0}
+          calculatedBuyers={marketData.calculatedBuyers}
+          visibilityReachGap={gapsData.mode === 'leadgen' ? gapsData.leadgen.visibilityReachGap : gapsData.retail.visibilityReachGap}
+          leadGenGap={gapsData.mode === 'leadgen' ? gapsData.leadgen.leadGenGap : 0}
+          closeRateGap={gapsData.mode === 'leadgen' ? gapsData.leadgen.closeRateGap : gapsData.retail.closeRateGap}
+        />
+        
+        <CurrentMarketingOverview 
+          data={marketingData} 
+          setData={setMarketingData} 
+          annualRevenue={parseFloat(companyData.annualRevenue.replace(/,/g, '')) || 0}
+        />
+        
+        <SBAMarketingBudget 
+          data={sbaData} 
+          setData={setSbaData} 
+          annualRevenue={parseFloat(companyData.annualRevenue.replace(/,/g, '')) || 0}
+        />
+        
+        <Notes 
+          data={notesData} 
+          setData={setNotesData} 
+        />
+      </div>
+      
+      {/* Hidden data block for GPT analysis */}
+      <GPTDataBlock 
+        clientData={clientData}
+        marketData={marketData}
+        companyData={companyData}
+        gapsData={gapsData}
+        scenariosData={scenariosData}
+        marketingData={marketingData}
+      />
+      
+      <div className="mt-8 text-center">
+        <button 
+          onClick={() => {
+            const shareableUrl = generateShareableUrl();
+            navigator.clipboard.writeText(shareableUrl);
+            alert('Shareable URL copied to clipboard!');
+          }}
+          className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          type="button"
+        >
+          Generate Shareable URL
+        </button>
+      </div>
+    </main>
   );
 }
