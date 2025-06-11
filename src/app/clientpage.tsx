@@ -234,7 +234,7 @@ export default function ClientPage() {
   };
 
   return (
-    <main className="container mx-auto px-4">
+    <main className="container mx-auto px-4 pt-0" style={{ marginTop: 0, paddingTop: 0 }}>
       {/* Display URL parsing error if any */}
       {urlError && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative">
@@ -250,8 +250,8 @@ export default function ClientPage() {
         </div>
       )}
       
-      {/* Card 1 at the very top, no cards to right or left */}
-      <div className="w-full mb-8">
+      {/* Card 1 at the very top, no cards to right or left - REMOVED TOP MARGIN */}
+      <div className="w-full mb-8" style={{ marginTop: 0 }}>
         <ClientInformation 
           data={clientData} 
           setData={setClientData}
