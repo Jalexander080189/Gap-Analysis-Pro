@@ -245,7 +245,9 @@ export default function ClientPage() {
       <div className="w-full mb-8">
         <ClientInformation 
           data={clientData} 
-          setData={setClientData} 
+          setData={setClientData}
+          mode={gapsData.mode}
+          setMode={(newMode) => setGapsData(prev => ({ ...prev, mode: newMode }))}
         />
       </div>
       
@@ -338,3 +340,4 @@ export default function ClientPage() {
     </main>
   );
 }
+

@@ -37,13 +37,6 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
   const [comments, setComments] = useState<string[]>([]);
   const [shared, setShared] = useState(false);
 
-  const handleModeChange = (mode: "leadgen" | "retail") => {
-    setData({
-      ...data,
-      mode
-    });
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -69,7 +62,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
     } else {
       setData({
         ...data,
-        [name]: value as string // Changed from 'any' to 'string' to fix TypeScript error
+        [name]: value as string
       });
     }
   };
@@ -171,23 +164,10 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
       <h2 className="section-title">Gaps & Opportunities</h2>
       
       <div className="mb-4">
-        <div className="flex space-x-4 mb-4">
-          <button
-            onClick={() => handleModeChange('leadgen')}
-            className={`px-4 py-2 rounded-md ${
-              data.mode === 'leadgen' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
-          >
-            Lead Gen Business
-          </button>
-          <button
-            onClick={() => handleModeChange('retail')}
-            className={`px-4 py-2 rounded-md ${
-              data.mode === 'retail' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
-          >
-            Retail Business
-          </button>
+        <div className="bg-blue-50 p-3 rounded-lg mb-4">
+          <p className="text-blue-700 text-sm">
+            💡 <strong>Mode Selection:</strong> Use the Lead Gen/Retail toggle in the Client Information card above to switch between business modes.
+          </p>
         </div>
         
         {data.mode === 'leadgen' ? (
@@ -412,23 +392,17 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
       {/* Comments list */}
       {comments.length > 0 && (
         <div className="mt-2 p-3 border border-gray-200 rounded-lg">
-          <h4 className="font-medium mb-2">Comments</h4>
+          <h4 className="font-medium mb-2">Comments:</h4>
           {comments.map((comment, index) => (
-            <div key={index} className="mb-2 pb-2 border-b border-gray-100 last:border-b-0">
-              <p className="text-sm">{comment}</p>
+            <div key={index} className="mb-1 p-2 bg-gray-50 rounded">
+              {comment}
             </div>
           ))}
         </div>
       )}
-      
-      <button 
-        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        onClick={() => setData({ ...data, showBack: !data.showBack })}
-      >
-        {data.showBack ? 'Show Front' : 'Show Back'}
-      </button>
     </div>
   );
 };
 
 export default GapsAndOpps;
+

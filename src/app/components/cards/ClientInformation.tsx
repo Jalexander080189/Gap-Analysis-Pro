@@ -32,9 +32,11 @@ export interface ClientDataType {
 interface ClientInformationProps {
   data: ClientDataType;
   setData: React.Dispatch<React.SetStateAction<ClientDataType>>;
+  mode: "leadgen" | "retail";
+  setMode: React.Dispatch<React.SetStateAction<"leadgen" | "retail">>;
 }
 
-const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) => {
+const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mode, setMode }) => {
   const [showBusinessOverview, setShowBusinessOverview] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const profileInputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +97,10 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
       }));
     }
   }, [data, setData]);
+
+  const handleModeChange = (newMode: "leadgen" | "retail") => {
+    setMode(newMode);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -509,16 +515,19 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                 alignItems: 'center'
               }}
             >
-              <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                {isCoverImage ? 'Cover photo (4:1 ratio)' : 'Profile picture (square)'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '14px', color: '#6b7280' }}>Zoom:</span>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2"
+                  step="0.1"
+                  value="1"
+                  style={{ width: '100px' }}
+                />
               </div>
               
-              <div 
-                style={{
-                  display: 'flex',
-                  gap: '8px'
-                }}
-              >
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   onClick={cancelCropping}
                   style={{
@@ -543,255 +552,227 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                     cursor: 'pointer'
                   }}
                 >
-                  Apply Crop
+                  Apply
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-      
+
       {!data.showBack ? (
-        <div style={{ marginTop: 0, paddingTop: 0 }}>
-          {/* LinkedIn-style cover photo - full width with 4:1 aspect ratio */}
+        <>
+          {/* Cover Photo */}
           <div 
             className="profile-cover"
-            style={{ 
-              backgroundImage: data.coverImage ? `url(${data.coverImage})` : undefined,
-              marginTop: 0,
-              paddingTop: 0
+            style={{
+              backgroundImage: data.coverImage ? `url(${data.coverImage})` : undefined
             }}
           >
-            {/* Edit cover button */}
-            <button
-              type="button"
-              onClick={() => coverInputRef.current?.click()}
+            <button 
               className="edit-cover-btn"
-              aria-label="Edit cover photo"
+              onClick={() => coverInputRef.current?.click()}
+              title="Edit cover photo"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-              <input 
-                ref={coverInputRef}
-                type="file" 
-                accept="image/*" 
-                onChange={handleCoverImageUpload} 
-                className="hidden-input"
-              />
+              📷
             </button>
-            
-            {/* Profile picture overlapping the cover photo */}
-            <div 
-              className={`profile-picture ${dragActive ? 'drag-active' : ''}`}
-              onClick={() => profileInputRef.current?.click()}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
-              {data.profileImage ? (
-                <div 
-                  className="profile-image" 
-                  style={{ backgroundImage: `url(${data.profileImage})` }}
-                />
-              ) : (
-                <div className="profile-initial">
-                  {data.companyName ? data.companyName.charAt(0).toUpperCase() : '?'}
-                </div>
-              )}
-              <input 
-                ref={profileInputRef}
-                type="file" 
-                accept="image/*" 
-                onChange={handleProfileImageUpload} 
-                className="hidden-input"
-              />
-            </div>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleCoverImageUpload}
+              className="hidden-input"
+            />
           </div>
-          
-          {/* Profile information section with proper spacing */}
+
+          {/* Profile Picture */}
+          <div 
+            className={`profile-picture ${dragActive ? 'drag-active' : ''}`}
+            onClick={() => profileInputRef.current?.click()}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            {data.profileImage ? (
+              <div 
+                className="profile-image"
+                style={{ backgroundImage: `url(${data.profileImage})` }}
+              />
+            ) : (
+              <div className="profile-initial">
+                {data.companyName ? data.companyName.charAt(0).toUpperCase() : '?'}
+              </div>
+            )}
+            <input
+              ref={profileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleProfileImageUpload}
+              className="hidden-input"
+            />
+          </div>
+
+          {/* Profile Information */}
           <div className="profile-info">
             <div className="profile-header">
               <div>
                 <h1 className="profile-name">
                   {data.companyName || 'Company Name'}
-                  {/* Verified badge */}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#0a66c2">
-                    <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-9.618 5.04L12 20.58l9.618-12.596A11.955 11.955 0 0112 2.944z" />
-                  </svg>
+                  <span style={{ fontSize: '14px', color: '#0a66c2', marginLeft: '8px' }}>
+                    ●
+                  </span>
                 </h1>
-                
                 <p className="profile-industry">
-                  {data.industryType || 'Industry'}
+                  Industry Type
                 </p>
-                
-                {/* Location info */}
                 <p className="profile-location">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                  </svg>
-                  United States
+                  📍 United States
                 </p>
-                
-                {/* Connections/Contacts count */}
                 <p className="profile-contacts">
-                  {data.contacts && data.contacts.length > 0 
-                    ? `${data.contacts.length} ${data.contacts.length === 1 ? 'contact' : 'contacts'}`
-                    : 'No contacts'}
+                  {(data.contacts || []).length} contacts
                 </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {/* Lead Gen/Retail Toggle */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
+                    Mode:
+                  </span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button
+                      onClick={() => handleModeChange('leadgen')}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        borderRadius: '16px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        backgroundColor: mode === 'leadgen' ? '#0a66c2' : '#f3f4f6',
+                        color: mode === 'leadgen' ? 'white' : '#6b7280',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      Lead Gen
+                    </button>
+                    <button
+                      onClick={() => handleModeChange('retail')}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        borderRadius: '16px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        backgroundColor: mode === 'retail' ? '#0a66c2' : '#f3f4f6',
+                        color: mode === 'retail' ? 'white' : '#6b7280',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      Retail
+                    </button>
+                  </div>
+                </div>
+                <button 
+                  onClick={toggleEdit}
+                  className="edit-profile-btn"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+
+            {/* Profile Links */}
+            <div className="profile-links">
+              {data.companyWebsite && (
+                <a href={data.companyWebsite} className="profile-link" target="_blank" rel="noopener noreferrer">
+                  🌐 Website
+                </a>
+              )}
+              {data.companyFacebookURL && (
+                <a href={data.companyFacebookURL} className="profile-link" target="_blank" rel="noopener noreferrer">
+                  📘 Facebook
+                </a>
+              )}
+            </div>
+
+            <div className="section-divider"></div>
+
+            {/* Business Overview */}
+            <div className="business-overview">
+              <div className="business-overview-header">
+                <h3 className="business-overview-title">Business Overview</h3>
+                <button 
+                  onClick={() => setShowBusinessOverview(!showBusinessOverview)}
+                  className="toggle-overview-btn"
+                >
+                  {showBusinessOverview ? 'Hide' : 'Show'}
+                </button>
               </div>
               
-              {/* Edit button */}
-              <button
-                type="button"
-                onClick={toggleEdit}
-                className="edit-profile-btn"
-              >
-                Edit
+              {showBusinessOverview && (
+                <div className="business-overview-content">
+                  {data.businessDescription || 'Brief description of the business...'}
+                </div>
+              )}
+            </div>
+
+            <div className="button-divider"></div>
+
+            {/* Social Buttons */}
+            <div className="social-buttons">
+              <button className="social-button">
+                👍 Like
+              </button>
+              <button className="social-button">
+                💬 Comment
+              </button>
+              <button className="social-button">
+                📤 Share
               </button>
             </div>
-            
-            {/* Website and social links */}
-            {(data.companyWebsite || data.companyFacebookURL) && (
-              <div className="profile-links">
-                {data.companyWebsite && (
-                  <a 
-                    href={data.companyWebsite.startsWith('http') ? data.companyWebsite : `https://${data.companyWebsite}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="profile-link"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="2" y1="12" x2="22" y2="12"></line>
-                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                    </svg>
-                    Website
-                  </a>
-                )}
-                
-                {data.companyFacebookURL && (
-                  <a 
-                    href={data.companyFacebookURL.startsWith('http') ? data.companyFacebookURL : `https://${data.companyFacebookURL}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="profile-link"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#1877f2">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
-                    Facebook
-                  </a>
-                )}
-              </div>
-            )}
           </div>
-          
-          {/* Section divider */}
-          <div className="section-divider"></div>
-          
-          {/* Business Overview section */}
-          <div className="business-overview">
-            <div className="business-overview-header">
-              <h3 className="business-overview-title">Business Overview</h3>
-              <button
-                type="button"
-                onClick={() => setShowBusinessOverview(!showBusinessOverview)}
-                className="toggle-overview-btn"
-              >
-                {showBusinessOverview ? 'Hide' : 'Show'}
-              </button>
-            </div>
-            
-            {showBusinessOverview && (
-              <div className="business-overview-content">
-                {data.businessDescription || 'No business overview provided.'}
-              </div>
-            )}
-          </div>
-          
-          {/* Button divider */}
-          <div className="button-divider"></div>
-          
-          {/* Social interaction buttons */}
-          <div className="social-buttons">
-            <button className="social-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-              </svg>
-              Like
-            </button>
-            
-            <button className="social-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-              Comment
-            </button>
-            
-            <button className="social-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                <polyline points="16,6 12,2 8,6"></polyline>
-                <line x1="12" y1="2" x2="12" y2="15"></line>
-              </svg>
-              Share
-            </button>
-          </div>
-        </div>
+        </>
       ) : (
-        /* Edit Mode */
         <div className="edit-mode">
           <div className="edit-header">
-            <h2 className="edit-title">Edit Profile</h2>
-            <button
-              type="button"
+            <h2 className="edit-title">Edit Client Information</h2>
+            <button 
               onClick={toggleEdit}
               className="save-profile-btn"
             >
               Save
             </button>
           </div>
-          
+
           {/* Image Upload Section */}
           <div className="image-upload-section">
-            <h3 className="section-title">Profile Images</h3>
+            <h3 className="section-title">Images</h3>
             <div className="image-upload-container">
-              {/* Profile Image Upload */}
               <div className="profile-upload">
                 <label className="upload-label">Profile Picture</label>
                 <div 
                   className={`profile-upload-area ${dragActive ? 'drag-active' : ''}`}
+                  onClick={() => profileInputRef.current?.click()}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
                   onDragOver={handleDrag}
                   onDrop={handleDrop}
-                  onClick={() => profileInputRef.current?.click()}
                 >
                   {data.profileImage ? (
                     <div 
-                      className="upload-preview" 
+                      className="upload-preview"
                       style={{ backgroundImage: `url(${data.profileImage})` }}
                     />
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                   )}
-                  <input 
-                    ref={profileInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleProfileImageUpload} 
-                    className="hidden-input"
-                  />
                 </div>
               </div>
               
-              {/* Cover Image Upload */}
               <div className="cover-upload">
                 <label className="upload-label">Cover Photo</label>
                 <div 
@@ -800,27 +781,20 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                 >
                   {data.coverImage ? (
                     <div 
-                      className="upload-preview cover-preview" 
+                      className="upload-preview cover-preview"
                       style={{ backgroundImage: `url(${data.coverImage})` }}
                     />
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                   )}
-                  <input 
-                    ref={coverInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleCoverImageUpload} 
-                    className="hidden-input"
-                  />
                 </div>
               </div>
             </div>
           </div>
-          
-          {/* Company Information */}
+
+          {/* Company Information Section */}
           <div className="company-info-section">
             <h3 className="section-title">Company Information</h3>
             
@@ -830,7 +804,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                 <input
                   type="text"
                   name="companyName"
-                  value={data.companyName || ''}
+                  value={data.companyName}
                   onChange={handleInputChange}
                   className="form-input"
                   placeholder="Enter company name"
@@ -842,33 +816,33 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                 <input
                   type="text"
                   name="industryType"
-                  value={data.industryType || ''}
+                  value={data.industryType}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="Enter industry type"
+                  placeholder="e.g., Technology, Healthcare"
                 />
               </div>
             </div>
             
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Website</label>
+                <label className="form-label">Company Website</label>
                 <input
-                  type="url"
+                  type="text"
                   name="companyWebsite"
-                  value={data.companyWebsite || ''}
+                  value={data.companyWebsite}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="https://example.com"
+                  placeholder="https://company.com"
                 />
               </div>
               
               <div className="form-group">
                 <label className="form-label">Facebook URL</label>
                 <input
-                  type="url"
+                  type="text"
                   name="companyFacebookURL"
-                  value={data.companyFacebookURL || ''}
+                  value={data.companyFacebookURL}
                   onChange={handleInputChange}
                   className="form-input"
                   placeholder="https://facebook.com/company"
@@ -876,39 +850,35 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
               </div>
             </div>
           </div>
-          
+
           {/* Contacts Section */}
           <div className="contacts-section">
             <div className="contacts-header">
               <h3 className="section-title">Contacts</h3>
               {(data.contacts || []).length < 5 && (
-                <button
-                  type="button"
-                  onClick={addContact}
-                  className="add-contact-btn"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Add Contact
+                <button onClick={addContact} className="add-contact-btn">
+                  + Add Contact
                 </button>
               )}
             </div>
             
-            {data.contacts && data.contacts.length > 0 ? (
+            {(data.contacts || []).length === 0 ? (
+              <div className="no-contacts">
+                <p className="no-contacts-text">No contacts added yet</p>
+                <button onClick={addContact} className="add-first-contact-btn">
+                  + Add First Contact
+                </button>
+              </div>
+            ) : (
               <div className="contacts-list">
-                {data.contacts.map((contact, index) => (
+                {(data.contacts || []).map((contact, index) => (
                   <div key={index} className="contact-item">
-                    <button
-                      type="button"
+                    <button 
                       onClick={() => removeContact(index)}
                       className="remove-contact-btn"
-                      aria-label="Remove contact"
+                      title="Remove contact"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
+                      ×
                     </button>
                     
                     <div className="contact-form">
@@ -944,7 +914,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                             value={contact.email}
                             onChange={(e) => handleContactChange(index, 'email', e.target.value)}
                             className="form-input"
-                            placeholder="email@example.com"
+                            placeholder="email@company.com"
                           />
                         </div>
                         
@@ -963,45 +933,29 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="no-contacts">
-                <p className="no-contacts-text">No contacts added yet</p>
-                <button
-                  type="button"
-                  onClick={addContact}
-                  className="add-first-contact-btn"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Add First Contact
-                </button>
-              </div>
             )}
           </div>
-          
+
           {/* Business Overview Section */}
           <div className="business-overview-section">
             <h3 className="section-title">Business Overview</h3>
             <div className="textarea-container">
               <textarea
-                value={data.businessDescription || ''}
+                value={data.businessDescription}
                 onChange={handleBusinessOverviewChange}
                 className="business-overview-textarea"
-                placeholder="Enter business overview..."
-                rows={6}
+                placeholder="Enter a brief description of the business, its services, target market, and key value propositions..."
               />
             </div>
           </div>
-          
+
           {/* Save Button */}
           <div className="save-container">
-            <button
-              type="button"
+            <button 
               onClick={toggleEdit}
               className="save-profile-btn-large"
             >
-              Save Client Data
+              Save Changes
             </button>
           </div>
         </div>
@@ -1011,3 +965,4 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData }) 
 };
 
 export default ClientInformation;
+
