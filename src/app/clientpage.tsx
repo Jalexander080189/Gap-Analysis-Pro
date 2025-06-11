@@ -91,6 +91,9 @@ export default function ClientPage() {
     showBack: false
   });
   
+  // Mode state for the toggle - separate from gapsData to match expected interface
+  const [mode, setMode] = useState<'leadgen' | 'retail'>('leadgen');
+  
   // Scenarios state
   const [scenariosData, setScenariosData] = useState({
     visibilityReachSlider: 5,
@@ -136,6 +139,11 @@ export default function ClientPage() {
   
   const searchParams = useSearchParams();
   
+  // Sync mode changes with gapsData
+  useEffect(() => {
+    setGapsData(prev => ({ ...prev, mode }));
+  }, [mode]);
+  
   // Function to update state from URL parameters
   const updateStateFromParams = useCallback((companySlug: string) => {
     try {
@@ -174,10 +182,11 @@ export default function ClientPage() {
       if (decodedData.companyData) setCompanyData(decodedData.companyData);
       if (decodedData.gapsData) {
         // Ensure mode is either 'leadgen' or 'retail'
-        const mode = decodedData.gapsData.mode === 'retail' ? 'retail' : 'leadgen';
+        const newMode = decodedData.gapsData.mode === 'retail' ? 'retail' : 'leadgen';
+        setMode(newMode);
         setGapsData({
           ...decodedData.gapsData,
-          mode
+          mode: newMode
         });
       }
       if (decodedData.scenariosData) setScenariosData(decodedData.scenariosData);
@@ -224,11 +233,6 @@ export default function ClientPage() {
     return `${baseUrl}?company=${encodedData}`;
   };
 
-  // FIXED: Proper setMode function that matches the expected interface
-  const handleModeChange = (newMode: 'leadgen' | 'retail') => {
-    setGapsData(prev => ({ ...prev, mode: newMode }));
-  };
-
   return (
     <main className="container mx-auto px-4">
       {/* Display URL parsing error if any */}
@@ -251,8 +255,8 @@ export default function ClientPage() {
         <ClientInformation 
           data={clientData} 
           setData={setClientData}
-          mode={gapsData.mode}
-          setMode={handleModeChange}
+          mode={mode}
+          setMode={setMode}
         />
       </div>
       
