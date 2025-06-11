@@ -1,29 +1,16 @@
-// Updated GPTDataBlock.tsx to include new fields
+'use client';
 
 import React from 'react';
 
-// Define proper TypeScript interfaces
-export interface ContactType {
-  name: string;
-  email: string;
-  mobile: string;
-  title: string;
-}
-
+// Updated ClientDataType with new fields and contacts array
 export interface ClientDataType {
   companyName: string;
-  companyWebsite: string;
+  companyWebsite: string; // renamed from companyUrl
   companyFacebookURL: string;
-  instagramURL: string;
-  facebookAdLibraryURL: string;
-  phoenixURL: string;
-  companyAddress: string;
-  industryType: string;
-  contacts: ContactType[];
+  industryType: string; // new field
+  contacts: ContactType[]; // new array for multiple contacts
   businessDescription: string;
   showBack: boolean;
-  profileImage?: string;
-  coverImage?: string;
   
   // Legacy fields for backward compatibility
   contactName?: string;
@@ -33,7 +20,15 @@ export interface ClientDataType {
   businessType?: string;
 }
 
-interface MarketDataType {
+// New interface for contact information
+export interface ContactType {
+  name: string;
+  email: string;
+  mobile: string;
+  title: string;
+}
+
+export interface MarketDataType {
   audienceSize: string;
   buyerPercentage: string;
   avgYearlyCustomerValue: string;
@@ -42,7 +37,7 @@ interface MarketDataType {
   showBack: boolean;
 }
 
-interface CompanyDataType {
+export interface CompanyDataType {
   annualRevenue: string;
   percentNewCustomers: string;
   percentCurrentCustomers: string;
@@ -52,7 +47,7 @@ interface CompanyDataType {
   showBack: boolean;
 }
 
-interface GapsDataType {
+export interface GapsDataType {
   mode: 'leadgen' | 'retail';
   leadgen: {
     annualWebsiteVisitors: string;
@@ -71,7 +66,7 @@ interface GapsDataType {
   showBack: boolean;
 }
 
-interface ScenariosDataType {
+export interface ScenariosDataType {
   visibilityReachSlider: number;
   leadGenSlider: number;
   closeRateSlider: number;
@@ -82,12 +77,8 @@ interface ScenariosDataType {
   showBack: boolean;
 }
 
-interface MarketingDataType {
-  channels: Array<{
-    name: string;
-    monthlyAdspend: string;
-    monthlyCost: string;
-  }>;
+export interface MarketingDataType {
+  channels: Array<{name: string; monthlyAdspend: string; monthlyCost: string}>;
   totalMonthlySpend: number;
   totalYearlySpend: number;
   additionalMonthlySpend: number;
@@ -104,45 +95,37 @@ interface GPTDataBlockProps {
   marketingData: MarketingDataType;
 }
 
-const GPTDataBlock: React.FC<GPTDataBlockProps> = ({
-  clientData,
-  marketData,
-  companyData,
-  gapsData,
-  scenariosData,
-  marketingData
+const GPTDataBlock: React.FC<GPTDataBlockProps> = ({ 
+  clientData, 
+  marketData, 
+  companyData, 
+  gapsData, 
+  scenariosData, 
+  marketingData 
 }) => {
-  // This component is hidden but contains all the data for GPT analysis
-  const allData = {
-    clientData,
-    marketData,
-    companyData,
-    gapsData,
-    scenariosData,
-    marketingData
-  };
-
   return (
-    <div style={{ display: 'none' }} data-gpt-analysis={JSON.stringify(allData)}>
-      {/* Hidden data block for GPT analysis */}
-      <div>Company: {clientData.companyName}</div>
-      <div>Industry: {clientData.industryType}</div>
-      <div>Website: {clientData.companyWebsite}</div>
-      <div>Facebook: {clientData.companyFacebookURL}</div>
-      <div>Instagram: {clientData.instagramURL}</div>
-      <div>Facebook Ad Library: {clientData.facebookAdLibraryURL}</div>
-      <div>Phoenix: {clientData.phoenixURL}</div>
-      <div>Address: {clientData.companyAddress}</div>
-      <div>Business Description: {clientData.businessDescription}</div>
-      <div>Contacts: {JSON.stringify(clientData.contacts)}</div>
-      <div>Market Data: {JSON.stringify(marketData)}</div>
-      <div>Company Data: {JSON.stringify(companyData)}</div>
-      <div>Gaps Data: {JSON.stringify(gapsData)}</div>
-      <div>Scenarios Data: {JSON.stringify(scenariosData)}</div>
-      <div>Marketing Data: {JSON.stringify(marketingData)}</div>
+    <div className="hidden">
+      {/* This component is used to pass data to GPT for analysis */}
+      <div id="client-data">
+        {JSON.stringify(clientData)}
+      </div>
+      <div id="market-data">
+        {JSON.stringify(marketData)}
+      </div>
+      <div id="company-data">
+        {JSON.stringify(companyData)}
+      </div>
+      <div id="gaps-data">
+        {JSON.stringify(gapsData)}
+      </div>
+      <div id="scenarios-data">
+        {JSON.stringify(scenariosData)}
+      </div>
+      <div id="marketing-data">
+        {JSON.stringify(marketingData)}
+      </div>
     </div>
   );
 };
 
 export default GPTDataBlock;
-
