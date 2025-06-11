@@ -95,7 +95,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
     console.log('Share button clicked, new state:', !shared);
   };
 
-  // Calculate lead gen gaps when inputs change
+  // FIXED: Calculate lead gen gaps when inputs change - added 'data' and 'setData' to dependencies
   useEffect(() => {
     if (data.mode === 'leadgen') {
       const annualWebsiteVisitors = parseHumanFriendlyNumber(data.leadgen.annualWebsiteVisitors);
@@ -127,10 +127,11 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
     data.leadgen.annualLeadsGenerated,
     data.leadgen.annualNewAccountsClosed,
     calculatedBuyers,
-    setData
+    data, // FIXED: Added missing dependency
+    setData // FIXED: Added missing dependency
   ]);
 
-  // Calculate retail gaps when inputs change
+  // FIXED: Calculate retail gaps when inputs change - added 'data' and 'setData' to dependencies
   useEffect(() => {
     if (data.mode === 'retail') {
       const annualStoreVisitors = parseHumanFriendlyNumber(data.retail.annualStoreVisitors);
@@ -156,7 +157,8 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
     data.retail.annualStoreVisitors,
     data.retail.annualNewAccountsClosed,
     calculatedBuyers,
-    setData
+    data, // FIXED: Added missing dependency
+    setData // FIXED: Added missing dependency
   ]);
 
   return (

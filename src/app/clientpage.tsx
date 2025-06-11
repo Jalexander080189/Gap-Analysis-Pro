@@ -224,6 +224,11 @@ export default function ClientPage() {
     return `${baseUrl}?company=${encodedData}`;
   };
 
+  // FIXED: Proper setMode function that matches the expected interface
+  const handleModeChange = (newMode: 'leadgen' | 'retail') => {
+    setGapsData(prev => ({ ...prev, mode: newMode }));
+  };
+
   return (
     <main className="container mx-auto px-4">
       {/* Display URL parsing error if any */}
@@ -247,7 +252,7 @@ export default function ClientPage() {
           data={clientData} 
           setData={setClientData}
           mode={gapsData.mode}
-          setMode={(newMode) => setGapsData(prev => ({ ...prev, mode: newMode }))}
+          setMode={handleModeChange}
         />
       </div>
       
