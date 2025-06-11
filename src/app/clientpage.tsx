@@ -16,11 +16,15 @@ import { ClientDataType } from './components/cards/GPTDataBlock';
 export default function ClientPage() {
   console.log('Client-side JavaScript is running!');
   
-  // Client information state with updated structure
+  // Client information state with updated structure including new fields
   const [clientData, setClientData] = useState<ClientDataType>({
     companyName: '',
     companyWebsite: '',
     companyFacebookURL: '',
+    instagramURL: '',
+    facebookAdLibraryURL: '',
+    phoenixURL: '',
+    companyAddress: '',
     industryType: '',
     contacts: [],
     businessDescription: '',
@@ -173,6 +177,20 @@ export default function ClientPage() {
         // Map businessType to industryType if needed
         if (!clientDataUpdate.industryType && clientDataUpdate.businessType) {
           clientDataUpdate.industryType = clientDataUpdate.businessType;
+        }
+        
+        // Initialize new fields if they don't exist in the decoded data
+        if (!clientDataUpdate.instagramURL) {
+          clientDataUpdate.instagramURL = '';
+        }
+        if (!clientDataUpdate.facebookAdLibraryURL) {
+          clientDataUpdate.facebookAdLibraryURL = '';
+        }
+        if (!clientDataUpdate.phoenixURL) {
+          clientDataUpdate.phoenixURL = '';
+        }
+        if (!clientDataUpdate.companyAddress) {
+          clientDataUpdate.companyAddress = '';
         }
         
         setClientData(clientDataUpdate);
