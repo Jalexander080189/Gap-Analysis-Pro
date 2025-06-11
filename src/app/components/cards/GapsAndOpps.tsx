@@ -95,7 +95,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
     console.log('Share button clicked, new state:', !shared);
   };
 
-  // FIXED: Calculate lead gen gaps when inputs change - added 'data' and 'setData' to dependencies
+  // Calculate lead gen gaps when inputs change
   useEffect(() => {
     if (data.mode === 'leadgen') {
       const annualWebsiteVisitors = parseHumanFriendlyNumber(data.leadgen.annualWebsiteVisitors);
@@ -127,11 +127,11 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
     data.leadgen.annualLeadsGenerated,
     data.leadgen.annualNewAccountsClosed,
     calculatedBuyers,
-    data, // FIXED: Added missing dependency
-    setData // FIXED: Added missing dependency
+    data,
+    setData
   ]);
 
-  // FIXED: Calculate retail gaps when inputs change - added 'data' and 'setData' to dependencies
+  // Calculate retail gaps when inputs change
   useEffect(() => {
     if (data.mode === 'retail') {
       const annualStoreVisitors = parseHumanFriendlyNumber(data.retail.annualStoreVisitors);
@@ -157,8 +157,8 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
     data.retail.annualStoreVisitors,
     data.retail.annualNewAccountsClosed,
     calculatedBuyers,
-    data, // FIXED: Added missing dependency
-    setData // FIXED: Added missing dependency
+    data,
+    setData
   ]);
 
   return (
@@ -166,12 +166,6 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
       <h2 className="section-title">Gaps & Opportunities</h2>
       
       <div className="mb-4">
-        <div className="bg-blue-50 p-3 rounded-lg mb-4">
-          <p className="text-blue-700 text-sm">
-            💡 <strong>Mode Selection:</strong> Use the Lead Gen/Retail toggle in the Client Information card above to switch between business modes.
-          </p>
-        </div>
-        
         {data.mode === 'leadgen' ? (
           <>
             <div className="mb-4">
@@ -216,57 +210,59 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
               />
             </div>
             
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-medium mb-3">Gap Analysis</h3>
-              
-              <div className="mb-4">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm text-gray-600">Visibility Reach Gap</span>
-                  <span className="text-sm font-medium">{formatPercentage(data.leadgen.visibilityReachGap)}</span>
+            {!data.showBack && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-medium mb-3">Gap Analysis</h3>
+                
+                <div className="mb-4">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm text-gray-600">Visibility Reach Gap</span>
+                    <span className="text-sm font-medium">{formatPercentage(data.leadgen.visibilityReachGap)}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-red-600 h-2.5 rounded-full" 
+                      style={{ width: `${data.leadgen.visibilityReachGap * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-red-600 mt-1">
+                    {formatPercentage(data.leadgen.visibilityReachGap)} of all buyers in market didn&apos;t even look at your company as an option!
+                  </p>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className="bg-red-600 h-2.5 rounded-full" 
-                    style={{ width: `${data.leadgen.visibilityReachGap * 100}%` }}
-                  ></div>
+                
+                <div className="mb-4">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm text-gray-600">Lead Gen Gap</span>
+                    <span className="text-sm font-medium">{formatPercentage(data.leadgen.leadGenGap)}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-red-600 h-2.5 rounded-full" 
+                      style={{ width: `${data.leadgen.leadGenGap * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-red-600 mt-1">
+                    {formatPercentage(data.leadgen.leadGenGap)} of all buyers that researched you didn&apos;t even leave a name or contact info?!? If you can&apos;t identify them how can you sell them?
+                  </p>
                 </div>
-                <p className="text-xs text-red-600 mt-1">
-                  {formatPercentage(data.leadgen.visibilityReachGap)} of all buyers in market didn&apos;t even look at your company as an option!
-                </p>
+                
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm text-gray-600">Close Rate Gap</span>
+                    <span className="text-sm font-medium">{formatPercentage(data.leadgen.closeRateGap)}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-red-600 h-2.5 rounded-full" 
+                      style={{ width: `${data.leadgen.closeRateGap * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-red-600 mt-1">
+                    {formatPercentage(data.leadgen.closeRateGap)} of all opportunities given you are saying no too! Why?
+                  </p>
+                </div>
               </div>
-              
-              <div className="mb-4">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm text-gray-600">Lead Gen Gap</span>
-                  <span className="text-sm font-medium">{formatPercentage(data.leadgen.leadGenGap)}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className="bg-red-600 h-2.5 rounded-full" 
-                    style={{ width: `${data.leadgen.leadGenGap * 100}%` }}
-                  ></div>
-                </div>
-                <p className="text-xs text-red-600 mt-1">
-                  {formatPercentage(data.leadgen.leadGenGap)} of all buyers that researched you didn&apos;t even leave a name or contact info?!? If you can&apos;t identify them how can you sell them?
-                </p>
-              </div>
-              
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm text-gray-600">Close Rate Gap</span>
-                  <span className="text-sm font-medium">{formatPercentage(data.leadgen.closeRateGap)}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className="bg-red-600 h-2.5 rounded-full" 
-                    style={{ width: `${data.leadgen.closeRateGap * 100}%` }}
-                  ></div>
-                </div>
-                <p className="text-xs text-red-600 mt-1">
-                  {formatPercentage(data.leadgen.closeRateGap)} of all opportunities given you are saying no too! Why?
-                </p>
-              </div>
-            </div>
+            )}
           </>
         ) : (
           <>
@@ -298,47 +294,49 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
               />
             </div>
             
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-medium mb-3">Gap Analysis</h3>
-              
-              <div className="mb-4">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm text-gray-600">Visibility Reach Gap</span>
-                  <span className="text-sm font-medium">{formatPercentage(data.retail.visibilityReachGap)}</span>
+            {!data.showBack && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-medium mb-3">Gap Analysis</h3>
+                
+                <div className="mb-4">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm text-gray-600">Visibility Reach Gap</span>
+                    <span className="text-sm font-medium">{formatPercentage(data.retail.visibilityReachGap)}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-red-600 h-2.5 rounded-full" 
+                      style={{ width: `${data.retail.visibilityReachGap * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-red-600 mt-1">
+                    {formatPercentage(data.retail.visibilityReachGap)} of all buyers in market didn&apos;t even look at your company as an option!
+                  </p>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className="bg-red-600 h-2.5 rounded-full" 
-                    style={{ width: `${data.retail.visibilityReachGap * 100}%` }}
-                  ></div>
+                
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm text-gray-600">Close Rate Gap</span>
+                    <span className="text-sm font-medium">{formatPercentage(data.retail.closeRateGap)}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-red-600 h-2.5 rounded-full" 
+                      style={{ width: `${data.retail.closeRateGap * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-red-600 mt-1">
+                    {formatPercentage(data.retail.closeRateGap)} of all opportunities given you are saying no too! Why?
+                  </p>
                 </div>
-                <p className="text-xs text-red-600 mt-1">
-                  {formatPercentage(data.retail.visibilityReachGap)} of all buyers in market didn&apos;t even look at your company as an option!
-                </p>
               </div>
-              
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm text-gray-600">Close Rate Gap</span>
-                  <span className="text-sm font-medium">{formatPercentage(data.retail.closeRateGap)}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className="bg-red-600 h-2.5 rounded-full" 
-                    style={{ width: `${data.retail.closeRateGap * 100}%` }}
-                  ></div>
-                </div>
-                <p className="text-xs text-red-600 mt-1">
-                  {formatPercentage(data.retail.closeRateGap)} of all opportunities given you are saying no too! Why?
-                </p>
-              </div>
-            </div>
+            )}
           </>
         )}
       </div>
       
       <div className="mt-4 flex items-center space-x-2">
-        {/* Refactored Like button with React event handler */}
+        {/* Like button */}
         <button 
           className={`social-button ${liked ? 'bg-blue-100' : ''}`}
           onClick={handleLikeClick}
@@ -349,7 +347,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
           {liked ? 'Liked' : 'Like'}
         </button>
         
-        {/* Refactored Comment button with React event handler */}
+        {/* Comment button */}
         <button 
           className={`social-button ${commentOpen ? 'bg-blue-100' : ''}`}
           onClick={handleCommentClick}
@@ -360,7 +358,7 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
           Comment
         </button>
         
-        {/* Refactored Share button with React event handler */}
+        {/* Share button */}
         <button 
           className={`social-button ${shared ? 'bg-blue-100' : ''}`}
           onClick={handleShareClick}
@@ -369,6 +367,14 @@ const GapsAndOpps: React.FC<GapsAndOppsProps> = ({ data, setData, calculatedBuye
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
           {shared ? 'Shared' : 'Share'}
+        </button>
+        
+        {/* Show Back button */}
+        <button 
+          className="social-button"
+          onClick={() => setData({ ...data, showBack: !data.showBack })}
+        >
+          {data.showBack ? 'Show Front' : 'Show Back'}
         </button>
       </div>
       
