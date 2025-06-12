@@ -7,7 +7,11 @@ export interface ClientDataType {
   companyName: string;
   companyWebsite: string; // renamed from companyUrl
   companyFacebookURL: string;
+  facebookAdLibraryURL?: string;
+  instagramURL?: string;
+  companyAddress?: string;
   industryType: string; // new field
+  phoenixURL?: string;
   contacts: ContactType[]; // new array for multiple contacts
   businessDescription: string;
   showBack: boolean;

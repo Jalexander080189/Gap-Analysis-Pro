@@ -14,6 +14,10 @@ export interface ClientDataType {
   companyName: string;
   companyWebsite: string;
   companyFacebookURL: string;
+  facebookAdLibraryURL?: string;
+  instagramURL?: string;
+  companyAddress?: string;
+  phoenixURL?: string;
   industryType: string;
   contacts: ContactType[];
   businessDescription: string;
@@ -797,7 +801,6 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
           {/* Company Information Section */}
           <div className="company-info-section">
             <h3 className="section-title">Company Information</h3>
-            
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Company Name</label>
@@ -846,6 +849,58 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
                   onChange={handleInputChange}
                   className="form-input"
                   placeholder="https://facebook.com/company"
+                />
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Facebook Ad Library URL</label>
+                <input
+                  type="text"
+                  name="facebookAdLibraryURL"
+                  value={data.facebookAdLibraryURL || ''}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&view_all_page_id=..."
+                />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Instagram URL</label>
+                <input
+                  type="text"
+                  name="instagramURL"
+                  value={data.instagramURL || ''}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="https://instagram.com/company"
+                />
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Company Address</label>
+                <input
+                  type="text"
+                  name="companyAddress"
+                  value={data.companyAddress || ''}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="123 Main St, City, State, ZIP"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Phoenix URL</label>
+                <input
+                  type="text"
+                  name="phoenixURL"
+                  value={data.phoenixURL || ''}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="https://phoenix.example.com"
                 />
               </div>
             </div>
