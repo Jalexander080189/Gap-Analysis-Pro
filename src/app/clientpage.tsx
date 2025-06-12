@@ -91,6 +91,9 @@ export default function ClientPage() {
     showBack: false
   });
   
+  // Mode state for the toggle - separate from gapsData to match expected interface
+  const [mode, setMode] = useState<'leadgen' | 'retail'>('leadgen');
+  
   // Scenarios state
   const [scenariosData, setScenariosData] = useState({
     visibilityReachSlider: 5,
@@ -136,6 +139,11 @@ export default function ClientPage() {
   
   const searchParams = useSearchParams();
   
+  // Sync mode changes with gapsData
+  useEffect(() => {
+    setGapsData(prev => ({ ...prev, mode }));
+  }, [mode]);
+  
   // Function to update state from URL parameters
   const updateStateFromParams = useCallback((companySlug: string) => {
     try {
@@ -174,10 +182,11 @@ export default function ClientPage() {
       if (decodedData.companyData) setCompanyData(decodedData.companyData);
       if (decodedData.gapsData) {
         // Ensure mode is either 'leadgen' or 'retail'
-        const mode = decodedData.gapsData.mode === 'retail' ? 'retail' : 'leadgen';
+        const newMode = decodedData.gapsData.mode === 'retail' ? 'retail' : 'leadgen';
+        setMode(newMode);
         setGapsData({
           ...decodedData.gapsData,
-          mode
+          mode: newMode
         });
       }
       if (decodedData.scenariosData) setScenariosData(decodedData.scenariosData);
@@ -225,7 +234,7 @@ export default function ClientPage() {
   };
 
   return (
-    <main className="container mx-auto px-4">
+    <main className="container mx-auto px-4 pt-0" style={{ marginTop: 0, paddingTop: 0 }}>
       {/* Display URL parsing error if any */}
       {urlError && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative">
@@ -241,13 +250,13 @@ export default function ClientPage() {
         </div>
       )}
       
-      {/* Card 1 at the very top, no cards to right or left */}
-      <div className="w-full mb-8">
+      {/* Card 1 at the very top, no cards to right or left - REMOVED TOP MARGIN */}
+      <div className="w-full mb-8" style={{ marginTop: 0 }}>
         <ClientInformation 
           data={clientData} 
           setData={setClientData}
-          mode={gapsData.mode}
-          setMode={(newMode) => setGapsData(prev => ({ ...prev, mode: newMode }))}
+          mode={mode}
+          setMode={setMode}
         />
       </div>
       
@@ -340,4 +349,3 @@ export default function ClientPage() {
     </main>
   );
 }
-
