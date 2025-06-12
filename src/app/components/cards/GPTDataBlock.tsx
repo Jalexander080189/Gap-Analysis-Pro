@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-// Updated ClientDataType with new fields and contacts array
+// Updated ClientDataType with new optional fields, contacts array, and business metrics
 export interface ClientDataType {
   companyName: string;
   companyWebsite: string; // renamed from companyUrl
@@ -11,6 +11,18 @@ export interface ClientDataType {
   contacts: ContactType[]; // new array for multiple contacts
   businessDescription: string;
   showBack: boolean;
+  
+  // NEW FIELDS - Added as optional to prevent breaking existing code
+  instagramURL?: string;
+  facebookAdLibraryURL?: string;
+  phoenixURL?: string;
+  companyAddress?: string;
+  
+  // Business metrics fields
+  annualWebsiteVisitors?: number;
+  annualLeadsGenerated?: number;
+  annualNewAccountsClosed?: number;
+  annualRevenue?: number;
   
   // Legacy fields for backward compatibility
   contactName?: string;

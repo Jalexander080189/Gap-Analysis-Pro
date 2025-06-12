@@ -1,965 +1,548 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-
-// Define proper TypeScript interfaces
-export interface ContactType {
-  name: string;
-  email: string;
-  mobile: string;
-  title: string;
-}
-
-export interface ClientDataType {
-  companyName: string;
-  companyWebsite: string;
-  companyFacebookURL: string;
-  industryType: string;
-  contacts: ContactType[];
-  businessDescription: string;
-  showBack: boolean;
-  profileImage?: string;
-  coverImage?: string;
-  
-  // Legacy fields for backward compatibility
-  contactName?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  contactTitle?: string;
-  businessType?: string;
-}
+import { ClientDataType, ContactType } from './GPTDataBlock';
 
 interface ClientInformationProps {
   data: ClientDataType;
-  setData: React.Dispatch<React.SetStateAction<ClientDataType>>;
-  mode: "leadgen" | "retail";
-  setMode: React.Dispatch<React.SetStateAction<"leadgen" | "retail">>;
+  setData: (data: ClientDataType) => void;
+  mode: 'leadgen' | 'retail';
+  setMode: React.Dispatch<React.SetStateAction<'leadgen' | 'retail'>>;
 }
 
 const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mode, setMode }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState<ClientDataType>(data);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
   const [showBusinessOverview, setShowBusinessOverview] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
+  
   const profileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
-  
-  // Custom cropper state
-  const [showCropper, setShowCropper] = useState(false);
-  const [cropperImage, setCropperImage] = useState<string | null>(null);
-  const [isCoverImage, setIsCoverImage] = useState(false);
-  const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
-  const [cropSize, setCropSize] = useState({ width: 200, height: 200 });
-  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const imageRef = useRef<HTMLImageElement>(null);
 
-  // Initialize contacts array if it doesn't exist (for backward compatibility)
+  // Update editData when data prop changes
   useEffect(() => {
-    if (!data.contacts) {
-      // Convert legacy contact data to new format if it exists
-      if (data.contactName || data.contactEmail || data.contactPhone || data.contactTitle) {
-        setData(prevData => ({
-          ...prevData,
-          contacts: [{
-            name: prevData.contactName || '',
-            email: prevData.contactEmail || '',
-            mobile: prevData.contactPhone || '',
-            title: prevData.contactTitle || ''
-          }],
-          // Keep legacy fields for backward compatibility
-          contactName: prevData.contactName,
-          contactEmail: prevData.contactEmail,
-          contactPhone: prevData.contactPhone,
-          contactTitle: prevData.contactTitle
-        }));
-      } else {
-        // Initialize with empty contacts array
-        setData(prevData => ({
-          ...prevData,
-          contacts: []
-        }));
-      }
-    }
-    
-    // Initialize industryType if it doesn't exist
-    if (!data.industryType && data.businessType) {
-      setData(prevData => ({
-        ...prevData,
-        industryType: prevData.businessType || ''
-      }));
-    }
-    
-    // Initialize companyWebsite if it doesn't exist
-    if (!data.companyWebsite && data.businessType) {
-      setData(prevData => ({
-        ...prevData,
-        companyWebsite: ''
-      }));
-    }
-  }, [data, setData]);
+    setEditData(data);
+  }, [data]);
 
-  const handleModeChange = (newMode: "leadgen" | "retail") => {
-    setMode(newMode);
+  const handleSave = () => {
+    setData(editData);
+    setIsEditing(false);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    setData(prevData => ({
-      ...prevData,
-      [name]: value
-    }));
+  const handleCancel = () => {
+    setEditData(data);
+    setIsEditing(false);
   };
 
-  const handleBusinessOverviewChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setData(prevData => ({
-      ...prevData,
-      businessDescription: e.target.value
+  const handleInputChange = (field: keyof ClientDataType, value: string) => {
+    setEditData(prev => ({
+      ...prev,
+      [field]: value
     }));
   };
 
   const handleContactChange = (index: number, field: keyof ContactType, value: string) => {
-    setData(prevData => {
-      const updatedContacts = [...(prevData.contacts || [])];
-      if (!updatedContacts[index]) {
-        updatedContacts[index] = { name: '', email: '', mobile: '', title: '' };
-      }
-      updatedContacts[index] = { ...updatedContacts[index], [field]: value };
-      
-      // Also update legacy fields if this is the first contact (for backward compatibility)
-      const legacyUpdates = index === 0 ? {
-        contactName: field === 'name' ? value : prevData.contactName,
-        contactEmail: field === 'email' ? value : prevData.contactEmail,
-        contactPhone: field === 'mobile' ? value : prevData.contactPhone,
-        contactTitle: field === 'title' ? value : prevData.contactTitle
-      } : {};
-      
-      return {
-        ...prevData,
-        contacts: updatedContacts,
-        ...legacyUpdates
-      };
-    });
-  };
-
-  const addContact = () => {
-    if ((data.contacts || []).length < 5) {
-      setData(prevData => ({
-        ...prevData,
-        contacts: [...(prevData.contacts || []), { name: '', email: '', mobile: '', title: '' }]
-      }));
-    }
-  };
-  
-  const removeContact = (index: number) => {
-    setData(prevData => {
-      const updatedContacts = [...(prevData.contacts || [])];
-      updatedContacts.splice(index, 1);
-      
-      // If removing the first contact, update legacy fields to empty or next contact
-      const legacyUpdates = index === 0 ? {
-        contactName: updatedContacts[0]?.name || '',
-        contactEmail: updatedContacts[0]?.email || '',
-        contactPhone: updatedContacts[0]?.mobile || '',
-        contactTitle: updatedContacts[0]?.title || ''
-      } : {};
-      
-      return {
-        ...prevData,
-        contacts: updatedContacts,
-        ...legacyUpdates
-      };
-    });
-  };
-
-  // Handle profile image upload
-  const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setIsCoverImage(false);
-        setCropperImage(result);
-        setShowCropper(true);
-        
-        // Load image to get dimensions
-        const img = new window.Image();
-        img.onload = () => {
-          const containerWidth = 600;
-          const containerHeight = 400;
-          const aspectRatio = img.width / img.height;
-          
-          let displayWidth = containerWidth;
-          let displayHeight = containerWidth / aspectRatio;
-          
-          if (displayHeight > containerHeight) {
-            displayHeight = containerHeight;
-            displayWidth = containerHeight * aspectRatio;
-          }
-          
-          setImageSize({ width: displayWidth, height: displayHeight });
-          
-          // Set initial crop size (square for profile)
-          const cropSizeValue = Math.min(displayWidth, displayHeight) * 0.6;
-          setCropSize({ width: cropSizeValue, height: cropSizeValue });
-          setCropPosition({ 
-            x: (displayWidth - cropSizeValue) / 2, 
-            y: (displayHeight - cropSizeValue) / 2 
-          });
-        };
-        img.src = result;
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Handle cover image upload
-  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setIsCoverImage(true);
-        setCropperImage(result);
-        setShowCropper(true);
-        
-        // Load image to get dimensions
-        const img = new window.Image();
-        img.onload = () => {
-          const containerWidth = 600;
-          const containerHeight = 400;
-          const aspectRatio = img.width / img.height;
-          
-          let displayWidth = containerWidth;
-          let displayHeight = containerWidth / aspectRatio;
-          
-          if (displayHeight > containerHeight) {
-            displayHeight = containerHeight;
-            displayWidth = containerHeight * aspectRatio;
-          }
-          
-          setImageSize({ width: displayWidth, height: displayHeight });
-          
-          // Set initial crop size (4:1 aspect ratio for cover)
-          const cropHeight = displayHeight * 0.6;
-          const cropWidth = cropHeight * 4;
-          setCropSize({ width: Math.min(cropWidth, displayWidth), height: cropHeight });
-          setCropPosition({ 
-            x: (displayWidth - Math.min(cropWidth, displayWidth)) / 2, 
-            y: (displayHeight - cropHeight) / 2 
-          });
-        };
-        img.src = result;
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Handle drag events for profile image
-  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
-  };
-
-  // Handle drop event for profile image
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setIsCoverImage(false);
-        setCropperImage(result);
-        setShowCropper(true);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const toggleEdit = () => {
-    setData(prevData => ({
-      ...prevData,
-      showBack: !prevData.showBack
+    const updatedContacts = [...editData.contacts];
+    updatedContacts[index] = {
+      ...updatedContacts[index],
+      [field]: value
+    };
+    setEditData(prev => ({
+      ...prev,
+      contacts: updatedContacts
     }));
   };
 
-  // Custom cropper functions
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - cropPosition.x,
-      y: e.clientY - cropPosition.y
-    });
+  const addContact = () => {
+    setEditData(prev => ({
+      ...prev,
+      contacts: [...prev.contacts, { name: '', email: '', mobile: '', title: '' }]
+    }));
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    
-    const newX = Math.max(0, Math.min(imageSize.width - cropSize.width, e.clientX - dragStart.x));
-    const newY = Math.max(0, Math.min(imageSize.height - cropSize.height, e.clientY - dragStart.y));
-    
-    setCropPosition({ x: newX, y: newY });
+  const removeContact = (index: number) => {
+    setEditData(prev => ({
+      ...prev,
+      contacts: prev.contacts.filter((_, i) => i !== index)
+    }));
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
+  const handleImageUpload = (type: 'profile' | 'cover', file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (type === 'profile') {
+        setProfileImage(result);
+      } else {
+        setCoverImage(result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
-  const createCroppedImage = () => {
-    if (!cropperImage || !imageRef.current) return;
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const img = imageRef.current;
-    
-    // Calculate scale factors
-    const scaleX = img.naturalWidth / imageSize.width;
-    const scaleY = img.naturalHeight / imageSize.height;
-    
-    // Set canvas size to crop size
-    canvas.width = cropSize.width * scaleX;
-    canvas.height = cropSize.height * scaleY;
-    
-    // Draw the cropped portion
-    ctx.drawImage(
-      img,
-      cropPosition.x * scaleX,
-      cropPosition.y * scaleY,
-      cropSize.width * scaleX,
-      cropSize.height * scaleY,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-    
-    const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9);
-    
-    if (isCoverImage) {
-      setData(prevData => ({
-        ...prevData,
-        coverImage: croppedImageUrl
-      }));
-    } else {
-      setData(prevData => ({
-        ...prevData,
-        profileImage: croppedImageUrl
-      }));
-    }
-    
-    cancelCropping();
-  };
-
-  const cancelCropping = () => {
-    setShowCropper(false);
-    setCropperImage(null);
-    setCropPosition({ x: 0, y: 0 });
-    setCropSize({ width: 200, height: 200 });
-    setImageSize({ width: 0, height: 0 });
-    setIsDragging(false);
-  };
-
-  return (
-    <div className="linkedin-card" style={{ marginTop: 0, paddingTop: 0 }}>
-      {/* Custom Image Cropper Modal */}
-      {showCropper && cropperImage && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            zIndex: 9999,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <div 
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              width: '90%',
-              maxWidth: '700px',
-              maxHeight: '90vh',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
+  if (isEditing) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold">Edit Client Information</h2>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            <div 
-              style={{
-                padding: '16px',
-                borderBottom: '1px solid #e5e7eb'
-              }}
-            >
-              <h3 
-                style={{
-                  margin: 0,
-                  fontSize: '18px',
-                  fontWeight: 'bold'
-                }}
-              >
-                Crop {isCoverImage ? 'Cover' : 'Profile'} Image
-              </h3>
-              <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6b7280' }}>
-                Drag the selection area to position your crop
-              </p>
-            </div>
-            
-            <div 
-              style={{
-                position: 'relative',
-                height: '450px',
-                backgroundColor: '#f3f4f6',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden'
-              }}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            >
-              {/* Image */}
-              <div
-                style={{
-                  position: 'relative',
-                  width: imageSize.width,
-                  height: imageSize.height
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  ref={imageRef}
-                  src={cropperImage}
-                  alt="Crop preview"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    userSelect: 'none',
-                    pointerEvents: 'none'
-                  }}
-                />
-                
-                {/* Crop overlay */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: cropPosition.x,
-                    top: cropPosition.y,
-                    width: cropSize.width,
-                    height: cropSize.height,
-                    border: '2px solid #0a66c2',
-                    borderRadius: isCoverImage ? '4px' : '50%',
-                    cursor: 'move',
-                    backgroundColor: 'rgba(10, 102, 194, 0.1)',
-                    boxSizing: 'border-box'
-                  }}
-                  onMouseDown={handleMouseDown}
-                />
-                
-                {/* Dark overlay for non-cropped areas */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    pointerEvents: 'none'
-                  }}
-                />
-                
-                {/* Clear area for crop selection */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: cropPosition.x,
-                    top: cropPosition.y,
-                    width: cropSize.width,
-                    height: cropSize.height,
-                    backgroundColor: 'transparent',
-                    borderRadius: isCoverImage ? '4px' : '50%',
-                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
-                    pointerEvents: 'none'
-                  }}
-                />
-              </div>
-            </div>
-            
-            <div 
-              style={{
-                padding: '16px',
-                borderTop: '1px solid #e5e7eb',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#6b7280' }}>Zoom:</span>
-                <input
-                  type="range"
-                  min="0.5"
-                  max="2"
-                  step="0.1"
-                  value="1"
-                  style={{ width: '100px' }}
-                />
-              </div>
-              
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  onClick={cancelCropping}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#f3f4f6',
-                    color: '#4b5563',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={createCroppedImage}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#0a66c2',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Apply
-                </button>
-              </div>
-            </div>
-          </div>
+            Save
+          </button>
         </div>
-      )}
 
-      {!data.showBack ? (
-        <>
-          {/* Cover Photo */}
-          <div 
-            className="profile-cover"
-            style={{
-              backgroundImage: data.coverImage ? `url(${data.coverImage})` : undefined
-            }}
-          >
-            <button 
-              className="edit-cover-btn"
-              onClick={() => coverInputRef.current?.click()}
-              title="Edit cover photo"
-            >
-              📷
-            </button>
-            <input
-              ref={coverInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleCoverImageUpload}
-              className="hidden-input"
-            />
-          </div>
-
-          {/* Profile Picture */}
-          <div 
-            className={`profile-picture ${dragActive ? 'drag-active' : ''}`}
-            onClick={() => profileInputRef.current?.click()}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            {data.profileImage ? (
-              <div 
-                className="profile-image"
-                style={{ backgroundImage: `url(${data.profileImage})` }}
-              />
-            ) : (
-              <div className="profile-initial">
-                {data.companyName ? data.companyName.charAt(0).toUpperCase() : '?'}
-              </div>
-            )}
-            <input
-              ref={profileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleProfileImageUpload}
-              className="hidden-input"
-            />
-          </div>
-
-          {/* Profile Information */}
-          <div className="profile-info">
-            <div className="profile-header">
-              <div>
-                <h1 className="profile-name">
-                  {data.companyName || 'Company Name'}
-                  <span style={{ fontSize: '14px', color: '#0a66c2', marginLeft: '8px' }}>
-                    ●
-                  </span>
-                </h1>
-                <p className="profile-industry">
-                  Industry Type
-                </p>
-                <p className="profile-location">
-                  📍 United States
-                </p>
-                <p className="profile-contacts">
-                  {(data.contacts || []).length} contacts
-                </p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {/* Lead Gen/Retail Toggle */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
-                    Mode:
-                  </span>
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    <button
-                      onClick={() => handleModeChange('leadgen')}
-                      style={{
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        borderRadius: '16px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        backgroundColor: mode === 'leadgen' ? '#0a66c2' : '#f3f4f6',
-                        color: mode === 'leadgen' ? 'white' : '#6b7280',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      Lead Gen
-                    </button>
-                    <button
-                      onClick={() => handleModeChange('retail')}
-                      style={{
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        borderRadius: '16px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        backgroundColor: mode === 'retail' ? '#0a66c2' : '#f3f4f6',
-                        color: mode === 'retail' ? 'white' : '#6b7280',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      Retail
-                    </button>
+        {/* Images Section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-4">Images</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                {profileImage ? (
+                  <img src={profileImage} alt="Profile" className="w-20 h-20 rounded-full mx-auto mb-2" />
+                ) : (
+                  <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-2 flex items-center justify-center">
+                    <span className="text-gray-400">+</span>
                   </div>
-                </div>
-                <button 
-                  onClick={toggleEdit}
-                  className="edit-profile-btn"
-                >
-                  Edit
-                </button>
-              </div>
-            </div>
-
-            {/* Profile Links */}
-            <div className="profile-links">
-              {data.companyWebsite && (
-                <a href={data.companyWebsite} className="profile-link" target="_blank" rel="noopener noreferrer">
-                  🌐 Website
-                </a>
-              )}
-              {data.companyFacebookURL && (
-                <a href={data.companyFacebookURL} className="profile-link" target="_blank" rel="noopener noreferrer">
-                  📘 Facebook
-                </a>
-              )}
-            </div>
-
-            <div className="section-divider"></div>
-
-            {/* Business Overview */}
-            <div className="business-overview">
-              <div className="business-overview-header">
-                <h3 className="business-overview-title">Business Overview</h3>
-                <button 
-                  onClick={() => setShowBusinessOverview(!showBusinessOverview)}
-                  className="toggle-overview-btn"
-                >
-                  {showBusinessOverview ? 'Hide' : 'Show'}
-                </button>
-              </div>
-              
-              {showBusinessOverview && (
-                <div className="business-overview-content">
-                  {data.businessDescription || 'Brief description of the business...'}
-                </div>
-              )}
-            </div>
-
-            <div className="button-divider"></div>
-
-            {/* Social Buttons */}
-            <div className="social-buttons">
-              <button className="social-button">
-                👍 Like
-              </button>
-              <button className="social-button">
-                💬 Comment
-              </button>
-              <button className="social-button">
-                📤 Share
-              </button>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="edit-mode">
-          <div className="edit-header">
-            <h2 className="edit-title">Edit Client Information</h2>
-            <button 
-              onClick={toggleEdit}
-              className="save-profile-btn"
-            >
-              Save
-            </button>
-          </div>
-
-          {/* Image Upload Section */}
-          <div className="image-upload-section">
-            <h3 className="section-title">Images</h3>
-            <div className="image-upload-container">
-              <div className="profile-upload">
-                <label className="upload-label">Profile Picture</label>
-                <div 
-                  className={`profile-upload-area ${dragActive ? 'drag-active' : ''}`}
+                )}
+                <input
+                  ref={profileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImageUpload('profile', file);
+                  }}
+                  className="hidden"
+                />
+                <button
                   onClick={() => profileInputRef.current?.click()}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
+                  className="text-blue-600 hover:text-blue-700"
+                  type="button"
                 >
-                  {data.profileImage ? (
-                    <div 
-                      className="upload-preview"
-                      style={{ backgroundImage: `url(${data.profileImage})` }}
-                    />
-                  ) : (
-                    <svg className="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  )}
-                </div>
-              </div>
-              
-              <div className="cover-upload">
-                <label className="upload-label">Cover Photo</label>
-                <div 
-                  className="cover-upload-area"
-                  onClick={() => coverInputRef.current?.click()}
-                >
-                  {data.coverImage ? (
-                    <div 
-                      className="upload-preview cover-preview"
-                      style={{ backgroundImage: `url(${data.coverImage})` }}
-                    />
-                  ) : (
-                    <svg className="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Company Information Section */}
-          <div className="company-info-section">
-            <h3 className="section-title">Company Information</h3>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Company Name</label>
-                <input
-                  type="text"
-                  name="companyName"
-                  value={data.companyName}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="Enter company name"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">Industry Type</label>
-                <input
-                  type="text"
-                  name="industryType"
-                  value={data.industryType}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="e.g., Technology, Healthcare"
-                />
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Company Website</label>
-                <input
-                  type="text"
-                  name="companyWebsite"
-                  value={data.companyWebsite}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="https://company.com"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">Facebook URL</label>
-                <input
-                  type="text"
-                  name="companyFacebookURL"
-                  value={data.companyFacebookURL}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="https://facebook.com/company"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Contacts Section */}
-          <div className="contacts-section">
-            <div className="contacts-header">
-              <h3 className="section-title">Contacts</h3>
-              {(data.contacts || []).length < 5 && (
-                <button onClick={addContact} className="add-contact-btn">
-                  + Add Contact
-                </button>
-              )}
-            </div>
-            
-            {(data.contacts || []).length === 0 ? (
-              <div className="no-contacts">
-                <p className="no-contacts-text">No contacts added yet</p>
-                <button onClick={addContact} className="add-first-contact-btn">
-                  + Add First Contact
+                  Click to add profile photo
                 </button>
               </div>
-            ) : (
-              <div className="contacts-list">
-                {(data.contacts || []).map((contact, index) => (
-                  <div key={index} className="contact-item">
-                    <button 
-                      onClick={() => removeContact(index)}
-                      className="remove-contact-btn"
-                      title="Remove contact"
-                    >
-                      ×
-                    </button>
-                    
-                    <div className="contact-form">
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label className="form-label">Name</label>
-                          <input
-                            type="text"
-                            value={contact.name}
-                            onChange={(e) => handleContactChange(index, 'name', e.target.value)}
-                            className="form-input"
-                            placeholder="Contact name"
-                          />
-                        </div>
-                        
-                        <div className="form-group">
-                          <label className="form-label">Title</label>
-                          <input
-                            type="text"
-                            value={contact.title}
-                            onChange={(e) => handleContactChange(index, 'title', e.target.value)}
-                            className="form-input"
-                            placeholder="Job title"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label className="form-label">Email</label>
-                          <input
-                            type="email"
-                            value={contact.email}
-                            onChange={(e) => handleContactChange(index, 'email', e.target.value)}
-                            className="form-input"
-                            placeholder="email@company.com"
-                          />
-                        </div>
-                        
-                        <div className="form-group">
-                          <label className="form-label">Mobile</label>
-                          <input
-                            type="tel"
-                            value={contact.mobile}
-                            onChange={(e) => handleContactChange(index, 'mobile', e.target.value)}
-                            className="form-input"
-                            placeholder="(555) 123-4567"
-                          />
-                        </div>
-                      </div>
-                    </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Cover Photo</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                {coverImage ? (
+                  <img src={coverImage} alt="Cover" className="w-full h-20 object-cover rounded mb-2" />
+                ) : (
+                  <div className="w-full h-20 bg-gray-200 rounded mb-2 flex items-center justify-center">
+                    <span className="text-gray-400">+</span>
                   </div>
-                ))}
+                )}
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImageUpload('cover', file);
+                  }}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => coverInputRef.current?.click()}
+                  className="text-blue-600 hover:text-blue-700"
+                  type="button"
+                >
+                  Click to add cover photo
+                </button>
               </div>
-            )}
+            </div>
           </div>
+        </div>
 
-          {/* Business Overview Section */}
-          <div className="business-overview-section">
-            <h3 className="section-title">Business Overview</h3>
-            <div className="textarea-container">
-              <textarea
-                value={data.businessDescription}
-                onChange={handleBusinessOverviewChange}
-                className="business-overview-textarea"
-                placeholder="Enter a brief description of the business, its services, target market, and key value propositions..."
+        {/* Company Information Section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-4">Company Information</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Row 1 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+              <input
+                type="text"
+                value={editData.companyName}
+                onChange={(e) => handleInputChange('companyName', e.target.value)}
+                placeholder="Enter company name"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Industry Type</label>
+              <input
+                type="text"
+                value={editData.industryType}
+                onChange={(e) => handleInputChange('industryType', e.target.value)}
+                placeholder="e.g., Technology, Healthcare"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            {/* Row 2 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Company Website</label>
+              <input
+                type="url"
+                value={editData.companyWebsite}
+                onChange={(e) => handleInputChange('companyWebsite', e.target.value)}
+                placeholder="https://company.com"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Facebook URL</label>
+              <input
+                type="url"
+                value={editData.companyFacebookURL}
+                onChange={(e) => handleInputChange('companyFacebookURL', e.target.value)}
+                placeholder="https://facebook.com/company"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            {/* Row 3 - NEW FIELDS */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Instagram URL</label>
+              <input
+                type="url"
+                value={editData.instagramURL || ''}
+                onChange={(e) => handleInputChange('instagramURL', e.target.value)}
+                placeholder="https://instagram.com/company"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Facebook Ad Library URL</label>
+              <input
+                type="url"
+                value={editData.facebookAdLibraryURL || ''}
+                onChange={(e) => handleInputChange('facebookAdLibraryURL', e.target.value)}
+                placeholder="https://facebook.com/ads/library"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            {/* Row 4 - NEW FIELDS */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phoenix URL</label>
+              <input
+                type="url"
+                value={editData.phoenixURL || ''}
+                onChange={(e) => handleInputChange('phoenixURL', e.target.value)}
+                placeholder="https://phoenix.platform.url"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Company Address</label>
+              <input
+                type="text"
+                value={editData.companyAddress || ''}
+                onChange={(e) => handleInputChange('companyAddress', e.target.value)}
+                placeholder="123 Main St, City, State 12345"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
+        </div>
 
-          {/* Save Button */}
-          <div className="save-container">
-            <button 
-              onClick={toggleEdit}
-              className="save-profile-btn-large"
+        {/* Contacts Section */}
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium">Contacts</h3>
+            <button
+              onClick={addContact}
+              className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+              type="button"
             >
-              Save Changes
+              + Add Contact
+            </button>
+          </div>
+          
+          {editData.contacts.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No contacts added yet</p>
+          ) : (
+            <div className="space-y-4">
+              {editData.contacts.map((contact, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <input
+                      type="text"
+                      value={contact.name}
+                      onChange={(e) => handleContactChange(index, 'name', e.target.value)}
+                      placeholder="Contact Name"
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
+                      value={contact.title}
+                      onChange={(e) => handleContactChange(index, 'title', e.target.value)}
+                      placeholder="Job Title"
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="email"
+                      value={contact.email}
+                      onChange={(e) => handleContactChange(index, 'email', e.target.value)}
+                      placeholder="Email"
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="tel"
+                      value={contact.mobile}
+                      onChange={(e) => handleContactChange(index, 'mobile', e.target.value)}
+                      placeholder="Mobile"
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <button
+                    onClick={() => removeContact(index)}
+                    className="text-red-600 hover:text-red-700 text-sm"
+                    type="button"
+                  >
+                    Remove Contact
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <button
+            onClick={addContact}
+            className="mt-4 px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50"
+            type="button"
+          >
+            + Add First Contact
+          </button>
+        </div>
+
+        {/* Business Overview Section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-4">Business Overview</h3>
+          <textarea
+            value={editData.businessDescription}
+            onChange={(e) => handleInputChange('businessDescription', e.target.value)}
+            placeholder="Enter a brief description of the business, its services, target market, and key value propositions..."
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={handleCancel}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            type="button"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            type="button"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Card View (Default)
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+      {/* Cover Photo with Mode Toggle */}
+      <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600 relative">
+        {coverImage && (
+          <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+        )}
+        
+        {/* Mode Toggle in top-right corner */}
+        <div className="absolute top-4 right-4 flex items-center space-x-2">
+          <span className="text-white text-sm font-medium">Mode:</span>
+          <div className="flex bg-white/20 rounded-lg p-1">
+            <button
+              onClick={() => setMode('leadgen')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                mode === 'leadgen'
+                  ? 'bg-white text-blue-600'
+                  : 'text-white hover:bg-white/20'
+              }`}
+              type="button"
+            >
+              Lead Gen
+            </button>
+            <button
+              onClick={() => setMode('retail')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                mode === 'retail'
+                  ? 'bg-white text-blue-600'
+                  : 'text-white hover:bg-white/20'
+              }`}
+              type="button"
+            >
+              Retail
             </button>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Profile Section */}
+      <div className="px-6 pb-4">
+        <div className="flex items-start justify-between -mt-8">
+          {/* Profile Picture */}
+          <div className="flex items-center">
+            <div className="w-16 h-16 bg-gray-200 rounded-full border-2 border-white overflow-hidden">
+              {profileImage ? (
+                <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-gray-400 text-xl">+</span>
+                </div>
+              )}
+            </div>
+            <div className="ml-4 pt-8">
+              <h2 className="text-xl font-semibold">{data.companyName || 'Company Name'}</h2>
+              <p className="text-gray-600">{data.industryType || 'Industry'}</p>
+            </div>
+          </div>
+          
+          {/* Edit Button */}
+          <button
+            onClick={() => setIsEditing(true)}
+            className="mt-8 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            type="button"
+          >
+            Edit
+          </button>
+        </div>
+        
+        {/* Company Details */}
+        <div className="mt-6">
+          <div className="flex items-center text-gray-600 mb-2">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+            <a href={data.companyWebsite} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+              {data.companyWebsite || 'Website not provided'}
+            </a>
+          </div>
+          <div className="flex items-center text-gray-600">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span>{data.contacts.length} contacts</span>
+          </div>
+        </div>
+        
+        {/* Business Overview Section */}
+        <div className="mt-6">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-medium">Business Overview</h3>
+            <button
+              onClick={() => setShowBusinessOverview(!showBusinessOverview)}
+              className="text-blue-600 hover:text-blue-700 text-sm"
+              type="button"
+            >
+              {showBusinessOverview ? 'Hide' : 'Show'}
+            </button>
+          </div>
+          
+          {showBusinessOverview && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-gray-700 whitespace-pre-wrap">
+                {data.businessDescription || 'No business description provided.'}
+              </p>
+              
+              {/* Business Metrics */}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Annual Website Visitors</label>
+                  <input
+                    type="number"
+                    value={data.annualWebsiteVisitors || 0}
+                    onChange={(e) => setData({...data, annualWebsiteVisitors: parseInt(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Annual Leads Generated</label>
+                  <input
+                    type="number"
+                    value={data.annualLeadsGenerated || 0}
+                    onChange={(e) => setData({...data, annualLeadsGenerated: parseInt(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Annual New Accounts Closed</label>
+                  <input
+                    type="number"
+                    value={data.annualNewAccountsClosed || 0}
+                    onChange={(e) => setData({...data, annualNewAccountsClosed: parseInt(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Annual Revenue ($)</label>
+                  <input
+                    type="number"
+                    value={data.annualRevenue || 0}
+                    onChange={(e) => setData({...data, annualRevenue: parseInt(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              
+              {/* Note about data flow */}
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-4">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">Note:</span> These values automatically update the calculations in the Gaps & Opportunities card.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Social Interaction Buttons */}
+        <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
+          <button
+            className="flex items-center text-gray-600 hover:text-blue-600"
+            type="button"
+          >
+            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+            </svg>
+            Like
+          </button>
+          <button
+            className="flex items-center text-gray-600 hover:text-blue-600"
+            type="button"
+          >
+            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            </svg>
+            Comment
+          </button>
+          <button
+            className="flex items-center text-gray-600 hover:text-blue-600"
+            type="button"
+          >
+            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            Share
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
