@@ -91,6 +91,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
     reader.readAsDataURL(file);
   };
 
+  // Edit Form View
   if (isEditing) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -366,7 +367,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
     );
   }
 
-  // Card View (Default) - FIXED LAYOUT
+  // Card View (Default) - PRODUCTION-SAFE IMPLEMENTATION
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
       {/* Cover Photo with Mode Toggle */}
@@ -378,25 +379,21 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
         {/* Mode Toggle in top-right corner */}
         <div className="absolute top-4 right-4 flex items-center space-x-2">
           <span className="text-white text-sm font-medium">Mode:</span>
-          <div className="flex bg-white/20 rounded-lg p-1">
+          <div className="flex bg-white bg-opacity-20 rounded-lg p-1">
             <button
               onClick={() => setMode('leadgen')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                mode === 'leadgen'
-                  ? 'bg-white text-blue-600'
-                  : 'text-white hover:bg-white/20'
-              }`}
+              className={mode === 'leadgen' 
+                ? "px-3 py-1 text-xs font-medium rounded-md bg-white text-blue-600" 
+                : "px-3 py-1 text-xs font-medium rounded-md text-white hover:bg-white hover:bg-opacity-20"}
               type="button"
             >
               Lead Gen
             </button>
             <button
               onClick={() => setMode('retail')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                mode === 'retail'
-                  ? 'bg-white text-blue-600'
-                  : 'text-white hover:bg-white/20'
-              }`}
+              className={mode === 'retail' 
+                ? "px-3 py-1 text-xs font-medium rounded-md bg-white text-blue-600" 
+                : "px-3 py-1 text-xs font-medium rounded-md text-white hover:bg-white hover:bg-opacity-20"}
               type="button"
             >
               Retail
