@@ -13,8 +13,8 @@ interface ClientInformationProps {
 const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mode, setMode }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<ClientDataType>(data);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(data.profilePhoto || null);
+  const [coverImage, setCoverImage] = useState<string | null>(data.coverPhoto || null);
   const [showBusinessOverview, setShowBusinessOverview] = useState(false);
   
   const profileInputRef = useRef<HTMLInputElement>(null);
@@ -23,15 +23,25 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
   // Update editData when data prop changes
   useEffect(() => {
     setEditData(data);
+    setProfileImage(data.profilePhoto || null);
+    setCoverImage(data.coverPhoto || null);
   }, [data]);
 
   const handleSave = () => {
-    setData(editData);
+    // Include the image data in the save
+    const updatedData = {
+      ...editData,
+      profilePhoto: profileImage,
+      coverPhoto: coverImage
+    };
+    setData(updatedData);
     setIsEditing(false);
   };
 
   const handleCancel = () => {
     setEditData(data);
+    setProfileImage(data.profilePhoto || null);
+    setCoverImage(data.coverPhoto || null);
     setIsEditing(false);
   };
 
