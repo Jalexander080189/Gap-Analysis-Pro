@@ -571,7 +571,8 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
             className="profile-cover"
             style={{
               backgroundImage: data.coverImage ? `url(${data.coverImage})` : undefined,
-              position: 'relative'
+              position: 'relative',
+              overflow: 'visible'
             }}
           >
             <button 
@@ -590,15 +591,21 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
             />
           </div>
 
-          {/* Profile Picture */}
+          {/* Profile Picture - FIXED POSITIONING */}
           <div 
             className={`profile-picture ${dragActive ? 'drag-active' : ''}`}
             style={{
-             position: 'absolute',
-             bottom: '-60px',
-             left: '50%',
-             transform: 'translateX(-50%)',
-             zIndex: 20,
+              position: 'absolute',
+              left: '50%',
+              bottom: '-60px',
+              transform: 'translateX(-50%)',
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              border: '4px solid white',
+              backgroundColor: 'white',
+              zIndex: '20',
+              overflow: 'hidden'
             }}
             onClick={() => profileInputRef.current?.click()}
             onDragEnter={handleDrag}
@@ -626,7 +633,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
           </div>
 
           {/* Profile Information */}
-          <div className="profile-info">
+          <div className="profile-info" style={{ marginTop: '60px' }}>
             <div className="profile-header">
               <div>
                 <h1 className="profile-name">
@@ -698,30 +705,55 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
             {/* Profile Links */}
             <div className="profile-links">
               {data.companyWebsite && (
-                <a href={data.companyWebsite} className="profile-link" target="_blank" rel="noopener noreferrer">
+                <a 
+                  href={data.companyWebsite.startsWith('http' ) ? data.companyWebsite : `https://${data.companyWebsite}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="profile-link"
+                >
                   🌐 Website
                 </a>
-              )}
+               )}
               {data.companyFacebookURL && (
-                <a href={data.companyFacebookURL} className="profile-link" target="_blank" rel="noopener noreferrer">
-                  📘 Facebook
+                <a 
+                  href={data.companyFacebookURL.startsWith('http' ) ? data.companyFacebookURL : `https://${data.companyFacebookURL}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="profile-link"
+                >
+                  📱 Facebook
                 </a>
-              )}
+               )}
               {data.instagramURL && (
-                <a href={data.instagramURL} className="profile-link" target="_blank" rel="noopener noreferrer">
+                <a 
+                  href={data.instagramURL.startsWith('http' ) ? data.instagramURL : `https://${data.instagramURL}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="profile-link"
+                >
                   📸 Instagram
                 </a>
-              )}
+               )}
               {data.facebookAdLibraryURL && (
-                <a href={data.facebookAdLibraryURL} className="profile-link" target="_blank" rel="noopener noreferrer">
-                  📊 FB Ad Library
+                <a 
+                  href={data.facebookAdLibraryURL.startsWith('http' ) ? data.facebookAdLibraryURL : `https://${data.facebookAdLibraryURL}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="profile-link"
+                >
+                  📊 Ad Library
                 </a>
-              )}
+               )}
               {data.phoenixURL && (
-                <a href={data.phoenixURL} className="profile-link" target="_blank" rel="noopener noreferrer">
-                  🔥 Phoenix
+                <a 
+                  href={data.phoenixURL.startsWith('http' ) ? data.phoenixURL : `https://${data.phoenixURL}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="profile-link"
+                >
+                  🔍 Phoenix
                 </a>
-              )}
+               )}
             </div>
 
             <div className="section-divider"></div>
@@ -729,7 +761,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
             {/* Business Overview */}
             <div className="business-overview">
               <div className="business-overview-header">
-                <h3 className="business-overview-title">Business Overview</h3>
+                <h2 className="business-overview-title">Business Overview</h2>
                 <button 
                   onClick={() => setShowBusinessOverview(!showBusinessOverview)}
                   className="toggle-overview-btn"
@@ -737,10 +769,9 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
                   {showBusinessOverview ? 'Hide' : 'Show'}
                 </button>
               </div>
-              
               {showBusinessOverview && (
                 <div className="business-overview-content">
-                  {data.businessDescription || 'Brief description of the business...'}
+                  {data.businessDescription || 'No business description available.'}
                 </div>
               )}
             </div>
@@ -764,18 +795,18 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
       ) : (
         <div className="edit-mode">
           <div className="edit-header">
-            <h2 className="edit-title">Edit Client Information</h2>
+            <h2 className="edit-title">Edit Profile</h2>
             <button 
               onClick={toggleEdit}
               className="save-profile-btn"
             >
-              Save
+              Done
             </button>
           </div>
 
           {/* Image Upload Section */}
           <div className="image-upload-section">
-            <h3 className="section-title">Images</h3>
+            <h3 className="section-title">Profile Images</h3>
             <div className="image-upload-container">
               <div className="profile-upload">
                 <label className="upload-label">Profile Picture</label>
@@ -793,13 +824,15 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
                       style={{ backgroundImage: `url(${data.profileImage})` }}
                     />
                   ) : (
-                    <svg className="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '24px', marginBottom: '8px' }}>📷</div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                        Click or drag to upload
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
-              
               <div className="cover-upload">
                 <label className="upload-label">Cover Photo</label>
                 <div 
@@ -812,16 +845,19 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
                       style={{ backgroundImage: `url(${data.coverImage})` }}
                     />
                   ) : (
-                    <svg className="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '24px', marginBottom: '8px' }}>🖼️</div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                        Click to upload
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Company Information Section */}
+          {/* Company Info Section */}
           <div className="company-info-section">
             <h3 className="section-title">Company Information</h3>
             <div className="form-row">
@@ -830,78 +866,24 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
                 <input
                   type="text"
                   name="companyName"
-                  value={data.companyName}
+                  value={data.companyName || ''}
                   onChange={handleInputChange}
                   className="form-input"
                   placeholder="Enter company name"
                 />
               </div>
-              
               <div className="form-group">
                 <label className="form-label">Industry Type</label>
                 <input
                   type="text"
                   name="industryType"
-                  value={data.industryType}
+                  value={data.industryType || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="e.g., Technology, Healthcare"
+                  placeholder="Enter industry type"
                 />
               </div>
             </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Company Website</label>
-                <input
-                  type="text"
-                  name="companyWebsite"
-                  value={data.companyWebsite}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="https://company.com"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">Facebook URL</label>
-                <input
-                  type="text"
-                  name="companyFacebookURL"
-                  value={data.companyFacebookURL}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="https://facebook.com/company"
-                />
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Facebook Ad Library URL</label>
-                <input
-                  type="text"
-                  name="facebookAdLibraryURL"
-                  value={data.facebookAdLibraryURL || ''}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="https://www.facebook.com/ads/library/..."
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">Instagram URL</label>
-                <input
-                  type="text"
-                  name="instagramURL"
-                  value={data.instagramURL || ''}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="https://instagram.com/company"
-                />
-              </div>
-            </div>
-            
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Company Address</label>
@@ -911,10 +893,59 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
                   value={data.companyAddress || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="123 Main St, City, State, ZIP"
+                  placeholder="Enter company address"
                 />
               </div>
-              
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Company Website</label>
+                <input
+                  type="text"
+                  name="companyWebsite"
+                  value={data.companyWebsite || ''}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="Enter company website URL"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Facebook URL</label>
+                <input
+                  type="text"
+                  name="companyFacebookURL"
+                  value={data.companyFacebookURL || ''}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="Enter Facebook URL"
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Instagram URL</label>
+                <input
+                  type="text"
+                  name="instagramURL"
+                  value={data.instagramURL || ''}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="Enter Instagram URL"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Facebook Ad Library URL</label>
+                <input
+                  type="text"
+                  name="facebookAdLibraryURL"
+                  value={data.facebookAdLibraryURL || ''}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="Enter Facebook Ad Library URL"
+                />
+              </div>
+            </div>
+            <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Phoenix URL</label>
                 <input
@@ -923,7 +954,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
                   value={data.phoenixURL || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="https://phoenix.example.com"
+                  placeholder="Enter Phoenix URL"
                 />
               </div>
             </div>
@@ -933,83 +964,86 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
           <div className="contacts-section">
             <div className="contacts-header">
               <h3 className="section-title">Contacts</h3>
-              {(data.contacts || []).length < 5 && (
-                <button onClick={addContact} className="add-contact-btn">
+              {(data.contacts || []).length > 0 && (data.contacts || []).length < 5 && (
+                <button 
+                  onClick={addContact}
+                  className="add-contact-btn"
+                >
                   + Add Contact
                 </button>
               )}
             </div>
             
-            {(data.contacts || []).length === 0 ? (
-              <div className="no-contacts">
-                <p className="no-contacts-text">No contacts added yet</p>
-                <button onClick={addContact} className="add-first-contact-btn">
-                  + Add First Contact
-                </button>
-              </div>
-            ) : (
+            {(data.contacts || []).length > 0 ? (
               <div className="contacts-list">
                 {(data.contacts || []).map((contact, index) => (
                   <div key={index} className="contact-item">
-                    <button 
-                      onClick={() => removeContact(index)}
-                      className="remove-contact-btn"
-                      title="Remove contact"
-                    >
-                      ×
-                    </button>
-                    
+                    {index > 0 && (
+                      <button 
+                        onClick={() => removeContact(index)}
+                        className="remove-contact-btn"
+                      >
+                        ×
+                      </button>
+                    )}
                     <div className="contact-form">
                       <div className="form-row">
                         <div className="form-group">
                           <label className="form-label">Name</label>
                           <input
                             type="text"
-                            value={contact.name}
+                            value={contact.name || ''}
                             onChange={(e) => handleContactChange(index, 'name', e.target.value)}
                             className="form-input"
-                            placeholder="Contact name"
+                            placeholder="Enter contact name"
                           />
                         </div>
-                        
                         <div className="form-group">
                           <label className="form-label">Title</label>
                           <input
                             type="text"
-                            value={contact.title}
+                            value={contact.title || ''}
                             onChange={(e) => handleContactChange(index, 'title', e.target.value)}
                             className="form-input"
-                            placeholder="Job title"
+                            placeholder="Enter contact title"
                           />
                         </div>
                       </div>
-                      
                       <div className="form-row">
                         <div className="form-group">
                           <label className="form-label">Email</label>
                           <input
                             type="email"
-                            value={contact.email}
+                            value={contact.email || ''}
                             onChange={(e) => handleContactChange(index, 'email', e.target.value)}
                             className="form-input"
-                            placeholder="email@company.com"
+                            placeholder="Enter contact email"
                           />
                         </div>
-                        
                         <div className="form-group">
                           <label className="form-label">Mobile</label>
                           <input
                             type="tel"
-                            value={contact.mobile}
+                            value={contact.mobile || ''}
                             onChange={(e) => handleContactChange(index, 'mobile', e.target.value)}
                             className="form-input"
-                            placeholder="(555) 123-4567"
+                            placeholder="Enter contact mobile"
                           />
                         </div>
                       </div>
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : (
+              <div className="no-contacts">
+                <p className="no-contacts-text">No contacts added yet.</p>
+                <button 
+                  onClick={addContact}
+                  className="add-first-contact-btn"
+                >
+                  + Add First Contact
+                </button>
               </div>
             )}
           </div>
@@ -1019,15 +1053,14 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
             <h3 className="section-title">Business Overview</h3>
             <div className="textarea-container">
               <textarea
-                value={data.businessDescription}
+                value={data.businessDescription || ''}
                 onChange={handleBusinessOverviewChange}
                 className="business-overview-textarea"
-                placeholder="Enter a brief description of the business, its services, target market, and key value propositions..."
+                placeholder="Enter business description..."
               />
             </div>
           </div>
 
-          {/* Save Button */}
           <div className="save-container">
             <button 
               onClick={toggleEdit}
