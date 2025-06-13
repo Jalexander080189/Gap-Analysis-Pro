@@ -628,7 +628,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
                   </span>
                 </h1>
                 <p className="profile-industry">
-                  Industry Type
+                  {data.industryType || 'Industry Type'}
                 </p>
                 <p className="profile-location">
                   📍 {data.companyAddress || 'United States'}
@@ -877,7 +877,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
                   value={data.facebookAdLibraryURL || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&view_all_page_id=..."
+                  placeholder="https://www.facebook.com/ads/library/..."
                 />
               </div>
               
