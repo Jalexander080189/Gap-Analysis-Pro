@@ -121,7 +121,7 @@ body {
   }
 }
 /* Profile picture positioning fix */
-.profile-picture {
+.profile-avatar {
   position: absolute !important;
   left: 50% !important;
   bottom: -60px !important;

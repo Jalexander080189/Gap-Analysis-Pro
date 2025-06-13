@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import './profile-fix.css'; 
+import React, { useState, useRef, useEffect } from 'react'; 
 
 // Define proper TypeScript interfaces
 export interface ContactType {
@@ -566,288 +565,89 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
       )}
 
       {!data.showBack ? (
-        <>
-          {/* Cover Photo */}
-          <div 
-            className="profile-cover profile-cover-fixed"
-            style={{
-              backgroundImage: data.coverImage ? `url(${data.coverImage})` : undefined
-            }}
-          >
-            <button 
-              className="edit-cover-btn"
-              onClick={() => coverInputRef.current?.click()}
-              title="Edit cover photo"
-            >
-              📷
-            </button>
-            <input
-              ref={coverInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleCoverImageUpload}
-              className="hidden-input"
-            />
-          </div>
-
-          {/* Profile Picture - FIXED POSITIONING */}
-          <div 
-            className={`profile-picture profile-picture-fixed ${dragActive ? 'drag-active' : ''}`}
-            onClick={() => profileInputRef.current?.click()}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            {data.profileImage ? (
+        <div className="card-front">
+          {/* LinkedIn-style Profile Header */}
+          <div className="profile-header mb-6">
+            {/* Cover Photo Section */}
+            <div className="relative">
               <div 
-                className="profile-image"
-                style={{ backgroundImage: `url(${data.profileImage})` }}
-              />
-            ) : (
-              <div className="profile-initial">
-                {data.companyName ? data.companyName.charAt(0).toUpperCase() : '?'}
+                className="profile-banner relative overflow-hidden cursor-pointer"
+                onClick={() => coverInputRef.current?.click()}
+              >
+                {data.coverImage && (
+                  <img 
+                    src={data.coverImage}
+                    alt="Cover"
+                    className="w-full h-full object-cover"
+                    draggable={false}
+                  />
+                )}
+                <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                  <span className="text-white text-sm">
+                    {data.coverImage ? 'Change cover photo' : 'Click to add cover photo'}
+                  </span>
+                </div>
               </div>
-            )}
-            <input
-              ref={profileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleProfileImageUpload}
-              className="hidden-input"
-            />
-          </div>
+              
+              {/* Profile Avatar */}
+              <div 
+                className="profile-avatar cursor-pointer flex items-center justify-center"
+                onClick={() => profileInputRef.current?.click()}
+              >
+                {data.profileImage ? (
+                  <img 
+                    src={data.profileImage}
+                    alt="Profile"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-400 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+            </div>
 
-          {/* Profile Information */}
-          <div className="profile-info profile-info-fixed">
-            <div className="profile-header">
-              <div>
-                <h1 className="profile-name">
-                  {data.companyName || 'Company Name'}
-                  <span style={{ fontSize: '14px', color: '#0a66c2', marginLeft: '8px' }}>
-                    ●
-                  </span>
-                </h1>
-                <p className="profile-industry">
-                  {data.industryType || 'Industry Type'}
-                </p>
-                <p className="profile-location">
-                  📍 {data.companyAddress || 'United States'}
-                </p>
-                <p className="profile-contacts">
-                  {(data.contacts || []).length} contacts
-                </p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Company Name and Industry */}
+            <div className="mt-12 mb-4">
+              <h2 className="text-2xl font-bold text-gray-800">
+                {data.companyName || 'Company Name'}
+              </h2>
+              <p className="text-gray-600">
+                Industry Type: {data.industryType || 'Years in business'}
+              </p>
+              <div className="flex items-center mt-2">
+                <button 
+                  onClick={() => setShowBusinessOverview(!showBusinessOverview)}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  {data.contacts?.length || 0} contacts
+                </button>
+                
                 {/* Lead Gen/Retail Toggle */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
-                    Mode:
-                  </span>
-                  <div style={{ display: 'flex', gap: '4px' }}>
+                <div className="ml-auto">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600">Mode:</span>
                     <button
-                      onClick={() => handleModeChange('leadgen')}
-                      style={{
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        borderRadius: '16px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        backgroundColor: mode === 'leadgen' ? '#0a66c2' : '#f3f4f6',
-                        color: mode === 'leadgen' ? 'white' : '#6b7280',
-                        transition: 'all 0.2s ease'
-                      }}
+                      onClick={() => handleModeChange(mode === 'leadgen' ? 'retail' : 'leadgen')}
+                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                        mode === 'leadgen' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
                     >
-                      Lead Gen
-                    </button>
-                    <button
-                      onClick={() => handleModeChange('retail')}
-                      style={{
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        borderRadius: '16px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        backgroundColor: mode === 'retail' ? '#0a66c2' : '#f3f4f6',
-                        color: mode === 'retail' ? 'white' : '#6b7280',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      Retail
+                      {mode === 'leadgen' ? 'Lead Gen' : 'Retail'}
                     </button>
                   </div>
                 </div>
-                <button 
-                  onClick={toggleEdit}
-                  className="edit-profile-btn"
-                >
-                  Edit
-                </button>
               </div>
             </div>
 
-            {/* Profile Links */}
-            <div className="profile-links">
-              {data.companyWebsite && (
-                <a 
-                  href={data.companyWebsite.startsWith('http' ) ? data.companyWebsite : `https://${data.companyWebsite}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="profile-link"
-                >
-                  🌐 Website
-                </a>
-               )}
-              {data.companyFacebookURL && (
-                <a 
-                  href={data.companyFacebookURL.startsWith('http' ) ? data.companyFacebookURL : `https://${data.companyFacebookURL}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="profile-link"
-                >
-                  📱 Facebook
-                </a>
-               )}
-              {data.instagramURL && (
-                <a 
-                  href={data.instagramURL.startsWith('http' ) ? data.instagramURL : `https://${data.instagramURL}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="profile-link"
-                >
-                  📸 Instagram
-                </a>
-               )}
-              {data.facebookAdLibraryURL && (
-                <a 
-                  href={data.facebookAdLibraryURL.startsWith('http' ) ? data.facebookAdLibraryURL : `https://${data.facebookAdLibraryURL}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="profile-link"
-                >
-                  📊 Ad Library
-                </a>
-               )}
-              {data.phoenixURL && (
-                <a 
-                  href={data.phoenixURL.startsWith('http' ) ? data.phoenixURL : `https://${data.phoenixURL}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="profile-link"
-                >
-                  🔍 Phoenix
-                </a>
-               )}
-            </div>
-
-            <div className="section-divider"></div>
-
-            {/* Business Overview */}
-            <div className="business-overview">
-              <div className="business-overview-header">
-                <h2 className="business-overview-title">Business Overview</h2>
-                <button 
-                  onClick={() => setShowBusinessOverview(!showBusinessOverview)}
-                  className="toggle-overview-btn"
-                >
-                  {showBusinessOverview ? 'Hide' : 'Show'}
-                </button>
-              </div>
-              {showBusinessOverview && (
-                <div className="business-overview-content">
-                  {data.businessDescription || 'No business description available.'}
-                </div>
-              )}
-            </div>
-
-            <div className="button-divider"></div>
-
-            {/* Social Buttons */}
-            <div className="social-buttons">
-              <button className="social-button">
-                👍 Like
-              </button>
-              <button className="social-button">
-                💬 Comment
-              </button>
-              <button className="social-button">
-                📤 Share
-              </button>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="edit-mode">
-          <div className="edit-header">
-            <h2 className="edit-title">Edit Profile</h2>
-            <button 
-              onClick={toggleEdit}
-              className="save-profile-btn"
-            >
-              Done
-            </button>
-          </div>
-
-          {/* Image Upload Section */}
-          <div className="image-upload-section">
-            <h3 className="section-title">Profile Images</h3>
-            <div className="image-upload-container">
-              <div className="profile-upload">
-                <label className="upload-label">Profile Picture</label>
-                <div 
-                  className={`profile-upload-area ${dragActive ? 'drag-active' : ''}`}
-                  onClick={() => profileInputRef.current?.click()}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                >
-                  {data.profileImage ? (
-                    <div 
-                      className="upload-preview"
-                      style={{ backgroundImage: `url(${data.profileImage})` }}
-                    />
-                  ) : (
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '24px', marginBottom: '8px' }}>📷</div>
-                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                        Click or drag to upload
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="cover-upload">
-                <label className="upload-label">Cover Photo</label>
-                <div 
-                  className="cover-upload-area"
-                  onClick={() => coverInputRef.current?.click()}
-                >
-                  {data.coverImage ? (
-                    <div 
-                      className="upload-preview cover-preview"
-                      style={{ backgroundImage: `url(${data.coverImage})` }}
-                    />
-                  ) : (
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '24px', marginBottom: '8px' }}>🖼️</div>
-                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                        Click to upload
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Company Info Section */}
-          <div className="company-info-section">
-            <h3 className="section-title">Company Information</h3>
-            <div className="form-row">
-              <div className="form-group">
+            {/* Form Fields */}
+            <div className="space-y-4">
+              <div>
                 <label className="form-label">Company Name</label>
                 <input
                   type="text"
@@ -858,7 +658,8 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
                   placeholder="Enter company name"
                 />
               </div>
-              <div className="form-group">
+
+              <div>
                 <label className="form-label">Industry Type</label>
                 <input
                   type="text"
@@ -866,199 +667,289 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
                   value={data.industryType || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="Enter industry type"
+                  placeholder="e.g., Technology, Healthcare"
                 />
               </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Company Address</label>
-                <input
-                  type="text"
-                  name="companyAddress"
-                  value={data.companyAddress || ''}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="Enter company address"
-                />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
+
+              <div>
                 <label className="form-label">Company Website</label>
                 <input
-                  type="text"
+                  type="url"
                   name="companyWebsite"
                   value={data.companyWebsite || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="Enter company website URL"
+                  placeholder="https://company.com"
                 />
               </div>
-              <div className="form-group">
-                <label className="form-label">Facebook URL</label>
+
+              <div>
+                <label className="form-label">Years in Business</label>
                 <input
                   type="text"
+                  name="yearsInBusiness"
+                  value={data.yearsInBusiness || ''}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="e.g., 5"
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Facebook URL</label>
+                <input
+                  type="url"
                   name="companyFacebookURL"
                   value={data.companyFacebookURL || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="Enter Facebook URL"
+                  placeholder="https://facebook.com/..."
                 />
               </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
+
+              <div>
                 <label className="form-label">Instagram URL</label>
                 <input
-                  type="text"
+                  type="url"
                   name="instagramURL"
                   value={data.instagramURL || ''}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="Enter Instagram URL"
+                  placeholder="https://instagram.com/..."
                 />
               </div>
-              <div className="form-group">
-                <label className="form-label">Facebook Ad Library URL</label>
-                <input
-                  type="text"
-                  name="facebookAdLibraryURL"
-                  value={data.facebookAdLibraryURL || ''}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="Enter Facebook Ad Library URL"
-                />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Phoenix URL</label>
-                <input
-                  type="text"
-                  name="phoenixURL"
-                  value={data.phoenixURL || ''}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="Enter Phoenix URL"
-                />
-              </div>
-            </div>
-          </div>
 
-          {/* Contacts Section */}
-          <div className="contacts-section">
-            <div className="contacts-header">
-              <h3 className="section-title">Contacts</h3>
-              {(data.contacts || []).length > 0 && (data.contacts || []).length < 5 && (
-                <button 
-                  onClick={addContact}
-                  className="add-contact-btn"
-                >
-                  + Add Contact
-                </button>
-              )}
-            </div>
-            
-            {(data.contacts || []).length > 0 ? (
-              <div className="contacts-list">
-                {(data.contacts || []).map((contact, index) => (
-                  <div key={index} className="contact-item">
-                    {index > 0 && (
-                      <button 
-                        onClick={() => removeContact(index)}
-                        className="remove-contact-btn"
-                      >
-                        ×
-                      </button>
-                    )}
-                    <div className="contact-form">
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label className="form-label">Name</label>
-                          <input
-                            type="text"
-                            value={contact.name || ''}
-                            onChange={(e) => handleContactChange(index, 'name', e.target.value)}
-                            className="form-input"
-                            placeholder="Enter contact name"
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">Title</label>
-                          <input
-                            type="text"
-                            value={contact.title || ''}
-                            onChange={(e) => handleContactChange(index, 'title', e.target.value)}
-                            className="form-input"
-                            placeholder="Enter contact title"
-                          />
-                        </div>
-                      </div>
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label className="form-label">Email</label>
-                          <input
-                            type="email"
-                            value={contact.email || ''}
-                            onChange={(e) => handleContactChange(index, 'email', e.target.value)}
-                            className="form-input"
-                            placeholder="Enter contact email"
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">Mobile</label>
-                          <input
-                            type="tel"
-                            value={contact.mobile || ''}
-                            onChange={(e) => handleContactChange(index, 'mobile', e.target.value)}
-                            className="form-input"
-                            placeholder="Enter contact mobile"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div>
+                <label className="form-label">Business Description</label>
+                <textarea
+                  name="businessDescription"
+                  value={data.businessDescription || ''}
+                  onChange={handleBusinessOverviewChange}
+                  className="form-input"
+                  rows={4}
+                  placeholder="Brief description of the business..."
+                />
               </div>
-            ) : (
-              <div className="no-contacts">
-                <p className="no-contacts-text">No contacts added yet.</p>
-                <button 
+
+              {/* Business Overview Section */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-medium text-gray-700 mb-4">Business Overview</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="form-label">Annual Website Visitors</label>
+                    <input
+                      type="number"
+                      name="annualWebsiteVisitors"
+                      value={data.annualWebsiteVisitors || ''}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      placeholder="e.g., 10000"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="form-label">Annual Leads Generated</label>
+                    <input
+                      type="number"
+                      name="annualLeadsGenerated"
+                      value={data.annualLeadsGenerated || ''}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      placeholder="e.g., 1000"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="form-label">Annual New Accounts Closed</label>
+                    <input
+                      type="number"
+                      name="annualNewAccountsClosed"
+                      value={data.annualNewAccountsClosed || ''}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      placeholder="e.g., 100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="form-label">Annual Revenue ($ )</label>
+                    <input
+                      type="number"
+                      name="annualRevenue"
+                      value={data.annualRevenue || ''}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      placeholder="e.g., 1000000"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    <strong>Note:</strong> These values will automatically update the calculations in the Gaps & Opportunities card.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Details Modal */}
+            {showBusinessOverview && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-medium text-gray-700 mb-2">Contact Information</h3>
+                {data.contacts && data.contacts.length > 0 ? (
+                  data.contacts.map((contact, index) => (
+                    <div key={index} className="mb-2 p-2 bg-white rounded">
+                      <p><strong>{contact.name}</strong> - {contact.title}</p>
+                      <p className="text-sm text-gray-600">{contact.email} | {contact.mobile}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No contacts added yet</p>
+                )}
+                <button
                   onClick={addContact}
-                  className="add-first-contact-btn"
+                  className="mt-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
                 >
-                  + Add First Contact
+                  Add Contact
                 </button>
               </div>
             )}
-          </div>
 
-          {/* Business Overview Section */}
-          <div className="business-overview-section">
-            <h3 className="section-title">Business Overview</h3>
-            <div className="textarea-container">
-              <textarea
-                value={data.businessDescription || ''}
-                onChange={handleBusinessOverviewChange}
-                className="business-overview-textarea"
-                placeholder="Enter business description..."
-              />
+            {/* Hidden file inputs */}
+            <input
+              ref={profileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleProfileImageUpload}
+            />
+            
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleCoverImageUpload}
+            />
+          </div>
+        ) : (
+          <div className="card-back">
+            <div className="card-header">
+              <h3 className="card-title">Business Overview</h3>
+            </div>
+            
+            <div className="card-content">
+              {data.businessDescription && (
+                <div>
+                  <h3 className="font-medium text-gray-700">Business Description</h3>
+                  <p className="text-gray-600">{data.businessDescription}</p>
+                </div>
+              )}
+
+              {/* Contact Information on Back of Card */}
+              <div className="mt-4">
+                <h3 className="font-medium text-gray-700 mb-2">Contact Information</h3>
+                {data.contacts && data.contacts.length > 0 ? (
+                  data.contacts.map((contact, index) => (
+                    <div key={index} className="mb-2 p-2 bg-white rounded">
+                      <input
+                        type="text"
+                        value={contact.name}
+                        onChange={(e) => handleContactChange(index, 'name', e.target.value)}
+                        className="form-input mb-1"
+                        placeholder="Contact Name"
+                      />
+                      <input
+                        type="text"
+                        value={contact.title}
+                        onChange={(e) => handleContactChange(index, 'title', e.target.value)}
+                        className="form-input mb-1"
+                        placeholder="Contact Title"
+                      />
+                      <input
+                        type="email"
+                        value={contact.email}
+                        onChange={(e) => handleContactChange(index, 'email', e.target.value)}
+                        className="form-input mb-1"
+                        placeholder="Contact Email"
+                      />
+                      <input
+                        type="tel"
+                        value={contact.mobile}
+                        onChange={(e) => handleContactChange(index, 'mobile', e.target.value)}
+                        className="form-input mb-1"
+                        placeholder="Contact Phone"
+                      />
+                      <button
+                        onClick={() => removeContact(index)}
+                        className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No contacts added yet</p>
+                )}
+                <button
+                  onClick={addContact}
+                  className="mt-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                >
+                  Add Contact
+                </button>
+              </div>
             </div>
           </div>
-
-          <div className="save-container">
-            <button 
-              onClick={toggleEdit}
-              className="save-profile-btn-large"
-            >
-              Save Changes
-            </button>
-          </div>
+        )}
+      
+      {/* Social interaction buttons */}
+      <div className="mt-4 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <button 
+            className={`social-button ${data.showBack ? 'hidden' : ''}`}
+            onClick={() => console.log('Like clicked')}
+            type="button"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.60L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+            </svg>
+            Like
+          </button>
+          
+          <button 
+            className={`social-button ${data.showBack ? 'hidden' : ''}`}
+            onClick={( ) => console.log('Comment clicked')}
+            type="button"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            Comment
+          </button>
+          
+          <button 
+            className={`social-button ${data.showBack ? 'hidden' : ''}`}
+            onClick={( ) => console.log('Share clicked')}
+            type="button"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            Share
+          </button>
         </div>
-      )}
+        
+        <button 
+          className="toggle-button"
+          onClick={toggleEdit}
+          type="button"
+        >
+          {data.showBack ? 'Show Front' : 'Show Back'}
+        </button>
+      </div>
     </div>
-  );
+   );
 };
 
 export default ClientInformation;
