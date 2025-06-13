@@ -1,0 +1,23 @@
+/* Override for profile picture positioning */
+.profile-picture-fixed {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -60px !important;
+  transform: translateX(-50%) !important;
+  width: 120px !important;
+  height: 120px !important;
+  border-radius: 50% !important;
+  border: 4px solid white !important;
+  background-color: white !important;
+  z-index: 999 !important;
+  overflow: hidden !important;
+}
+
+.profile-cover-fixed {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+.profile-info-fixed {
+  margin-top: 60px !important;
+}

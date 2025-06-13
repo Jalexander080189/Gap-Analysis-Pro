@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import './profile-fix.css'; 
 
 // Define proper TypeScript interfaces
 export interface ContactType {
@@ -568,11 +569,9 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
         <>
           {/* Cover Photo */}
           <div 
-            className="profile-cover"
+            className="profile-cover profile-cover-fixed"
             style={{
-              backgroundImage: data.coverImage ? `url(${data.coverImage})` : undefined,
-              position: 'relative',
-              overflow: 'visible'
+              backgroundImage: data.coverImage ? `url(${data.coverImage})` : undefined
             }}
           >
             <button 
@@ -593,20 +592,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
 
           {/* Profile Picture - FIXED POSITIONING */}
           <div 
-            className={`profile-picture ${dragActive ? 'drag-active' : ''}`}
-            style={{
-              position: 'absolute',
-              left: '50%',
-              bottom: '-60px',
-              transform: 'translateX(-50%)',
-              width: '120px',
-              height: '120px',
-              borderRadius: '50%',
-              border: '4px solid white',
-              backgroundColor: 'white',
-              zIndex: '20',
-              overflow: 'hidden'
-            }}
+            className={`profile-picture profile-picture-fixed ${dragActive ? 'drag-active' : ''}`}
             onClick={() => profileInputRef.current?.click()}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -633,7 +619,7 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
           </div>
 
           {/* Profile Information */}
-          <div className="profile-info" style={{ marginTop: '60px' }}>
+          <div className="profile-info profile-info-fixed">
             <div className="profile-header">
               <div>
                 <h1 className="profile-name">
