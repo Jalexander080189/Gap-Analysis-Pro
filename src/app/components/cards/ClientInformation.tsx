@@ -571,7 +571,8 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
             className="profile-cover"
             style={{
               backgroundImage: data.coverImage ? `url(${data.coverImage})` : undefined,
-              position: 'relative' 
+              position: 'relative'
+              overflow: 'visible'
             }}
           >
             <button 
@@ -595,13 +596,19 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
             className={`profile-picture ${dragActive ? 'drag-active' : ''}`}
             style={{
              position: 'absolute',
-             top: 'calc(100% - 60px)',
+             bottom: '-60px',
              left: '50%',
              transform: 'translateX(-50%)',
              zIndex: 20,
-             border: '4px solid white',
+             width: '120px',
+             height: '120px',
              borderRadius: '50%',
+             border: '4px solid white',
              backgroundColor: 'white'
+             display: 'flex',
+             alignItems: 'center',
+             justifyContent: 'center',
+             overflow: 'hidden'
             }}
             onClick={() => profileInputRef.current?.click()}
             onDragEnter={handleDrag}
