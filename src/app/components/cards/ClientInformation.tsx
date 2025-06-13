@@ -592,6 +592,13 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
           {/* Profile Picture */}
           <div 
             className={`profile-picture ${dragActive ? 'drag-active' : ''}`}
+            style={{
+             position: 'absolute',
+             top: '100px',
+             left: '50%',
+             transform: 'translateX(-50%)',
+             zIndex: 10
+            }}
             onClick={() => profileInputRef.current?.click()}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
