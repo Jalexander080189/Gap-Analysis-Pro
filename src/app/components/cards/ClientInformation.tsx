@@ -572,7 +572,6 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
             style={{
               backgroundImage: data.coverImage ? `url(${data.coverImage})` : undefined,
               position: 'relative'
-              overflow: 'visible'
             }}
           >
             <button 
@@ -600,15 +599,6 @@ const ClientInformation: React.FC<ClientInformationProps> = ({ data, setData, mo
              left: '50%',
              transform: 'translateX(-50%)',
              zIndex: 20,
-             width: '120px',
-             height: '120px',
-             borderRadius: '50%',
-             border: '4px solid white',
-             backgroundColor: 'white'
-             display: 'flex',
-             alignItems: 'center',
-             justifyContent: 'center',
-             overflow: 'hidden'
             }}
             onClick={() => profileInputRef.current?.click()}
             onDragEnter={handleDrag}
